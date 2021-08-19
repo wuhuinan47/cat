@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+    <meta http-equiv="Pragma" content="no-cache"/>
+    <meta http-equiv="Expires" content="0"/>
+    <title>Title</title>
+</head>
+<body>
+
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="pullAnimal()">
+    拉动物
+</button>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="familySign()">
+    公会签到
+</button>
+<br>
+<br>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="getSignPrize()">
+    摇能量(待开发)
+</button>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="youstop()">
+    打龙(待开发)
+</button>
+
+<br>
+<br>
+
+<input id="boxUID" style="font-size:20px;width:150px; height:100px;" type="text" placeholder="输入抓宝箱的uid" />
+<input id="boxQuality" style="font-size:20px;width:200px; height:100px;" type="text" placeholder="1=普通2=稀有3=传奇" />
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="getBox()">
+    抓宝箱
+</button>
+
+
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="houstop()">
+    打男孩(待开发)
+</button>
+
+<br>
+<br>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="loginByWechat()">
+    微信登录
+</button>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="loginByQQ()">
+    QQ登录
+</button>
+
+
+<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+
+<script type="text/javascript">
+    window.status = "1";
+
+    pullAnimal = function(){
+        $.get("https://cat.rosettawe.com/pullAnimal",function (data) {
+            console.log("pullAnimal:", data)
+            window.status = "1";
+        });
+    }
+
+    familySign = function(){
+        $.get("https://cat.rosettawe.com/familySign",function (data) {
+            console.log("familySign:", data)
+            window.status = "1";
+        });
+    }
+
+    getSignPrize = function(){
+        $.get("https://cat.rosettawe.com/getSignPrize",function (data) {
+            console.log("getSignPrize:", data)
+            window.status = "1";
+        });
+    }
+
+    getBox = function(){
+
+        var boxUID=document.getElementById("boxUID");
+        var boxQuality=document.getElementById("boxQuality");
+        console.log("boxUID:", boxUID.value);
+        console.log("boxQuality:", boxQuality.value);
+
+        $.get("https://cat.rosettawe.com/diamond?id="+boxUID.value+"&quality="+boxQuality.value,function (data) {
+            console.log("getSignPrize:", data)
+            window.status = "1";
+        });
+    }
+
+
+    loginByWechat = function(){
+        $.get("https://cat.rosettawe.com/loginByQrcode?id=1",function (data) {
+            console.log("loginByWechat:", data)
+            window.status = "1";
+        });
+    }
+
+    loginByQQ = function(){
+        $.get("https://cat.rosettawe.com/loginByQrcode?id=2",function (data) {
+            console.log("loginByWechat:", data)
+            window.status = "1";
+        });
+    }
+
+
+    // 
+
+    toubi = function(){
+        $.get("http://192.168.1.13:21000/print?command=1",function () {
+            console.log("djkslfjalskjdkf2223")
+            window.status = "1";
+        });
+    }
+
+    you = function(){
+        $.get("http://192.168.1.13:21000/print?command=2",function () {
+            console.log("djkslfjalskjdkf2223")
+            window.status = "1";
+        });
+    }
+
+    youstop = function(){
+        $.get("http://192.168.1.13:21000/print?command=3",function () {
+            console.log("djkslfjalskjdkf2223")
+            window.status = "1";
+        });
+    }
+
+    hou = function(){
+        $.get("http://192.168.1.13:21000/print?command=4",function () {
+            console.log("djkslfjalskjdkf2223")
+            window.status = "1";
+        });
+    }
+
+    houstop = function(){
+        $.get("http://192.168.1.13:21000/print?command=5",function () {
+            console.log("djkslfjalskjdkf2223")
+            window.status = "1";
+        });
+    }
+
+    third = function(){
+        $.get("http://192.168.1.13:21000/print?command=6",function () {
+            console.log("djkslfjalskjdkf2223")
+            window.status = "1";
+        });
+    }
+
+    thirdstop = function(){
+        $.get("http://192.168.1.13:21000/print?command=7",function () {
+            console.log("djkslfjalskjdkf2223")
+            window.status = "1";
+        });
+    }
+
+    gopen = function (i) {
+        console.log("gopen ", window.status != "1")
+        if (window.status != "1") {
+            return;
+        }
+        console.log("open ", i)
+        window.status = "0";
+        $.get("http://8.134.19.98:8888/open/" + i,function () {
+            console.log("djkslfjalskjdkf2223")
+            window.status = "1";
+        });
+    }
+
+    gclose = function (i) {
+        console.log("close ", window.status != "1")
+        if (window.status != "1") {
+            return;
+        }
+        window.status = "0";
+        $.get("http://8.134.19.98:8888/close/" + i,function () {
+            console.log("djkslfjalskjdkf2223")
+            window.status = "1";
+        });
+    }
+
+</script>
+
+
+</body>
+</html>
