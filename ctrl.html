@@ -5,11 +5,21 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
     <meta http-equiv="Pragma" content="no-cache"/>
     <meta http-equiv="Expires" content="0"/>
-    <title>Title</title>
+    <title>猫来了辅助简易版</title>
 </head>
 <body>
 
 
+    <select style="font-size:40px;width:400px; height:100px;" name="Oper_Type" id="Oper_Type">
+        <option selected="selected" value="">请选择</option>
+        </select>
+    
+        <button style="font-size:40px;width:400px; height:100px;" onclick="login('')">
+            登录
+        </button>
+
+        <br>
+<br>
 <button style="font-size:40px;width:400px; height:100px;" onclick="pullAnimal()">
     拉动物
 </button>
@@ -20,28 +30,65 @@
 <br>
 <br>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="getSignPrize()">
-    摇能量(待开发)
+<button style="font-size:40px;width:400px; height:100px;" onclick="startPullAnimal()">
+    开启动物定时器
 </button>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="youstop()">
-    打龙(待开发)
+<button style="font-size:40px;width:400px; height:100px;" onclick="stopPullAnimal()">
+    关闭动物定时器
 </button>
 
 <br>
 <br>
 
-<input id="boxUID" style="font-size:20px;width:150px; height:100px;" type="text" placeholder="输入抓宝箱的uid" />
-<input id="boxQuality" style="font-size:20px;width:200px; height:100px;" type="text" placeholder="1=普通2=稀有3=传奇" />
+<select style="font-size:20px;width:150px; height:100px;" name="boxUidsSelect" id="boxUidsSelect">
+    <option selected="selected" value="">请选择</option>
+    </select>
+    <select style="font-size:20px;width:150px; height:100px;" name="BCSelect2" id="BCSelect2">
+        <option selected="selected" value="">请选择</option>
+        <option value="1">普通</option>
+        <option value="2">稀有</option>
+        <option value="3">传奇</option>
+        </select>
+<input id="boxAmount" style="font-size:20px;width:200px; height:100px;" type="text" placeholder="目标数量" />
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="getBox()">
     抓宝箱
 </button>
 
+<br>
+<br>
+
+<select style="font-size:20px;width:150px; height:100px;" name="Oper_Candy" id="Oper_Candy">
+    <option selected="selected" value="">请选择</option>
+    </select>
 
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="houstop()">
-    打男孩(待开发)
+    <select style="font-size:20px;width:150px; height:100px;" name="BCSelect" id="BCSelect">
+        <option selected="selected" value="">请选择</option>
+        <option value="1">普通</option>
+        <option value="2">稀有</option>
+        <option value="3">传奇</option>
+        </select>
+<input id="candyAmount" style="font-size:20px;width:200px; height:100px;" type="text" placeholder="目标数量" />
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="hitCandy()">
+    打糖果
+</button>
+
+<br>
+<br>
+<button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss()">
+    我打龙
+</button>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss1()">
+    蜜打龙
+</button>
+
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="checkToken()">
+    检测账号状态
 </button>
 
 <br>
@@ -55,6 +102,93 @@
     QQ登录
 </button>
 
+<br>
+<br>
+
+<select style="font-size:40px;width:400px; height:100px;" name="Oper_Boss" id="Oper_Boss">
+    <option selected="selected" value="">请选择</option>
+    </select>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="getFreeBossCannon()">
+    领取免费龙炮弹
+</button>
+
+
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="sonAttackBoss()">
+    一键小号打龙
+</button>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(1)">
+    蜜龙组
+</button>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(2)">
+    牛龙组
+</button>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(3)">
+    龙组3
+</button>
+
+
+<!-- 
+<button style="font-size:40px;width:400px; height:100px;" onclick="login(302691822)">
+    大号登录
+</button> -->
+
+<br>
+<br>
+<br>
+<br>
+
 
 <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
 
@@ -64,6 +198,7 @@
     pullAnimal = function(){
         $.get("https://cat.rosettawe.com/pullAnimal",function (data) {
             console.log("pullAnimal:", data)
+            alert(data)
             window.status = "1";
         });
     }
@@ -71,6 +206,7 @@
     familySign = function(){
         $.get("https://cat.rosettawe.com/familySign",function (data) {
             console.log("familySign:", data)
+            alert(data)
             window.status = "1";
         });
     }
@@ -78,20 +214,42 @@
     getSignPrize = function(){
         $.get("https://cat.rosettawe.com/getSignPrize",function (data) {
             console.log("getSignPrize:", data)
+            alert(data)
             window.status = "1";
         });
     }
 
     getBox = function(){
 
-        var boxUID=document.getElementById("boxUID");
-        var boxQuality=document.getElementById("boxQuality");
-        console.log("boxUID:", boxUID.value);
-        console.log("boxQuality:", boxQuality.value);
+        var boxUID = $("#boxUidsSelect option:selected").val();
 
-        $.get("https://cat.rosettawe.com/diamond?id="+boxUID.value+"&quality="+boxQuality.value,function (data) {
+        var boxQuality = $("#BCSelect2 option:selected").val();
+
+        var boxAmount=document.getElementById("boxAmount");
+        console.log("boxUID:", boxUID);
+        console.log("boxQuality:", boxQuality);
+        console.log("boxAmount:", boxAmount.value);
+
+        $.get("https://cat.rosettawe.com/diamond?id="+boxUID+"&quality="+boxQuality+"&amount="+boxAmount.value,function (data) {
             console.log("getSignPrize:", data)
+            alert(data)
             window.status = "1";
+        });
+    }
+
+    hitCandy = function(){
+        var boxUID = $("#Oper_Candy option:selected").val();
+        var boxQuality = $("#BCSelect option:selected").val();
+
+        var boxAmount=document.getElementById("candyAmount");
+        console.log("candyUID:", boxUID);
+        console.log("candyQuality:", boxQuality);
+        console.log("candyAmount:", boxAmount.value);
+
+        $.get("https://cat.rosettawe.com/hitCandy?id="+boxUID+"&quality="+boxQuality+"&amount="+boxAmount.value,function (data) {
+        console.log("getSignPrize:", data)
+        alert(data)
+        window.status = "1";
         });
     }
 
@@ -99,17 +257,151 @@
     loginByWechat = function(){
         $.get("https://cat.rosettawe.com/loginByQrcode?id=1",function (data) {
             console.log("loginByWechat:", data)
+            // alert(data)
             window.status = "1";
+            window.open(data);
         });
     }
 
     loginByQQ = function(){
         $.get("https://cat.rosettawe.com/loginByQrcode?id=2",function (data) {
             console.log("loginByWechat:", data)
+            alert(data)
             window.status = "1";
         });
     }
 
+
+    startPullAnimal = function(){
+        $.get("https://cat.rosettawe.com/setConfig?confKey=pullAnimalGoStatus&confValue=1",function (data) {
+            console.log("loginByWechat:", data)
+            alert(data)
+            window.status = "1";
+        });
+    }
+
+    stopPullAnimal = function(){
+        $.get("https://cat.rosettawe.com/setConfig?confKey=pullAnimalGoStatus&confValue=0",function (data) {
+            console.log("loginByWechat:", data)
+            alert(data)
+            window.status = "1";
+        });
+    }
+
+    checkToken = function(){
+        $.get("https://cat.rosettawe.com/setConfig?checkToken",function (data) {
+            console.log("checkToken:", data)
+            alert(data)
+            window.status = "1";
+        });
+    }
+
+    attackBoss = function(){
+        $.get("https://cat.rosettawe.com/attackBoss",function (data) {
+            console.log("checkToken:", data)
+            alert(data)
+            window.status = "1";
+        });
+    }
+
+    attackBoss1 = function(){
+        $.get("https://cat.rosettawe.com/attackBoss?id=309392050",function (data) {
+            console.log("checkToken:", data)
+            alert(data)
+            window.status = "1";
+        });
+    }
+
+
+    sonAttackBoss = function(){
+        $.get("https://cat.rosettawe.com/sonAttackBoss",function (data) {
+            console.log("checkToken:", data)
+            alert(data)
+            window.status = "1";
+        });
+    }
+
+
+    oneSonAttackBoss = function(id){
+        $.get("https://cat.rosettawe.com/oneSonAttackBoss?id="+id,function (data) {
+            console.log("checkToken:", data)
+            alert(data)
+            window.status = "1";
+        });
+    }
+
+
+    login = function(id){
+        if (id == "") {
+            var str = $("#Oper_Type option:selected").val();
+            console.log("login uid is ", str)
+            id = str
+        }
+        // window.location.href = "https://cat.rosettawe.com/login?id="+id;
+        window.open("https://cat.rosettawe.com/login?id="+id)
+    }
+
+    getFreeBossCannon = function(id){
+        var id = $("#Oper_Boss option:selected").val();
+        $.get("https://cat.rosettawe.com/getFreeBossCannon?id="+id,function (data) {
+            alert(data)
+            window.status = "1";
+        });
+    }
+
+    // 
+
+
+
+    getAllTokens = function(){
+        $.get("https://cat.rosettawe.com/getAllTokens",function (data) {
+            var jsarr=JSON.parse( data );
+            for(var i=0;i<jsarr.length;i++){  
+                var tOption= document.createElement("Option");
+                tOption.text = jsarr[i]["name"];
+                tOption.selected = false;
+                tOption.value = jsarr[i]["id"];
+                document.getElementById("Oper_Type").options.add(tOption);
+                }
+
+                for(var i=0;i<jsarr.length;i++){  
+                var tOption1= document.createElement("Option");
+                tOption1.text = jsarr[i]["name"];
+                tOption1.selected = false;
+                tOption1.value = jsarr[i]["id"];
+                document.getElementById("boxUidsSelect").options.add(tOption1);
+                }
+
+
+                for(var i=0;i<jsarr.length;i++){  
+                var tOption= document.createElement("Option");
+                tOption.text = jsarr[i]["name"];
+                tOption.selected = false;
+                tOption.value = jsarr[i]["id"];
+                document.getElementById("Oper_Candy").options.add(tOption);
+                }
+
+                for(var i=0;i<jsarr.length;i++){  
+                var tOption= document.createElement("Option");
+                tOption.text = jsarr[i]["name"];
+                tOption.selected = false;
+                tOption.value = jsarr[i]["id"];
+                document.getElementById("Oper_Boss").options.add(tOption);
+                }
+
+            window.status = "1";
+        });
+    }
+
+
+
+    // 
+
+
+    // 
+
+
+    // 
 
     // 
 
@@ -186,6 +478,7 @@
             window.status = "1";
         });
     }
+    getAllTokens();
 
 </script>
 

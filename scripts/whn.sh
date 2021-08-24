@@ -1,15 +1,16 @@
 #!/bin/bash
 
 
-xiaohao1=301807377
-xiaohao2=309433834
-xiaohao3=326941142
-xiaohao4=406378614
-xiaohao5=690708340
-xiaohao6=693419844
+xiaohao1=697068758
+xiaohao2=693419844
+xiaohao3=694068717
+xiaohao4=690708340
+xiaohao5=309433834
+xiaohao6=301807377
 
 
-for bossID in 693419844_1629360416;
+
+for bossID in 302691822_1629699295;
 do
 
 clear
@@ -75,5 +76,3 @@ echo "6 end.\n"
 
 
 done
-
-

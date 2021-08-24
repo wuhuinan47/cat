@@ -20,7 +20,7 @@ function rand(){
 
 
 
-bossID=302691822_1629359709
+bossID=302691822_1629462202
 
 
 now=$(getNow)
