@@ -18,6 +18,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/wuhuinan47/cat/runner"
+	wechatapi "github.com/wuhuinan47/cat/wechatAPI"
 )
 
 var Pool *sql.DB
@@ -61,6 +62,10 @@ func main() {
 	http.HandleFunc("/attackBoss", AttackBossH)
 	http.HandleFunc("/sonAttackBoss", SonAttackBossH)
 	http.HandleFunc("/oneSonAttackBoss", OneSonAttackBossH)
+	http.HandleFunc("/giftPiece", GiftPieceH)
+	http.HandleFunc("/draw", DrawH)
+	http.HandleFunc("/throwDice", ThrowDiceH)
+
 	//OneSonAttackBossH
 
 	//
@@ -72,6 +77,9 @@ func main() {
 	http.HandleFunc("/checkToken", CheckTokenH)
 
 	//
+
+	// wechatAPI
+	http.HandleFunc("/wechatAPI/sendMsg", wechatapi.SendMsgH)
 
 	http.HandleFunc("/index.html", IndexH)
 	http.HandleFunc("/", IndexH)
@@ -181,6 +189,87 @@ func AttackBossH(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, "SUCCESS")
 	return
 
+}
+
+func ThrowDiceH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	amount := req.URL.Query().Get("amount")
+	intAmount, _ := strconv.Atoi(amount)
+	SQL := "select token from tokens where id = ?"
+
+	var token string
+	Pool.QueryRow(SQL, id).Scan(&token)
+
+	serverURL := getServerURL()
+
+	zoneToken := getZoneToken(serverURL, token)
+	log.Println("start throwDice")
+
+	for i := 1; i <= intAmount; i++ {
+		throwDice(serverURL, zoneToken)
+
+		if i == intAmount {
+			break
+		}
+		time.Sleep(time.Second * 2)
+	}
+	log.Println("end throwDice")
+
+	io.WriteString(w, "SUCCESS")
+	return
+}
+
+func DrawH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	drawMulti := req.URL.Query().Get("drawMulti")
+	amount := req.URL.Query().Get("amount")
+	intAmount, _ := strconv.Atoi(amount)
+
+	SQL := "select token from tokens where id = ?"
+
+	var token string
+	Pool.QueryRow(SQL, id).Scan(&token)
+
+	serverURL := getServerURL()
+
+	zoneToken := getZoneToken(serverURL, token)
+
+	for i := 1; i <= intAmount; i++ {
+		draw(serverURL, zoneToken, drawMulti)
+		time.Sleep(time.Second * 2)
+	}
+	io.WriteString(w, "SUCCESS")
+
+	return
+
+}
+
+func GiftPieceH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	fromUid := req.URL.Query().Get("fromUid")
+	toUid := req.URL.Query().Get("toUid")
+	amount := req.URL.Query().Get("amount")
+
+	SQL := "select token from tokens where id = ?"
+
+	var token string
+	Pool.QueryRow(SQL, fromUid).Scan(&token)
+
+	serverURL := getServerURL()
+
+	zoneToken := getZoneToken(serverURL, token)
+
+	intAmount, _ := strconv.Atoi(amount)
+
+	log.Println("amount:", amount)
+	log.Println("intAmount:", intAmount)
+	for i := 1; i <= intAmount; i++ {
+		giftPiece(serverURL, zoneToken, id, toUid)
+		time.Sleep(time.Second * 1)
+	}
+
+	io.WriteString(w, "SUCCESS")
+	return
 }
 
 func OneSonAttackBossH(w http.ResponseWriter, req *http.Request) {
@@ -1095,11 +1184,22 @@ func attackBossByAdmin(serverURL, zoneToken, bossID string) {
 	}
 }
 
+// https://s147.11h5.com:3148/123_207_183_233/3147/
+
+//
+func getAttackEnemyList(serverURL, zoneToken string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	url := fmt.Sprintf("%v/game?cmd=getAttackEnemyList&token=%v&now=%v", serverURL, zoneToken, now)
+	httpGetReturnJson(url)
+	return
+}
+
 // 攻击小岛
 func attackIsland(serverURL, zoneToken string, targetUid, building interface{}) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-	url := fmt.Sprintf("%v/game?cmd=attack&token=%v&type=1&targetUid=%v&building=%v&now=%v", serverURL, zoneToken, targetUid, building, now)
-	httpGetReturnJson(url)
+	url := fmt.Sprintf("%v/game?cmd=attack&token=%v&type=0&targetUid=%v&building=%v&now=%v", serverURL, zoneToken, targetUid, building, now)
+	formData := httpGetReturnJson(url)
+	log.Printf("攻击小岛 目标uid:%v, 建筑:%v, 增加金币:%v", targetUid, building, formData["addGold"])
 	return
 }
 
@@ -1301,52 +1401,48 @@ func getFreeBossCannon(serverURL, zoneToken string) {
 	httpGetReturnJson(url)
 }
 
+// 赠送拼图
+func giftPiece(serverURL, zoneToken, id, targetUid string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	url := fmt.Sprintf("%v/game?cmd=giftPiece&token=%v&id=%v&targetUid=%v&now=%v", serverURL, zoneToken, id, targetUid, now)
+	httpGetReturnJson(url)
+}
+
+// 扔骰子
+func throwDice(serverURL, zoneToken string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	url := fmt.Sprintf("%v/game?cmd=throwDice&token=%v&now=%v", serverURL, zoneToken, now)
+	httpGetReturnJson(url)
+}
+
+// https://s147.11h5.com:3147/118_89_183_87/3147/
+
 //
 
-func draw(serverURL, zoneToken string) {
+//
+
+func draw(serverURL, zoneToken string, drawMulti interface{}) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-	url := fmt.Sprintf("%v/game?cmd=draw&token=%v&drawMulti=1&now=%v", serverURL, zoneToken, now)
+	url := fmt.Sprintf("%v/game?cmd=draw&token=%v&drawMulti=%v&now=%v", serverURL, zoneToken, drawMulti, now)
 	formData := httpGetReturnJson(url)
 
-	id, ok := formData["id"]
+	id, ok := formData["id"].(string)
 
 	if !ok {
+		log.Println("没有能量可摇！")
 		return
 	}
 
-	if formData["getRichmanDice"].(float64) == 1 {
-		shareAPI(serverURL, zoneToken)
-		getShareDrawDice(serverURL, zoneToken)
-		log.Println("【摇一摇】分享获取乐园骰子")
-	}
-
-	if formData["getSnowball"].(float64) == 1 {
-
-		log.Println("【摇一摇】分享获取糖果炮弹")
-	}
-
 	if id == "10" {
-		stealData, ok := formData["stealData"].([]interface{})
-		if !ok {
-			log.Println("err formData:", formData)
-			log.Println("【摇一摇】偷取出错 停止程序")
-			return
-		}
-
-		log.Println("stealData:", stealData)
-
+		// stealData, _ := formData["stealData"].([]interface{})
+		// log.Println("stealData:", stealData)
+		time.Sleep(time.Second * 1)
 		stealResult := steal(serverURL, zoneToken, 1)
-		log.Println("stealResult:", stealResult)
-		log.Println("【摇一摇】偷取")
+		log.Println("【摇一摇】偷取 结果:", stealResult)
 	} else if id == "3" {
-		attackData, ok := formData["attackData"].(map[string]interface{})
+		attackData, _ := formData["attackData"].(map[string]interface{})
 
-		if !ok {
-			log.Println("err formData:", formData)
-			log.Println("【摇一摇】攻击出错 停止程序")
-			return
-		}
-		island := formData["islang"].(map[string]interface{})
+		island, _ := attackData["island"].(map[string]interface{})
 
 		var building string
 
@@ -1361,10 +1457,33 @@ func draw(serverURL, zoneToken string) {
 		} else {
 			building = "5"
 		}
-		attackUid := attackData["uid"]
+		attackUid := int(attackData["uid"].(float64))
+		getAttackEnemyList(serverURL, zoneToken)
+		time.Sleep(time.Second * 1)
 		attackIsland(serverURL, zoneToken, attackUid, building)
 		log.Println("【摇一摇】攻击")
 	}
+
+	if formData["getRichmanDice"].(float64) == 1 {
+		time.Sleep(time.Second * 1)
+		shareAPI(serverURL, zoneToken)
+		getShareDrawDice(serverURL, zoneToken)
+		log.Println("【摇一摇】分享获取乐园骰子")
+	}
+
+	if formData["getSnowball"].(float64) == 1 {
+		log.Println("【摇一摇】获取糖果炮弹")
+	}
+
+	if formData["shareMulti"].(float64) != 0 {
+		time.Sleep(time.Second * 1)
+		shareAPI(serverURL, zoneToken)
+		getDayShareGold(serverURL, zoneToken)
+		log.Println("【摇一摇】分享获取金币 倍数:", formData["shareMulti"])
+	}
+
+	gold, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", formData["gold"].(float64)/1000000), 64)
+	log.Printf("转盘行为:%v, 当前剩余能量:%v, 当前金币:%vM, 当前糖果炮弹:%v", id, formData["energy"], gold, formData["snowball"])
 }
 
 // 【摇一摇】--分享获取金币
@@ -1399,7 +1518,8 @@ func steal(serverURL, zoneToken string, idx interface{}) bool {
 func getShareDrawDice(serverURL, zoneToken string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := fmt.Sprintf("%v/game?cmd=getShareDrawDice&token=%v&share=1&itemId=75&now=%v", serverURL, zoneToken, now)
-	httpGetReturnJson(url)
+	formData := httpGetReturnJson(url)
+	log.Println("当前骰子数量:", formData["richmanDice"])
 }
 
 // https://s147.11h5.com:3147/123_206_192_93/3148/

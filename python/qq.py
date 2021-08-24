@@ -66,11 +66,6 @@ def updateToken(userID, nickname, token):
         return 1
 
 class Cat():
-    """
-    登陆B站, 处理验证码
-    电脑的缩放比例需要为100%, 否则验证码图片的获取会出现问题
-    """
-
     def __init__(self):
         """
         初始化
@@ -80,9 +75,8 @@ class Cat():
         options.add_experimental_option('excludeSwitches',
                                         ['enable-automation'])
         self.browser = webdriver.Chrome(options=options)
-        self.browser.get("https://graph.qq.com/oauth2.0/show?which=Login&display=pc&response_type=token&client_id=101206450&state=&redirect_uri=http%3A%2F%2Flogin.vutimes.com%2Faccount%2Fpage%2FqqAuthCallback.html%3FswitchVersion%3D1%26pf%3Dqq%26ssl%3D1%26back_url%3Dhttps%253A%252F%252Fplay.h5avu.com%252Fgame%252F%253Fgameid%253D147")
-        
-
+        # self.browser.get("https://graph.qq.com/oauth2.0/show?which=Login&display=pc&response_type=token&client_id=101206450&state=&redirect_uri=http%3A%2F%2Flogin.vutimes.com%2Faccount%2Fpage%2FqqAuthCallback.html%3FswitchVersion%3D1%26pf%3Dqq%26ssl%3D1%26back_url%3Dhttps%253A%252F%252Fplay.h5avu.com%252Fgame%252F%253Fgameid%253D147")
+        self.browser.get("https://graph.qq.com/oauth2.0/show?which=Login&display=pc&response_type=token&client_id=101206450&state=&redirect_uri=http%3A%2F%2Flogin.vutimes.com%2Faccount%2Fpage%2FqqAuthCallback.html%3FswitchVersion%3D1%26pf%3Dqq%26ssl%3D1%26back_url%3Dhttps%253A%252F%252Fplay.h5avu.com%252Fgame%252F%253Fgameid%253D147%2526fuid%253D302691822%2526statid%253D1785%2526share_from%253Dmsg%2526cp_from%253Dmsg%2526cp_shareId%253D55")
 
 
         # iframe=self.browser.find_element_by_css_selector("#ptlogin_iframe")

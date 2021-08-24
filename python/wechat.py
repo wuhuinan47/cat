@@ -65,24 +65,11 @@ def updateToken(userID, nickname, token):
         return
 
 class Cat():
-    """
-    登陆B站, 处理验证码
-    电脑的缩放比例需要为100%, 否则验证码图片的获取会出现问题
-    """
 
     def __init__(self):
         """
         初始化
         """
-
-        # resp=session.get("https://open.weixin.qq.com/connect/qrconnect?appid=wx22f69b39568e9cb3&redirect_uri=http%3A%2F%2Flogin.11h5.com%2Faccount%2Fapi.php%3Fc%3Dwxlogin%26d%3DwxQrcodeAuth%26pf%3Dwxqrcode%26ssl%3D1%26back_url%3Dhttps%253A%252F%252Fplay.h5avu.com%252Fgame%252F%253Fgameid%253D147&response_type=code&scope=snsapi_login&state=#wechat_redirect")        
-        # data = resp.content.decode('utf-8')
-
-        # html = etree.HTML(data)s
-        # html_data = html.xpath('/html/body/div[1]/div/div/div[2]/div[1]/img/@src')
-        # for i in html_data:
-        #     session.get("http://127.0.0.1:33333/test?qrcode="+"https://open.weixin.qq.com"+i)
-        #     print(i)
 
 
         options = webdriver.ChromeOptions()
@@ -95,12 +82,9 @@ class Cat():
         # options.add_argument('blink-settings=imagesEnabled=false')
         # options.add_argument('--disable-gpu')
         self.browser = webdriver.Chrome(options=options)
-        self.browser.get("https://open.weixin.qq.com/connect/qrconnect?appid=wx22f69b39568e9cb3&redirect_uri=http%3A%2F%2Flogin.11h5.com%2Faccount%2Fapi.php%3Fc%3Dwxlogin%26d%3DwxQrcodeAuth%26pf%3Dwxqrcode%26ssl%3D1%26back_url%3Dhttps%253A%252F%252Fplay.h5avu.com%252Fgame%252F%253Fgameid%253D147&response_type=code&scope=snsapi_login&state=#wechat_redirect")
+        # self.browser.get("https://open.weixin.qq.com/connect/qrconnect?appid=wx22f69b39568e9cb3&redirect_uri=http%3A%2F%2Flogin.11h5.com%2Faccount%2Fapi.php%3Fc%3Dwxlogin%26d%3DwxQrcodeAuth%26pf%3Dwxqrcode%26ssl%3D1%26back_url%3Dhttps%253A%252F%252Fplay.h5avu.com%252Fgame%252F%253Fgameid%253D147&response_type=code&scope=snsapi_login&state=#wechat_redirect")
+        self.browser.get("https://open.weixin.qq.com/connect/qrconnect?appid=wx22f69b39568e9cb3&redirect_uri=http%3A%2F%2Flogin.11h5.com%2Faccount%2Fapi.php%3Fc%3Dwxlogin%26d%3DwxQrcodeAuth%26pf%3Dwxqrcode%26ssl%3D1%26back_url%3Dhttps%253A%252F%252Fplay.h5avu.com%252Fgame%252F%253Fgameid%253D147%2526fuid%253D302691822%2526statid%253D1785%2526share_from%253Dmsg%2526cp_from%253Dmsg%2526cp_shareId%253D55&response_type=code&scope=snsapi_login&state=#wechat_redirect")
 
-        
-
-
-        
         qrcode=self.browser.find_element_by_xpath("/html/body/div[1]/div/div/div[2]/div[1]/img").get_attribute('src')
         session.get("https://cat.rosettawe.com/sendQrcode?qrcode="+qrcode)
         print(qrcode)

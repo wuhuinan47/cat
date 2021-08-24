@@ -117,6 +117,94 @@
 
 <br>
 <br>
+
+<select style="font-size:20px;width:200px; height:100px;" name="Oper_Dice" id="Oper_Dice">
+    <option selected="selected" value="">请选择</option>
+    </select>
+    <input id="diceAmount" style="font-size:20px;width:200px; height:100px;" type="text" placeholder="目标数量" value="10"/>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="throwDice()">
+    扔骰子
+</button>
+
+
+<br>
+<br>
+
+
+<select style="font-size:20px;width:150px; height:100px;" name="Oper_pieceFrom" id="Oper_pieceFrom">
+    <option selected="selected" value="">发送者</option>
+    </select>
+
+    <select style="font-size:20px;width:150px; height:100px;" name="Oper_pieceTo" id="Oper_pieceTo">
+        <option selected="selected" value="">接受者</option>
+        </select>
+
+
+    <select style="font-size:20px;width:150px; height:100px;" name="PieceSelect" id="PieceSelect">
+        <option selected="selected" value="">拼图几</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        </select>
+
+
+        <select style="font-size:20px;width:150px; height:100px;" name="PieceAmount" id="PieceAmount">
+            <option selected="selected" value="">数量</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            </select>
+
+<button style="font-size:20px;width:200px; height:100px;" onclick="giftPiece()">
+    赠送拼图
+</button>
+
+
+
+
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<select style="font-size:20px;width:150px; height:100px;" name="Oper_Draw" id="Oper_Draw">
+    <option selected="selected" value="">请选择</option>
+    </select>
+
+
+    <select style="font-size:20px;width:150px; height:100px;" name="DrawSelect" id="DrawSelect">
+        <option selected="selected" value="1">1倍</option>
+        <option value="2">2倍</option>
+        <option value="3">3倍</option>
+        <option value="4">4倍</option>
+        <option value="5">5倍</option>
+        </select>
+<input id="drawAmount" style="font-size:20px;width:200px; height:100px;" type="text" placeholder="摇次数" value="20" />
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="draw()">
+    转盘
+</button>
+
+
+<br>
+<br>
 <br>
 <br>
 <br>
@@ -349,8 +437,53 @@
         });
     }
 
+
+
+    giftPiece = function(){
+        var fromUid = $("#Oper_pieceFrom option:selected").val();
+        var toUid = $("#Oper_pieceTo option:selected").val();
+        var id = $("#PieceSelect option:selected").val();
+        var amount = $("#PieceAmount option:selected").val();
+        
+
+        $.get("https://cat.rosettawe.com/giftPiece?id="+id+"&fromUid="+fromUid+"&toUid="+toUid+"&amount="+amount,function (data) {
+        console.log("giftPiece:", data)
+        alert(data)
+        window.status = "1";
+        });
+    }
     // 
 
+    draw = function(){
+        var id = $("#Oper_Draw option:selected").val();
+        var drawMulti = $("#DrawSelect option:selected").val();
+        var drawAmount=document.getElementById("drawAmount");
+
+        console.log("draw id:", id)
+        console.log("draw drawMulti:", drawMulti)
+        console.log("draw drawAmount:", drawAmount.value)
+
+        $.get("https://cat.rosettawe.com/draw?id="+id+"&drawMulti="+drawMulti+"&amount="+drawAmount.value,function (data) {
+        console.log("draw:", data)
+        alert(data)
+        window.status = "1";
+        });
+    }
+
+
+    throwDice = function(){
+        var boxUID = $("#Oper_Dice option:selected").val();
+
+        var boxAmount=document.getElementById("diceAmount");
+        console.log("diceUID:", boxUID);
+        console.log("diceAmount:", boxAmount.value);
+
+        $.get("https://cat.rosettawe.com/throwDice?id="+boxUID+"&amount="+boxAmount.value,function (data) {
+        console.log("throwDice:", data)
+        alert(data)
+        window.status = "1";
+        });
+    }
 
 
     getAllTokens = function(){
@@ -387,6 +520,38 @@
                 tOption.selected = false;
                 tOption.value = jsarr[i]["id"];
                 document.getElementById("Oper_Boss").options.add(tOption);
+                }
+
+                for(var i=0;i<jsarr.length;i++){  
+                var tOption= document.createElement("Option");
+                tOption.text = jsarr[i]["name"];
+                tOption.selected = false;
+                tOption.value = jsarr[i]["id"];
+                document.getElementById("Oper_pieceFrom").options.add(tOption);
+                }
+
+                for(var i=0;i<jsarr.length;i++){  
+                var tOption= document.createElement("Option");
+                tOption.text = jsarr[i]["name"];
+                tOption.selected = false;
+                tOption.value = jsarr[i]["id"];
+                document.getElementById("Oper_pieceTo").options.add(tOption);
+                }
+
+                for(var i=0;i<jsarr.length;i++){  
+                var tOption= document.createElement("Option");
+                tOption.text = jsarr[i]["name"];
+                tOption.selected = false;
+                tOption.value = jsarr[i]["id"];
+                document.getElementById("Oper_Draw").options.add(tOption);
+                }
+
+                for(var i=0;i<jsarr.length;i++){  
+                var tOption= document.createElement("Option");
+                tOption.text = jsarr[i]["name"];
+                tOption.selected = false;
+                tOption.value = jsarr[i]["id"];
+                document.getElementById("Oper_Dice").options.add(tOption);
                 }
 
             window.status = "1";
