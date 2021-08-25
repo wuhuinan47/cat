@@ -11,7 +11,7 @@
 
 
     <select style="font-size:40px;width:400px; height:100px;" name="Oper_Type" id="Oper_Type">
-        <option selected="selected" value="">请选择</option>
+        <option selected="selected" value="302691822">🐮🐮🌱besos</option>
         </select>
     
         <button style="font-size:40px;width:400px; height:100px;" onclick="login('')">
@@ -41,16 +41,16 @@
 <br>
 <br>
 
-<select style="font-size:20px;width:150px; height:100px;" name="boxUidsSelect" id="boxUidsSelect">
+<select style="font-size:40px;width:150px; height:100px;" name="boxUidsSelect" id="boxUidsSelect">
     <option selected="selected" value="">请选择</option>
     </select>
-    <select style="font-size:20px;width:150px; height:100px;" name="BCSelect2" id="BCSelect2">
+    <select style="font-size:40px;width:150px; height:100px;" name="BCSelect2" id="BCSelect2">
         <option selected="selected" value="">请选择</option>
         <option value="1">普通</option>
         <option value="2">稀有</option>
         <option value="3">传奇</option>
         </select>
-<input id="boxAmount" style="font-size:20px;width:200px; height:100px;" type="text" placeholder="目标数量" />
+<input id="boxAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="目标数量" />
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="getBox()">
     抓宝箱
@@ -59,18 +59,18 @@
 <br>
 <br>
 
-<select style="font-size:20px;width:150px; height:100px;" name="Oper_Candy" id="Oper_Candy">
+<select style="font-size:40px;width:150px; height:100px;" name="Oper_Candy" id="Oper_Candy">
     <option selected="selected" value="">请选择</option>
     </select>
 
 
-    <select style="font-size:20px;width:150px; height:100px;" name="BCSelect" id="BCSelect">
+    <select style="font-size:40px;width:150px; height:100px;" name="BCSelect" id="BCSelect">
         <option selected="selected" value="">请选择</option>
         <option value="1">普通</option>
         <option value="2">稀有</option>
         <option value="3">传奇</option>
         </select>
-<input id="candyAmount" style="font-size:20px;width:200px; height:100px;" type="text" placeholder="目标数量" />
+<input id="candyAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="目标数量" />
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="hitCandy()">
     打糖果
@@ -118,30 +118,54 @@
 <br>
 <br>
 
-<select style="font-size:20px;width:200px; height:100px;" name="Oper_Dice" id="Oper_Dice">
+<select style="font-size:40px;width:200px; height:100px;" name="Oper_Dice" id="Oper_Dice">
     <option selected="selected" value="">请选择</option>
     </select>
-    <input id="diceAmount" style="font-size:20px;width:200px; height:100px;" type="text" placeholder="目标数量" value="10"/>
+    <input id="diceAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="目标数量" value="10"/>
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="throwDice()">
     扔骰子
 </button>
 
 
+
+<br>
+<br>
+
+<select style="font-size:40px;width:200px; height:100px;" name="Oper_Dice" id="Oper_Mail">
+    <option selected="selected" value="">请选择</option>
+    </select>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="getMailPrize()">
+    领取邮件奖励
+</button>
+
+
+<br>
+<br>
+
+<select style="font-size:40px;width:200px; height:100px;" name="Oper_BossPrize" id="Oper_BossPrize">
+    <option selected="selected" value="">一键领取</option>
+    </select>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="getBossPrize()">
+    领取龙奖励
+</button>
+
 <br>
 <br>
 
 
-<select style="font-size:20px;width:150px; height:100px;" name="Oper_pieceFrom" id="Oper_pieceFrom">
+<select style="font-size:40px;width:150px; height:100px;" name="Oper_pieceFrom" id="Oper_pieceFrom">
     <option selected="selected" value="">发送者</option>
     </select>
 
-    <select style="font-size:20px;width:150px; height:100px;" name="Oper_pieceTo" id="Oper_pieceTo">
+    <select style="font-size:40px;width:150px; height:100px;" name="Oper_pieceTo" id="Oper_pieceTo">
         <option selected="selected" value="">接受者</option>
         </select>
 
 
-    <select style="font-size:20px;width:150px; height:100px;" name="PieceSelect" id="PieceSelect">
+    <select style="font-size:40px;width:150px; height:100px;" name="PieceSelect" id="PieceSelect">
         <option selected="selected" value="">拼图几</option>
         <option value="1">1</option>
         <option value="2">2</option>
@@ -155,7 +179,7 @@
         </select>
 
 
-        <select style="font-size:20px;width:150px; height:100px;" name="PieceAmount" id="PieceAmount">
+        <select style="font-size:40px;width:150px; height:100px;" name="PieceAmount" id="PieceAmount">
             <option selected="selected" value="">数量</option>
             <option value="1">1</option>
             <option value="2">2</option>
@@ -169,7 +193,7 @@
             <option value="10">10</option>
             </select>
 
-<button style="font-size:20px;width:200px; height:100px;" onclick="giftPiece()">
+<button style="font-size:40px;width:200px; height:100px;" onclick="giftPiece()">
     赠送拼图
 </button>
 
@@ -179,29 +203,33 @@
 
 <br>
 <br>
-<br>
-<br>
-<br>
-<br>
 
-<select style="font-size:20px;width:150px; height:100px;" name="Oper_Draw" id="Oper_Draw">
+<select style="font-size:40px;width:150px; height:100px;" name="Oper_Draw" id="Oper_Draw">
     <option selected="selected" value="">请选择</option>
     </select>
 
 
-    <select style="font-size:20px;width:150px; height:100px;" name="DrawSelect" id="DrawSelect">
+    <select style="font-size:40px;width:150px; height:100px;" name="DrawSelect" id="DrawSelect">
         <option selected="selected" value="1">1倍</option>
         <option value="2">2倍</option>
         <option value="3">3倍</option>
         <option value="4">4倍</option>
         <option value="5">5倍</option>
         </select>
-<input id="drawAmount" style="font-size:20px;width:200px; height:100px;" type="text" placeholder="摇次数" value="20" />
+<input id="drawAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="摇次数" value="20" />
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="draw()">
     转盘
 </button>
 
+
+
+<br>
+<br>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="getServerLogs()">
+    查看服务器日志
+</button>
 
 <br>
 <br>
@@ -411,6 +439,7 @@
 
 
     oneSonAttackBoss = function(id){
+        alert("是否继续")
         $.get("https://cat.rosettawe.com/oneSonAttackBoss?id="+id,function (data) {
             console.log("checkToken:", data)
             alert(data)
@@ -486,6 +515,32 @@
     }
 
 
+    getMailPrize = function(){
+        var boxUID = $("#Oper_Mail option:selected").val();
+        $.get("https://cat.rosettawe.com/getMailPrize?id="+boxUID, function (data) {
+        console.log("getMailPrize:", data)
+        alert(data)
+        window.status = "1";
+        });
+    }
+
+    getBossPrize = function(){
+        alert("是否继续")
+
+        var boxUID = $("#Oper_BossPrize option:selected").val();
+        $.get("https://cat.rosettawe.com/getBossPrize?id="+boxUID, function (data) {
+        console.log("getMailPrize:", data)
+        alert(data)
+        window.status = "1";
+        });
+    }
+
+
+    getServerLogs = function(){
+        window.open("https://cat.rosettawe.com/getServerLogs");
+    }
+
+
     getAllTokens = function(){
         $.get("https://cat.rosettawe.com/getAllTokens",function (data) {
             var jsarr=JSON.parse( data );
@@ -554,6 +609,23 @@
                 document.getElementById("Oper_Dice").options.add(tOption);
                 }
 
+                for(var i=0;i<jsarr.length;i++){  
+                var tOption= document.createElement("Option");
+                tOption.text = jsarr[i]["name"];
+                tOption.selected = false;
+                tOption.value = jsarr[i]["id"];
+                document.getElementById("Oper_Mail").options.add(tOption);
+                }
+
+                for(var i=0;i<jsarr.length;i++){  
+                var tOption= document.createElement("Option");
+                tOption.text = jsarr[i]["name"];
+                tOption.selected = false;
+                tOption.value = jsarr[i]["id"];
+                document.getElementById("Oper_BossPrize").options.add(tOption);
+                }
+
+                
             window.status = "1";
         });
     }
