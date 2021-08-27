@@ -86,7 +86,37 @@
     蜜打龙
 </button>
 
+<br>
+<br>
 
+<!-- singleBossAttack -->
+
+
+<select style="font-size:40px;width:200px; height:100px;" name="SingleBossSelect" id="SingleBossSelect">
+    <option selected="selected" value="1">蜜龙组</option>
+    <option value="2">牛龙组</option>
+    <option value="3">龙组3</option>
+    </select>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="singleBossAttack()">
+    把龙打到800血
+</button>
+
+
+
+
+<br>
+<br>
+<select style="font-size:40px;width:200px; height:100px;" name="PiecePrizeSelect" id="PiecePrizeSelect">
+    <option selected="selected" value="">请选择</option>
+    </select>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="setPiece()">
+    领取拼图奖励
+</button>
+
+<br>
+<br>
 <button style="font-size:40px;width:400px; height:100px;" onclick="checkToken()">
     检测账号状态
 </button>
@@ -229,6 +259,10 @@
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="getServerLogs()">
     查看服务器日志
+</button>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="delServerLogs()">
+    删除服务器日志
 </button>
 
 <br>
@@ -413,6 +447,7 @@
     }
 
     attackBoss = function(){
+        alert("是否继续")
         $.get("https://cat.rosettawe.com/attackBoss",function (data) {
             console.log("checkToken:", data)
             alert(data)
@@ -421,6 +456,7 @@
     }
 
     attackBoss1 = function(){
+        alert("是否继续")
         $.get("https://cat.rosettawe.com/attackBoss?id=309392050",function (data) {
             console.log("checkToken:", data)
             alert(data)
@@ -515,6 +551,24 @@
     }
 
 
+    singleBossAttack = function(){
+        var boxUID = $("#SingleBossSelect option:selected").val();
+        $.get("https://cat.rosettawe.com/singleBossAttack?id="+boxUID, function (data) {
+        console.log("singleBossAttack:", data)
+        alert(data)
+        window.status = "1";
+        });
+    }
+
+    setPiece = function(){
+        var boxUID = $("#PiecePrizeSelect option:selected").val();
+        $.get("https://cat.rosettawe.com/setPiece?id="+boxUID, function (data) {
+        console.log("setPiece:", data)
+        alert(data)
+        window.status = "1";
+        });
+    }
+
     getMailPrize = function(){
         var boxUID = $("#Oper_Mail option:selected").val();
         $.get("https://cat.rosettawe.com/getMailPrize?id="+boxUID, function (data) {
@@ -540,6 +594,13 @@
         window.open("https://cat.rosettawe.com/getServerLogs");
     }
 
+    delServerLogs = function(){
+        $.get("https://cat.rosettawe.com/delServerLogs", function (data) {
+        console.log("delServerLogs:", data)
+        alert(data)
+        window.status = "1";
+        });
+    }
 
     getAllTokens = function(){
         $.get("https://cat.rosettawe.com/getAllTokens",function (data) {
@@ -625,6 +686,16 @@
                 document.getElementById("Oper_BossPrize").options.add(tOption);
                 }
 
+                for(var i=0;i<jsarr.length;i++){  
+                var tOption= document.createElement("Option");
+                tOption.text = jsarr[i]["name"];
+                tOption.selected = false;
+                tOption.value = jsarr[i]["id"];
+                document.getElementById("PiecePrizeSelect").options.add(tOption);
+                }
+
+
+                
                 
             window.status = "1";
         });

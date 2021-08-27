@@ -144,7 +144,8 @@ func NamedRunnerWithSeconds(name string, seconds int, running *bool, call func()
 		if err != nil {
 			log.Printf("%v is fail with %v \n", name, err)
 		}
-		nextDiff := time.Duration(seconds) * time.Second
+		nextDiff := time.Duration(RunPerfectTime(seconds)) * time.Second
+		// nextDiff := time.Duration(seconds) * time.Second
 		log.Println("next runner interval is :", nextDiff)
 		time.Sleep(nextDiff)
 	}
