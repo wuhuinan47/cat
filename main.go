@@ -33,6 +33,15 @@ var Pool *sql.DB
 // 	Quality int64 `json:"quality"`
 // }
 
+type User struct {
+	Uid       string
+	Token     string
+	Name      string
+	ServerURL string
+	ZoneToken string
+	Public    map[string]interface{}
+}
+
 func main() {
 
 	db, err := sql.Open("mysql", "cat:cyydmkj123@tcp(localhost:3306)/data_cat?charset=utf8&parseTime=true&collation=utf8mb4_unicode_ci")
@@ -100,6 +109,7 @@ func main() {
 	running := true
 	{
 		go runner.NamedRunnerWithSeconds("RunnerPullAnimal", 1800, &running, RunnerPullAnimal)
+		go runner.NamedRunnerWithSeconds("RunnerDraw", 1880, &running, RunnerDraw)
 	}
 
 	log.Println("listen port 33333 sucesss")
@@ -1193,7 +1203,15 @@ func getServerURL() (serverURL string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := "https://api.11h5.com/conf?cmd=getGameInfo&gameid=147&" + now
 	formData := httpGetReturnJson(url)
-	serverURL, ok := formData["ext"].(map[string]interface{})["serverURL"].(string)
+
+	ext, ok := formData["ext"].(map[string]interface{})
+
+	if !ok {
+		log.Println("get serverURL err")
+		return
+	}
+
+	serverURL, ok = ext["serverURL"].(string)
 	if !ok {
 		log.Println("get serverURL err")
 		return
@@ -1772,7 +1790,11 @@ func setPiece(serverURL, zoneToken string, id int64) {
 	return
 }
 
-// https://s147.11h5.com:3148/111_231_17_85/3149/
+func getFreeEnergy(serverURL, zoneToken string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	url := fmt.Sprintf("%v/game?cmd=getFreeEnergy&token=%v&now=%v", serverURL, zoneToken, now)
+	httpGetReturnJson(url)
+}
 
 func draw(uid, serverURL, zoneToken string, drawMulti interface{}) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
@@ -1845,7 +1867,15 @@ func draw(uid, serverURL, zoneToken string, drawMulti interface{}) {
 	}
 
 	gold, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", formData["gold"].(float64)/1000000), 64)
-	log.Printf("转盘行为:%v, 剩余能量:%v, 当前金币:%vM, 当前糖果炮弹:%v", id, formData["energy"], gold, formData["snowball"])
+
+	energy := formData["energy"].(float64)
+
+	if energy == 0 {
+		log.Println("【摇一摇】获取免费20能量")
+		getFreeEnergy(serverURL, zoneToken)
+	}
+
+	log.Printf("转盘行为:%v, 剩余能量:%v, 当前金币:%vM, 当前糖果炮弹:%v", id, energy, gold, formData["snowball"])
 }
 
 func rebuild(uid, building int64) {
@@ -2006,6 +2036,49 @@ func sendMsg(msg string) {
 }
 
 // runner
+
+func RunnerDraw() (err error) {
+	hour := time.Now().Hour()
+	if hour == 1 || hour == 7 || hour == 11 || hour == 17 || hour == 21 {
+		log.Println("start draw")
+		SQL := "select id, name, token from tokens where find_in_set(id, (select conf_value from config where conf_key = 'drawIds'))"
+
+		rows, err := Pool.Query(SQL)
+
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		var users []User
+
+		for rows.Next() {
+			var user User
+			err = rows.Scan(&user.Uid, &user.Name, &user.Token)
+			if err != nil {
+				break
+			}
+			user.ServerURL = getServerURL()
+			user.ZoneToken = getZoneToken(user.ServerURL, user.Token)
+
+			users = append(users, user)
+
+		}
+		for _, u := range users {
+			log.Printf("---------------------------[%v]开始转盘---------------------------", u.Name)
+			for i := 0; i < 50; i++ {
+				draw(u.Uid, u.ServerURL, u.ZoneToken, 1)
+				time.Sleep(time.Millisecond * 2100)
+			}
+			log.Printf("---------------------------[%v]结束转盘---------------------------", u.Name)
+		}
+
+	} else {
+		log.Println("no draw")
+	}
+
+	return
+}
 
 func RunnerPullAnimal() (err error) {
 

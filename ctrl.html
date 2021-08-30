@@ -246,7 +246,7 @@
         <option value="4">4倍</option>
         <option value="5">5倍</option>
         </select>
-<input id="drawAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="摇次数" value="20" />
+<input id="drawAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="摇次数" value="50" />
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="draw()">
     转盘
@@ -371,6 +371,8 @@
 
     getBox = function(){
 
+        alert("是否继续")
+
         var boxUID = $("#boxUidsSelect option:selected").val();
 
         var boxQuality = $("#BCSelect2 option:selected").val();
@@ -388,6 +390,8 @@
     }
 
     hitCandy = function(){
+        alert("是否继续")
+
         var boxUID = $("#Oper_Candy option:selected").val();
         var boxQuality = $("#BCSelect option:selected").val();
 
@@ -495,6 +499,8 @@
     }
 
     getFreeBossCannon = function(id){
+        alert("是否继续")
+
         var id = $("#Oper_Boss option:selected").val();
         $.get("https://cat.rosettawe.com/getFreeBossCannon?id="+id,function (data) {
             alert(data)
@@ -505,6 +511,8 @@
 
 
     giftPiece = function(){
+        alert("是否继续")
+
         var fromUid = $("#Oper_pieceFrom option:selected").val();
         var toUid = $("#Oper_pieceTo option:selected").val();
         var id = $("#PieceSelect option:selected").val();
@@ -520,6 +528,8 @@
     // 
 
     draw = function(){
+        alert("是否继续")
+
         var id = $("#Oper_Draw option:selected").val();
         var drawMulti = $("#DrawSelect option:selected").val();
         var drawAmount=document.getElementById("drawAmount");
@@ -537,6 +547,8 @@
 
 
     throwDice = function(){
+        alert("是否继续")
+
         var boxUID = $("#Oper_Dice option:selected").val();
 
         var boxAmount=document.getElementById("diceAmount");
@@ -552,6 +564,8 @@
 
 
     singleBossAttack = function(){
+        alert("是否继续")
+
         var boxUID = $("#SingleBossSelect option:selected").val();
         $.get("https://cat.rosettawe.com/singleBossAttack?id="+boxUID, function (data) {
         console.log("singleBossAttack:", data)
@@ -561,6 +575,7 @@
     }
 
     setPiece = function(){
+        alert("是否继续")
         var boxUID = $("#PiecePrizeSelect option:selected").val();
         $.get("https://cat.rosettawe.com/setPiece?id="+boxUID, function (data) {
         console.log("setPiece:", data)
@@ -570,6 +585,9 @@
     }
 
     getMailPrize = function(){
+        alert("是否继续")
+
+
         var boxUID = $("#Oper_Mail option:selected").val();
         $.get("https://cat.rosettawe.com/getMailPrize?id="+boxUID, function (data) {
         console.log("getMailPrize:", data)
