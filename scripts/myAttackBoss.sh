@@ -21,7 +21,7 @@ function rand(){
 
 
 
-for bossID in 309433834_1629535191;
+for bossID in 301807377_1630371288;
 do
 
 

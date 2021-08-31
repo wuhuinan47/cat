@@ -950,6 +950,7 @@ func pullAnimalGo() {
 			log.Printf("[uid: %v] token is invalid\n", uid)
 		}
 
+		log.Printf("[%v]开始拉动物", name)
 		foods := enterFamilyRob(serverURL, zoneToken)
 
 		for _, v := range foods {
@@ -1233,24 +1234,24 @@ func getZoneToken(serverURL, token string) (zoneToken string) {
 }
 
 func enterFamilyRob(serverURL, zoneToken string) (foods []map[string]interface{}) {
-
-	// https://s147.11h5.com:3148/123_206_182_64/3148//game?cmd=enterFamilyRob&token=ild70NWsJczwFddT65UMNWv66oNaoFZMH_h&now=1629251946267
-
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := serverURL + "/game?cmd=enterFamilyRob&token=" + zoneToken + "&now=" + now
-
 	formData := httpGetReturnJson(url)
-
 	if formData == nil {
 		return
 	}
-
 	familyRob, ok := formData["familyRob"].(map[string]interface{})
-
 	if !ok {
 		return
 	}
-
+	worker, ok := familyRob["worker"].(string)
+	if !ok {
+		return
+	}
+	if worker != "" {
+		log.Println("worker:", worker)
+		return
+	}
 	foodList, ok := familyRob["foodList"].([]interface{})
 	if !ok {
 		return
@@ -1429,7 +1430,11 @@ func attackBoss(serverURL, zoneToken, bossID string) {
 		damage := RangeRand(95, 100)
 		url := fmt.Sprintf("%v/game?cmd=attackBoss&token=%v&bossID=%v&damage=%v&isPerfect=0&isDouble=0&now=%v", serverURL, zoneToken, bossID, damage, now)
 		formData := httpGetReturnJson(url)
-		leftHp, ok := formData["boss"].(map[string]interface{})["leftHp"]
+		boss, ok := formData["boss"].(map[string]interface{})
+		if !ok {
+			return
+		}
+		leftHp, ok := boss["leftHp"]
 		if !ok {
 			return
 		}
@@ -2039,7 +2044,7 @@ func sendMsg(msg string) {
 
 func RunnerDraw() (err error) {
 	hour := time.Now().Hour()
-	if hour == 1 || hour == 7 || hour == 11 || hour == 17 || hour == 21 {
+	if hour == 1 || hour == 4 || hour == 7 || hour == 10 || hour == 13 || hour == 16 || hour == 19 || hour == 22 {
 		log.Println("start draw")
 		SQL := "select id, name, token from tokens where find_in_set(id, (select conf_value from config where conf_key = 'drawIds'))"
 
@@ -2065,12 +2070,20 @@ func RunnerDraw() (err error) {
 
 		}
 		for _, u := range users {
-			log.Printf("---------------------------[%v]开始转盘---------------------------", u.Name)
-			for i := 0; i < 50; i++ {
-				draw(u.Uid, u.ServerURL, u.ZoneToken, 1)
-				time.Sleep(time.Millisecond * 2100)
-			}
-			log.Printf("---------------------------[%v]结束转盘---------------------------", u.Name)
+
+			goName := u.Name
+			goUid := u.Uid
+			goServerURL := u.ServerURL
+			goZoneToken := u.ZoneToken
+			go func() {
+				log.Printf("---------------------------[%v]开始转盘---------------------------", goName)
+				for i := 0; i < 50; i++ {
+					draw(goUid, goServerURL, goZoneToken, 1)
+					time.Sleep(time.Millisecond * 2100)
+				}
+				log.Printf("---------------------------[%v]结束转盘---------------------------", u.Name)
+
+			}()
 		}
 
 	} else {

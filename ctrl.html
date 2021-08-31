@@ -18,7 +18,6 @@
             登录
         </button>
 
-        <br>
 <br>
 <button style="font-size:40px;width:400px; height:100px;" onclick="pullAnimal()">
     拉动物
@@ -27,7 +26,6 @@
 <button style="font-size:40px;width:400px; height:100px;" onclick="familySign()">
     公会签到
 </button>
-<br>
 <br>
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="startPullAnimal()">
@@ -38,7 +36,6 @@
     关闭动物定时器
 </button>
 
-<br>
 <br>
 
 <select style="font-size:40px;width:150px; height:100px;" name="boxUidsSelect" id="boxUidsSelect">
@@ -56,7 +53,6 @@
     抓宝箱
 </button>
 
-<br>
 <br>
 
 <select style="font-size:40px;width:150px; height:100px;" name="Oper_Candy" id="Oper_Candy">
@@ -77,7 +73,6 @@
 </button>
 
 <br>
-<br>
 <button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss()">
     我打龙
 </button>
@@ -86,7 +81,6 @@
     蜜打龙
 </button>
 
-<br>
 <br>
 
 <!-- singleBossAttack -->
@@ -106,7 +100,6 @@
 
 
 <br>
-<br>
 <select style="font-size:40px;width:200px; height:100px;" name="PiecePrizeSelect" id="PiecePrizeSelect">
     <option selected="selected" value="">请选择</option>
     </select>
@@ -116,12 +109,10 @@
 </button>
 
 <br>
-<br>
 <button style="font-size:40px;width:400px; height:100px;" onclick="checkToken()">
     检测账号状态
 </button>
 
-<br>
 <br>
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="loginByWechat()">
@@ -132,7 +123,6 @@
     QQ登录
 </button>
 
-<br>
 <br>
 
 <select style="font-size:40px;width:400px; height:100px;" name="Oper_Boss" id="Oper_Boss">
@@ -145,7 +135,6 @@
 
 
 
-<br>
 <br>
 
 <select style="font-size:40px;width:200px; height:100px;" name="Oper_Dice" id="Oper_Dice">
@@ -160,7 +149,6 @@
 
 
 <br>
-<br>
 
 <select style="font-size:40px;width:200px; height:100px;" name="Oper_Dice" id="Oper_Mail">
     <option selected="selected" value="">请选择</option>
@@ -172,7 +160,6 @@
 
 
 <br>
-<br>
 
 <select style="font-size:40px;width:200px; height:100px;" name="Oper_BossPrize" id="Oper_BossPrize">
     <option selected="selected" value="">一键领取</option>
@@ -182,7 +169,6 @@
     领取龙奖励
 </button>
 
-<br>
 <br>
 
 
@@ -232,7 +218,6 @@
 
 
 <br>
-<br>
 
 <select style="font-size:40px;width:150px; height:100px;" name="Oper_Draw" id="Oper_Draw">
     <option selected="selected" value="">请选择</option>
@@ -255,7 +240,6 @@
 
 
 <br>
-<br>
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="getServerLogs()">
     查看服务器日志
@@ -264,52 +248,6 @@
 <button style="font-size:40px;width:400px; height:100px;" onclick="delServerLogs()">
     删除服务器日志
 </button>
-
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
 <br>
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="sonAttackBoss()">
@@ -327,17 +265,6 @@
 <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(3)">
     龙组3
 </button>
-
-
-<!-- 
-<button style="font-size:40px;width:400px; height:100px;" onclick="login(302691822)">
-    大号登录
-</button> -->
-
-<br>
-<br>
-<br>
-<br>
 
 
 <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
@@ -371,9 +298,9 @@
 
     getBox = function(){
 
-        alert("是否继续")
-
-        var boxUID = $("#boxUidsSelect option:selected").val();
+        var r = confirm("是否继续")
+		if (r == true) {
+            var boxUID = $("#boxUidsSelect option:selected").val();
 
         var boxQuality = $("#BCSelect2 option:selected").val();
 
@@ -387,12 +314,15 @@
             alert(data)
             window.status = "1";
         });
+        }
+
+        
     }
 
     hitCandy = function(){
-        alert("是否继续")
-
-        var boxUID = $("#Oper_Candy option:selected").val();
+        var r = confirm("是否继续")
+		if (r == true) {
+            var boxUID = $("#Oper_Candy option:selected").val();
         var boxQuality = $("#BCSelect option:selected").val();
 
         var boxAmount=document.getElementById("candyAmount");
@@ -405,6 +335,9 @@
         alert(data)
         window.status = "1";
         });
+        }
+
+        
     }
 
 
@@ -451,21 +384,27 @@
     }
 
     attackBoss = function(){
-        alert("是否继续")
-        $.get("https://cat.rosettawe.com/attackBoss",function (data) {
+        var r = confirm("是否继续")
+		if (r == true) {
+            $.get("https://cat.rosettawe.com/attackBoss",function (data) {
             console.log("checkToken:", data)
             alert(data)
             window.status = "1";
         });
+        }
+        
     }
 
     attackBoss1 = function(){
-        alert("是否继续")
-        $.get("https://cat.rosettawe.com/attackBoss?id=309392050",function (data) {
+        var r = confirm("是否继续")
+		if (r == true) {
+            $.get("https://cat.rosettawe.com/attackBoss?id=309392050",function (data) {
             console.log("checkToken:", data)
             alert(data)
             window.status = "1";
         });
+        }
+        
     }
 
 
@@ -479,12 +418,15 @@
 
 
     oneSonAttackBoss = function(id){
-        alert("是否继续")
-        $.get("https://cat.rosettawe.com/oneSonAttackBoss?id="+id,function (data) {
+        var r = confirm("是否继续")
+		if (r == true) {
+            $.get("https://cat.rosettawe.com/oneSonAttackBoss?id="+id,function (data) {
             console.log("checkToken:", data)
             alert(data)
             window.status = "1";
         });
+        }
+        
     }
 
 
@@ -499,21 +441,24 @@
     }
 
     getFreeBossCannon = function(id){
-        alert("是否继续")
-
-        var id = $("#Oper_Boss option:selected").val();
+        var r = confirm("是否继续")
+		if (r == true) {
+            var id = $("#Oper_Boss option:selected").val();
         $.get("https://cat.rosettawe.com/getFreeBossCannon?id="+id,function (data) {
             alert(data)
             window.status = "1";
         });
+        }
+
+        
     }
 
 
 
     giftPiece = function(){
-        alert("是否继续")
-
-        var fromUid = $("#Oper_pieceFrom option:selected").val();
+        var r = confirm("是否继续")
+		if (r == true) {
+            var fromUid = $("#Oper_pieceFrom option:selected").val();
         var toUid = $("#Oper_pieceTo option:selected").val();
         var id = $("#PieceSelect option:selected").val();
         var amount = $("#PieceAmount option:selected").val();
@@ -524,13 +469,16 @@
         alert(data)
         window.status = "1";
         });
+        }
+
+        
     }
     // 
 
     draw = function(){
-        alert("是否继续")
-
-        var id = $("#Oper_Draw option:selected").val();
+        var r = confirm("是否继续")
+		if (r == true) {
+            var id = $("#Oper_Draw option:selected").val();
         var drawMulti = $("#DrawSelect option:selected").val();
         var drawAmount=document.getElementById("drawAmount");
 
@@ -543,12 +491,16 @@
         alert(data)
         window.status = "1";
         });
+		}
+
     }
 
 
     throwDice = function(){
-        alert("是否继续")
 
+
+        var r = confirm("是否继续")
+		if (r == true) {
         var boxUID = $("#Oper_Dice option:selected").val();
 
         var boxAmount=document.getElementById("diceAmount");
@@ -560,51 +512,66 @@
         alert(data)
         window.status = "1";
         });
+        }
+
+        
     }
 
 
     singleBossAttack = function(){
-        alert("是否继续")
-
-        var boxUID = $("#SingleBossSelect option:selected").val();
+        var r = confirm("是否继续")
+		if (r == true) {
+            var boxUID = $("#SingleBossSelect option:selected").val();
         $.get("https://cat.rosettawe.com/singleBossAttack?id="+boxUID, function (data) {
         console.log("singleBossAttack:", data)
         alert(data)
         window.status = "1";
         });
+        }
+
+       
     }
 
     setPiece = function(){
-        alert("是否继续")
-        var boxUID = $("#PiecePrizeSelect option:selected").val();
+        var r = confirm("是否继续")
+		if (r == true) {
+            var boxUID = $("#PiecePrizeSelect option:selected").val();
         $.get("https://cat.rosettawe.com/setPiece?id="+boxUID, function (data) {
         console.log("setPiece:", data)
         alert(data)
         window.status = "1";
         });
+        }
+        
     }
 
     getMailPrize = function(){
-        alert("是否继续")
-
-
-        var boxUID = $("#Oper_Mail option:selected").val();
+        var r = confirm("是否继续")
+		if (r == true) {
+            var boxUID = $("#Oper_Mail option:selected").val();
         $.get("https://cat.rosettawe.com/getMailPrize?id="+boxUID, function (data) {
         console.log("getMailPrize:", data)
         alert(data)
         window.status = "1";
         });
+        }
+
+
+        
     }
 
     getBossPrize = function(){
-        alert("是否继续")
-
-        var boxUID = $("#Oper_BossPrize option:selected").val();
+        var r = confirm("是否继续")
+		if (r == true) {
+            var boxUID = $("#Oper_BossPrize option:selected").val();
         $.get("https://cat.rosettawe.com/getBossPrize?id="+boxUID, function (data) {
         console.log("getMailPrize:", data)
         alert(data)
         window.status = "1";
         });
+        }
+
+        
     }
 
 
