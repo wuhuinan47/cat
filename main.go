@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strconv"
 	"time"
 
@@ -44,7 +45,8 @@ type User struct {
 
 func main() {
 
-	db, err := sql.Open("mysql", "cat:cyydmkj123@tcp(localhost:3306)/data_cat?charset=utf8&parseTime=true&collation=utf8mb4_unicode_ci")
+	// db, err := sql.Open("mysql", "cat:cyydmkj123@tcp(localhost:3306)/data_cat?charset=utf8&parseTime=true&collation=utf8mb4_unicode_ci")
+	db, err := sql.Open("mysql", "cat:cyydmkj123@tcp(localhost:3306)/data_cat")
 	if err != nil {
 		panic(err)
 	}
@@ -80,6 +82,9 @@ func main() {
 	http.HandleFunc("/singleBossAttack", SingleBossAttackH)
 	http.HandleFunc("/setPiece", SetPieceH)
 	http.HandleFunc("/sixEnergy", SixEnergyH)
+	http.HandleFunc("/attackMyBoss", AttackMyBossH)
+
+	//
 
 	//OneSonAttackBossH
 
@@ -109,11 +114,25 @@ func main() {
 	running := true
 	{
 		go runner.NamedRunnerWithSeconds("RunnerPullAnimal", 1800, &running, RunnerPullAnimal)
-		go runner.NamedRunnerWithSeconds("RunnerDraw", 1880, &running, RunnerDraw)
+		go runner.NamedRunnerWithSeconds("RunnerDraw", 3700, &running, RunnerDraw)
 	}
 
+	defer func() {
+		sendMsg("cat is stop")
+		log.Println("All done, good bye")
+	}()
+
+	go http.ListenAndServe(":33333", nil)
 	log.Println("listen port 33333 sucesss")
-	http.ListenAndServe(":33333", nil)
+
+	// if err = http.ListenAndServe(":33333", nil); err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill)
+
+	<-c
 
 }
 
@@ -171,6 +190,8 @@ func GetAllTokensH(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// io.WriteString(w, string(bytes))
+	// w.Header().Set("content-type", "application/json;charset=utf-8")
 	w.Write(bytes)
 }
 
@@ -210,6 +231,10 @@ func SingleBossAttackH(w http.ResponseWriter, req *http.Request) {
 
 	} else if id == "3" {
 		SQL = "select id, token from tokens where find_in_set(id, (select conf_value from config where conf_key='boss3'))"
+	} else if id == "4" {
+		SQL = "select id, token from tokens where find_in_set(id, (select conf_value from config where conf_key='newBoss1'))"
+	} else if id == "5" {
+		SQL = "select id, token from tokens where find_in_set(id, (select conf_value from config where conf_key='newBoss2'))"
 	}
 
 	rows, err := Pool.Query(SQL)
@@ -233,7 +258,7 @@ func SingleBossAttackH(w http.ResponseWriter, req *http.Request) {
 
 		for _, v := range bossList {
 			leftHp := v["leftHp"].(float64)
-			if leftHp > 1000 {
+			if leftHp >= 1500 {
 				attackBoss(serverURL, zoneToken, v["id"].(string))
 			}
 		}
@@ -251,27 +276,39 @@ func AttackBossH(w http.ResponseWriter, req *http.Request) {
 
 	log.Println("AttackBossH id :", id)
 
-	var SQL, token string
+	var SQL, name, token string
 	if id == "" {
-		SQL = "select token from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
+		SQL = "select name, token from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
 	} else {
-		SQL = fmt.Sprintf("select token from tokens where id = %v", id)
+		SQL = fmt.Sprintf("select name, token from tokens where id = %v", id)
 	}
 
-	Pool.QueryRow(SQL).Scan(&token)
+	Pool.QueryRow(SQL).Scan(&name, &token)
 
 	serverURL := getServerURL()
 
 	zoneToken := getZoneToken(serverURL, token)
 
 	bossList := getBossHelpList(serverURL, zoneToken)
+	log.Printf("---------------------------[%v]开始打龙---------------------------", name)
 
 	for _, v := range bossList {
 		leftHp := v["leftHp"].(float64)
-		if leftHp < 1000 && leftHp >= 500 {
-			attackBossByAdmin(serverURL, zoneToken, v["id"].(string))
+		log.Println("leftHp:", leftHp)
+		if leftHp <= 600 {
+			attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200)
+		} else if leftHp <= 1000 {
+			attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 195, 200)
+			attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 395, 400)
 		}
+
+		// if leftHp < 1000 && leftHp >= 500 {
+		// 	attackBossByAdmin(serverURL, zoneToken, v["id"].(string))
+		// }
 	}
+
+	log.Printf("---------------------------[%v]结束打龙---------------------------", name)
+
 	io.WriteString(w, "SUCCESS")
 	return
 
@@ -410,15 +447,20 @@ func ThrowDiceH(w http.ResponseWriter, req *http.Request) {
 	zoneToken := getZoneToken(serverURL, token)
 	log.Println("start throwDice")
 
-	for i := 1; i <= intAmount; i++ {
-		throwDice(serverURL, zoneToken)
+	go func() {
+		log.Println("start throwDice")
 
-		if i == intAmount {
-			break
+		for i := 1; i <= intAmount; i++ {
+			throwDice(serverURL, zoneToken)
+
+			if i == intAmount {
+				break
+			}
+			time.Sleep(time.Second * 3)
 		}
-		time.Sleep(time.Second * 3)
-	}
-	log.Println("end throwDice")
+		log.Println("end throwDice")
+
+	}()
 
 	io.WriteString(w, "SUCCESS")
 	return
@@ -439,13 +481,22 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 
 	zoneToken := getZoneToken(serverURL, token)
 
-	log.Printf("---------------------------[%v]开始转盘---------------------------", name)
-	for i := 1; i <= intAmount; i++ {
-		draw(uid, serverURL, zoneToken, drawMulti)
-		log.Println("剩余转盘次数:", intAmount-i)
-		time.Sleep(time.Millisecond * 2100)
-	}
-	log.Printf("---------------------------[%v]结束转盘---------------------------", name)
+	go func() {
+		log.Printf("---------------------------[%v]开始转盘---------------------------", name)
+		followCompanion(serverURL, zoneToken, 2)
+		for i := 1; i <= intAmount; i++ {
+			draw(uid, serverURL, zoneToken, drawMulti)
+			log.Println("剩余转盘次数:", intAmount-i)
+			time.Sleep(time.Millisecond * 2100)
+		}
+		if id == "302691822" {
+			followCompanion(serverURL, zoneToken, 3)
+		} else {
+			followCompanion(serverURL, zoneToken, 1)
+		}
+		log.Printf("---------------------------[%v]结束转盘---------------------------", name)
+		return
+	}()
 
 	io.WriteString(w, "SUCCESS")
 
@@ -481,16 +532,58 @@ func GiftPieceH(w http.ResponseWriter, req *http.Request) {
 	return
 }
 
+func AttackMyBossH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+
+	SQL := "select name, token from tokens where id = ?"
+
+	var name, token string
+
+	err := Pool.QueryRow(SQL, id).Scan(&name, &token)
+	if err != nil {
+		io.WriteString(w, err.Error())
+		return
+	}
+	serverURL := getServerURL()
+	zoneToken := getZoneToken(serverURL, token)
+	bossID := summonBoss(serverURL, zoneToken)
+	inviteBoss(serverURL, zoneToken, bossID)
+	time.Sleep(time.Second * 1)
+	shareAPI(serverURL, zoneToken)
+	getFreeBossCannon(serverURL, zoneToken)
+	log.Printf("---------------------------[%v]开始打龙---------------------------", name)
+	attackMyBoss(serverURL, zoneToken, bossID)
+	log.Printf("---------------------------[%v]结束打龙---------------------------", name)
+
+	io.WriteString(w, "SUCCESS")
+
+}
+
 func OneSonAttackBossH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 
-	SQL := "select id, token from tokens where find_in_set(id, (select conf_value from config where conf_key='mmBoss1'))"
-	if id == "2" {
-		SQL = "select id, token from tokens where find_in_set(id, (select conf_value from config where conf_key='cowBoss1'))"
+	var confKey = "newBoss1"
 
-	} else if id == "3" {
-		SQL = "select id, token from tokens where find_in_set(id, (select conf_value from config where conf_key='boss3'))"
+	if id == "2" {
+		confKey = "newBoss2"
 	}
+	if id == "3" {
+		confKey = "newBoss3"
+	}
+
+	if id == "4" {
+		confKey = "cowBoss1"
+	}
+
+	if id == "5" {
+		confKey = "mmBoss1"
+	}
+
+	if id == "6" {
+		confKey = "boss3"
+	}
+
+	SQL := fmt.Sprintf("select id, token from tokens where find_in_set(id, (select conf_value from config where conf_key='%s'))", confKey)
 
 	rows, err := Pool.Query(SQL)
 	if err != nil {
@@ -498,8 +591,10 @@ func OneSonAttackBossH(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer rows.Close()
-	var mmList []map[string]interface{}
+	var mmList1 []map[string]interface{}
+	var mmList2 []map[string]interface{}
 	var mmBossList []string
+	var j = 1
 	for rows.Next() {
 		var token string
 		var uid float64
@@ -511,17 +606,44 @@ func OneSonAttackBossH(w http.ResponseWriter, req *http.Request) {
 		time.Sleep(time.Second * 1)
 		shareAPI(serverURL, zoneToken)
 		getFreeBossCannon(serverURL, zoneToken)
-		mmList = append(mmList, map[string]interface{}{"uid": uid, "serverURL": serverURL, "zoneToken": zoneToken})
+		if j >= 5 {
+			mmList2 = append(mmList2, map[string]interface{}{"uid": uid, "serverURL": serverURL, "zoneToken": zoneToken})
+		} else {
+			mmList1 = append(mmList1, map[string]interface{}{"uid": uid, "serverURL": serverURL, "zoneToken": zoneToken})
+		}
+		j++
 		mmBossList = append(mmBossList, bossID)
+		time.Sleep(time.Second * 1)
 	}
-	for _, v := range mmList {
-		for _, v2 := range mmBossList {
+
+	for _, v2 := range mmBossList {
+		for _, v := range mmList1 {
+			flag := enterBoss(v["serverURL"].(string), v["zoneToken"].(string), v2, v["uid"].(float64))
+			if flag == true {
+				go attackBoss(v["serverURL"].(string), v["zoneToken"].(string), v2)
+			}
+		}
+		time.Sleep(time.Second * 18)
+	}
+
+	for _, v2 := range mmBossList {
+		for _, v := range mmList2 {
 			flag := enterBoss(v["serverURL"].(string), v["zoneToken"].(string), v2, v["uid"].(float64))
 			if flag == true {
 				attackBoss(v["serverURL"].(string), v["zoneToken"].(string), v2)
 			}
 		}
+		time.Sleep(time.Second * 18)
 	}
+
+	// for _, v := range mmList {
+	// 	for _, v2 := range mmBossList {
+	// 		flag := enterBoss(v["serverURL"].(string), v["zoneToken"].(string), v2, v["uid"].(float64))
+	// 		if flag == true {
+	// 			attackBoss(v["serverURL"].(string), v["zoneToken"].(string), v2)
+	// 		}
+	// 	}
+	// }
 
 	io.WriteString(w, "SUCCESS")
 	return
@@ -654,6 +776,9 @@ func LoginByQrcodeH(w http.ResponseWriter, req *http.Request) {
 		time.Sleep(time.Second * 1)
 	}
 
+	if id == "3" {
+		http.Redirect(w, req, qrcode, http.StatusTemporaryRedirect)
+	}
 	io.WriteString(w, qrcode)
 
 	return
@@ -981,73 +1106,226 @@ func familySignGo() {
 	}
 
 	defer rows.Close()
+
+	var tokenList []map[string]string
+
 	for rows.Next() {
 		var uid, token, name string
 		rows.Scan(&uid, &token, &name)
 		serverURL := getServerURL()
 		zoneToken := getZoneToken(serverURL, token)
 
-		if zoneToken == "" {
+		if zoneToken != "" {
+			tokenList = append(tokenList, map[string]string{"uid": uid, "name": name, "serverURL": serverURL, "zoneToken": zoneToken, "token": token})
+		} else {
 			sendMsg(uid + ":" + name)
 			log.Printf("[uid: %v] token is invalid\n", uid)
 		}
-
-		log.Printf("[%v] start familySign", name)
-		familySign(serverURL, zoneToken)
-		log.Printf("[%v] end familySign", name)
-		time.Sleep(time.Second * 1)
-		log.Printf("[%v] start getSignPrize", name)
-		getSignPrize(serverURL, zoneToken)
-		log.Printf("[%v] end getSignPrize", name)
-		time.Sleep(time.Second * 1)
-		log.Printf("[%v] start getFreeDailyGiftBox", name)
-		getFreeDailyGiftBox(serverURL, zoneToken)
-		log.Printf("[%v] end getFreeDailyGiftBox", name)
-		time.Sleep(time.Second * 1)
-
-		log.Printf("[%v] start playLuckyWheel", name)
-		shareAPI(serverURL, zoneToken)
-		playLuckyWheel(serverURL, zoneToken)
-		log.Printf("[%v] end playLuckyWheel", name)
-		time.Sleep(time.Second * 1)
-
-		log.Printf("[%v] start getFreeClamp", name)
-		shareAPI(serverURL, zoneToken)
-		getFreeClamp(serverURL, zoneToken)
-		log.Printf("[%v] end getFreeClamp", name)
-		time.Sleep(time.Second * 1)
-
-		log.Printf("[%v] start getInviteSnow", name)
-		shareAPI(serverURL, zoneToken)
-		getInviteSnow(serverURL, zoneToken)
-		log.Printf("[%v] end getInviteSnow", name)
-
-		time.Sleep(time.Second * 1)
-		log.Printf("[%v] start autoFriendEnergy", name)
-		autoFriendEnergy(serverURL, zoneToken)
-		log.Printf("[%v] end autoFriendEnergy", name)
-
-		log.Printf("[%v] start getSixEnergy", name)
-		for i := 0; i < 6; i++ {
-			time.Sleep(time.Second * 1)
-			getSixEnergy(serverURL, zoneToken)
-		}
-		log.Printf("[%v] end getSixEnergy", name)
-
-		gameList := []string{"535", "525", "157", "452", "411"}
-
-		time.Sleep(time.Second * 1)
-		for _, v := range gameList {
-			getAward(token, v)
-		}
 	}
 
+	var j = 1
+
+	for _, user := range tokenList {
+
+		if j >= 6 {
+			time.Sleep(time.Second * 2)
+			j = 1
+		}
+
+		log.Printf("[%v] start familySign", user["name"])
+		familySign(user["serverURL"], user["zoneToken"])
+		log.Printf("[%v] end familySign", user["name"])
+		j++
+	}
 	time.Sleep(time.Second * 1)
-	log.Println("start getFamilySignPrizeGo..")
-	getFamilySignPrizeGo()
-	log.Println("end getFamilySignPrizeGo..")
+
+	for _, user := range tokenList {
+		if j >= 6 {
+			time.Sleep(time.Second * 2)
+			j = 1
+		}
+		log.Printf("[%v] start getSignPrize", user["name"])
+		getSignPrize(user["serverURL"], user["zoneToken"])
+		log.Printf("[%v] end getSignPrize", user["name"])
+		j++
+	}
+	time.Sleep(time.Second * 1)
+
+	for _, user := range tokenList {
+		if j >= 6 {
+			time.Sleep(time.Second * 2)
+			j = 1
+		}
+		log.Printf("[%v] start getFreeDailyGiftBox", user["name"])
+		getFreeDailyGiftBox(user["serverURL"], user["zoneToken"])
+		log.Printf("[%v] end getFreeDailyGiftBox", user["name"])
+		j++
+	}
+	time.Sleep(time.Second * 1)
+
+	for _, user := range tokenList {
+		if j >= 6 {
+			time.Sleep(time.Second * 2)
+			j = 1
+		}
+		log.Printf("[%v] start playLuckyWheel", user["name"])
+		shareAPI(user["serverURL"], user["zoneToken"])
+		playLuckyWheel(user["serverURL"], user["zoneToken"])
+		log.Printf("[%v] end playLuckyWheel", user["name"])
+		j++
+	}
+	time.Sleep(time.Second * 1)
+
+	for _, user := range tokenList {
+		if j >= 6 {
+			time.Sleep(time.Second * 2)
+			j = 1
+		}
+		log.Printf("[%v] start getFreeClamp", user["name"])
+		shareAPI(user["serverURL"], user["zoneToken"])
+		getFreeClamp(user["serverURL"], user["zoneToken"])
+		log.Printf("[%v] end getFreeClamp", user["name"])
+		j++
+	}
+	time.Sleep(time.Second * 1)
+
+	for _, user := range tokenList {
+		if j >= 6 {
+			time.Sleep(time.Second * 2)
+			j = 1
+		}
+		log.Printf("[%v] start getInviteSnow", user["name"])
+		shareAPI(user["serverURL"], user["zoneToken"])
+		getInviteSnow(user["serverURL"], user["zoneToken"])
+		log.Printf("[%v] end getInviteSnow", user["name"])
+		j++
+	}
+	time.Sleep(time.Second * 1)
+
+	for _, user := range tokenList {
+		if j >= 6 {
+			time.Sleep(time.Second * 2)
+			j = 1
+		}
+		log.Printf("[%v] start autoFriendEnergy", user["name"])
+		autoFriendEnergy(user["serverURL"], user["zoneToken"])
+		log.Printf("[%v] end autoFriendEnergy", user["name"])
+		j++
+	}
+	time.Sleep(time.Second * 1)
+
+	for _, user := range tokenList {
+		if j >= 6 {
+			time.Sleep(time.Second * 2)
+			j = 1
+		}
+		log.Printf("[%v] start getSixEnergy", user["name"])
+		for i := 0; i < 6; i++ {
+			time.Sleep(time.Second * 1)
+			getSixEnergy(user["serverURL"], user["zoneToken"])
+		}
+		log.Printf("[%v] end getSixEnergy", user["name"])
+		j++
+	}
+	time.Sleep(time.Second * 1)
+
+	for _, user := range tokenList {
+		if j >= 6 {
+			time.Sleep(time.Second * 2)
+			j = 1
+		}
+		gameList := []string{"535", "525", "157", "452", "411"}
+
+		for _, v := range gameList {
+			getAward(user["token"], v)
+		}
+		j++
+	}
+	time.Sleep(time.Second * 1)
+
+	for _, user := range tokenList {
+		if j >= 2 {
+			time.Sleep(time.Second * 1)
+			j = 1
+		}
+		for i := 1; i <= 3; i++ {
+			getFamilySignPrize(user["serverURL"], user["zoneToken"], i)
+		}
+		j++
+	}
+	time.Sleep(time.Second * 1)
 
 	getAwardForCowBoy()
+
+	// for rows.Next() {
+	// 	var uid, token, name string
+	// 	rows.Scan(&uid, &token, &name)
+	// 	serverURL := getServerURL()
+	// 	zoneToken := getZoneToken(serverURL, token)
+
+	// 	if zoneToken == "" {
+	// 		sendMsg(uid + ":" + name)
+	// 		log.Printf("[uid: %v] token is invalid\n", uid)
+	// 	}
+
+	// 	log.Printf("[%v] start familySign", name)
+	// 	familySign(serverURL, zoneToken)
+	// 	log.Printf("[%v] end familySign", name)
+	// 	time.Sleep(time.Second * 1)
+
+	// 	log.Printf("[%v] start getSignPrize", name)
+	// 	getSignPrize(serverURL, zoneToken)
+	// 	log.Printf("[%v] end getSignPrize", name)
+	// 	time.Sleep(time.Second * 1)
+
+	// 	log.Printf("[%v] start getFreeDailyGiftBox", name)
+	// 	getFreeDailyGiftBox(serverURL, zoneToken)
+	// 	log.Printf("[%v] end getFreeDailyGiftBox", name)
+	// 	time.Sleep(time.Second * 1)
+
+	// 	log.Printf("[%v] start playLuckyWheel", name)
+	// 	shareAPI(serverURL, zoneToken)
+	// 	playLuckyWheel(serverURL, zoneToken)
+	// 	log.Printf("[%v] end playLuckyWheel", name)
+	// 	time.Sleep(time.Second * 1)
+
+	// 	log.Printf("[%v] start getFreeClamp", name)
+	// 	shareAPI(serverURL, zoneToken)
+	// 	getFreeClamp(serverURL, zoneToken)
+	// 	log.Printf("[%v] end getFreeClamp", name)
+	// 	time.Sleep(time.Second * 1)
+
+	// 	log.Printf("[%v] start getInviteSnow", name)
+	// 	shareAPI(serverURL, zoneToken)
+	// 	getInviteSnow(serverURL, zoneToken)
+	// 	log.Printf("[%v] end getInviteSnow", name)
+
+	// 	time.Sleep(time.Second * 1)
+	// 	log.Printf("[%v] start autoFriendEnergy", name)
+	// 	autoFriendEnergy(serverURL, zoneToken)
+	// 	log.Printf("[%v] end autoFriendEnergy", name)
+
+	// 	log.Printf("[%v] start getSixEnergy", name)
+	// 	for i := 0; i < 6; i++ {
+	// 		time.Sleep(time.Second * 1)
+	// 		getSixEnergy(serverURL, zoneToken)
+	// 	}
+	// 	log.Printf("[%v] end getSixEnergy", name)
+
+	// 	gameList := []string{"535", "525", "157", "452", "411"}
+
+	// 	time.Sleep(time.Second * 1)
+	// 	for _, v := range gameList {
+	// 		getAward(token, v)
+	// 	}
+	// }
+
+	// time.Sleep(time.Second * 1)
+	// log.Println("start getFamilySignPrizeGo..")
+	// getFamilySignPrizeGo()
+	// log.Println("end getFamilySignPrizeGo..")
+
+	// getAwardForCowBoy()
 
 	log.Println("familySignGo finish")
 
@@ -1423,60 +1701,88 @@ func inviteBoss(serverURL, zoneToken, bossID string) {
 	return
 }
 
-// 小号打Boss
-func attackBoss(serverURL, zoneToken, bossID string) {
-	for i := 1; i <= 3; i++ {
+// 打自己的BOSS 到600血
+
+func attackMyBoss(serverURL, zoneToken, bossID string) {
+	// 300
+
+	attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 95, 100)
+
+	// 1500
+
+	attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 195, 200)
+
+	// 1800
+
+	attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 95, 100)
+
+	// 3000
+	attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 195, 200)
+
+	// 3300
+	attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 95, 100)
+
+	// 4100
+
+	attackBossAPI(serverURL, zoneToken, bossID, 5, 0, 1, 195, 200)
+
+	// 4500
+	// attackBossAPI(serverURL, zoneToken, bossID, 1, 400, 1, 1)
+
+}
+
+// RangeRand(390, 400)
+
+func attackBossAPI(serverURL, zoneToken, bossID string, amount, isPerfect, isDouble int, min, max int64) {
+	for i := 1; i <= amount; i++ {
 		now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-		damage := RangeRand(95, 100)
-		url := fmt.Sprintf("%v/game?cmd=attackBoss&token=%v&bossID=%v&damage=%v&isPerfect=0&isDouble=0&now=%v", serverURL, zoneToken, bossID, damage, now)
+		damage := RangeRand(min, max)
+		url := fmt.Sprintf("%v/game?cmd=attackBoss&token=%v&bossID=%v&damage=%v&isPerfect=%v&isDouble=%v&now=%v", serverURL, zoneToken, bossID, damage, isPerfect, isDouble, now)
 		formData := httpGetReturnJson(url)
 		boss, ok := formData["boss"].(map[string]interface{})
 		if !ok {
-			return
+			time.Sleep(time.Second * 3)
+			httpGetReturnJson(url)
+			time.Sleep(time.Second * 3)
+		} else {
+			leftHp, ok := boss["leftHp"]
+			if !ok {
+				return
+			}
+			log.Println("leftHp:", leftHp)
+			time.Sleep(time.Second * 3)
 		}
-		leftHp, ok := boss["leftHp"]
-		if !ok {
-			return
-		}
-		log.Println("leftHp:", leftHp)
-		time.Sleep(time.Second * 3)
-
 	}
+}
 
-	for i := 1; i <= 2; i++ {
-		now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-		damage := RangeRand(195, 200)
-		url := fmt.Sprintf("%v/game?cmd=attackBoss&token=%v&bossID=%v&damage=%v&isPerfect=0&isDouble=0&now=%v", serverURL, zoneToken, bossID, damage, now)
-		formData := httpGetReturnJson(url)
-		leftHp, ok := formData["boss"].(map[string]interface{})["leftHp"]
-		if !ok {
-			return
-		}
-		log.Println("leftHp:", leftHp)
-		time.Sleep(time.Second * 3)
+// 小号打Boss
+func attackBoss(serverURL, zoneToken, bossID string) {
+	// 3 次 100
+	attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 95, 100)
+	// 2 次 200
+	attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 195, 200)
 
-	}
 }
 
 // 大号打Boss
 func attackBossByAdmin(serverURL, zoneToken, bossID string) {
 	for i := 1; i <= 3; i++ {
 		now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-		damage := RangeRand(195, 200)
+		damage := 200
 		url := fmt.Sprintf("%v/game?cmd=attackBoss&token=%v&bossID=%v&damage=%v&isPerfect=0&isDouble=1&now=%v", serverURL, zoneToken, bossID, damage, now)
 		formData := httpGetReturnJson(url)
 		log.Println("leftHp:", formData["boss"].(map[string]interface{})["leftHp"])
 		time.Sleep(time.Second * 3)
 	}
 
-	for i := 1; i <= 1; i++ {
-		now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-		damage := RangeRand(390, 400)
-		url := fmt.Sprintf("%v/game?cmd=attackBoss&token=%v&bossID=%v&damage=%v&isPerfect=1&isDouble=1&now=%v", serverURL, zoneToken, bossID, damage, now)
-		formData := httpGetReturnJson(url)
-		log.Println("leftHp:", formData["boss"].(map[string]interface{})["leftHp"])
-		time.Sleep(time.Second * 3)
-	}
+	// for i := 1; i <= 1; i++ {
+	// 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	// 	damage := RangeRand(390, 400)
+	// 	url := fmt.Sprintf("%v/game?cmd=attackBoss&token=%v&bossID=%v&damage=%v&isPerfect=1&isDouble=1&now=%v", serverURL, zoneToken, bossID, damage, now)
+	// 	formData := httpGetReturnJson(url)
+	// 	log.Println("leftHp:", formData["boss"].(map[string]interface{})["leftHp"])
+	// 	time.Sleep(time.Second * 3)
+	// }
 }
 
 // https://s147.11h5.com:3148/123_207_183_233/3147/
@@ -1494,7 +1800,7 @@ func attackIsland(serverURL, zoneToken string, flag, targetUid, building interfa
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := fmt.Sprintf("%v/game?cmd=attack&token=%v&type=%v&targetUid=%v&building=%v&now=%v", serverURL, zoneToken, flag, targetUid, building, now)
 	formData := httpGetReturnJson(url)
-	log.Printf("攻击小岛 目标uid:%v, 建筑:%v, 增加金币:%v", targetUid, building, formData["addGold"])
+	log.Printf("攻击小岛 目标uid:%v, 建筑:%v, 增加金币:%v, 额外金币:%v", targetUid, building, formData["addGold"], formData["companionGold"])
 	return
 }
 
@@ -1626,8 +1932,6 @@ func getFriendsCandyTreeInfo(serverURL, zoneToken string, targetType float64) (u
 	return
 }
 
-// https://s147.11h5.com:3147/182_254_218_30/3149/
-
 // 进入糖果树
 func getCandyTreeInfo(serverURL, zoneToken string, opUid interface{}) (posList []float64) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
@@ -1662,8 +1966,6 @@ func getCandyTreeInfo(serverURL, zoneToken string, opUid interface{}) (posList [
 
 	return
 }
-
-// https://s147.11h5.com:3147/182_254_218_30/3149/
 
 // 打糖果
 func hitCandyTree(serverURL, zoneToken string, opUid, pos interface{}) string {
@@ -1728,6 +2030,7 @@ func throwDice(serverURL, zoneToken string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := fmt.Sprintf("%v/game?cmd=throwDice&token=%v&now=%v", serverURL, zoneToken, now)
 	httpGetReturnJson(url)
+
 }
 
 // 获取邮件列表
@@ -1810,18 +2113,45 @@ func draw(uid, serverURL, zoneToken string, drawMulti interface{}) {
 
 	if !ok {
 		log.Println("没有能量可摇！")
+		go func() {
+			shareAPI(serverURL, zoneToken)
+			getShareDrawDice(serverURL, zoneToken)
+			time.Sleep(time.Second * 1)
+			shareAPI(serverURL, zoneToken)
+			getDayShareGold(serverURL, zoneToken)
+		}()
 		return
 	}
 
 	if id == "10" {
-		// stealData, _ := formData["stealData"].([]interface{})
+
+		stealData, ok := formData["stealData"].([]interface{})
+
+		// var idx = 1
+		idx := 1
+
+		if ok {
+			for i, v := range stealData {
+				vv, ok := v.(map[string]interface{})
+				if ok {
+					rich, ok := vv["rich"].(float64)
+					if ok {
+						if rich == 1 {
+							log.Println("【摇一摇】rich is :", i)
+							idx = i
+							break
+						}
+					}
+				}
+			}
+		}
 		// log.Println("stealData:", stealData)
 		time.Sleep(time.Second * 1)
-		stealResult := steal(serverURL, zoneToken, 1)
+		stealResult := steal(serverURL, zoneToken, idx)
 		log.Println("【摇一摇】偷取 结果:", stealResult)
 	} else if id == "3" {
-
-		if uid == "302691822" {
+		followCompanion(serverURL, zoneToken, 4)
+		if uid == "302691822" || uid == "309392050" {
 			time.Sleep(time.Second * 1)
 			attackIsland(serverURL, zoneToken, 1, 697068758, 1)
 			log.Println("【摇一摇】攻击好友【辛巴】")
@@ -1850,6 +2180,7 @@ func draw(uid, serverURL, zoneToken string, drawMulti interface{}) {
 			attackIsland(serverURL, zoneToken, 0, attackUid, building)
 			log.Println("【摇一摇】攻击")
 		}
+		followCompanion(serverURL, zoneToken, 2)
 
 	}
 
@@ -1884,8 +2215,40 @@ func draw(uid, serverURL, zoneToken string, drawMulti interface{}) {
 }
 
 func rebuild(uid, building int64) {
-	log.Println("rebuild")
+	SQL := "select token from tokens where id = ?"
+	var token string
+	Pool.QueryRow(SQL, uid).Scan(&token)
+	serverURL := getServerURL()
+	zoneToken := getZoneToken(serverURL, token)
+	buildFix(serverURL, zoneToken, building)
+	// buildUp(serverURL, zoneToken, building)
 }
+
+func buildUp(serverURL, zoneToken string, id int64) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	url := fmt.Sprintf("%v/game?cmd=buildUp&token=%v&id=%v&now=%v", serverURL, zoneToken, id, now)
+	httpGetReturnJson(url)
+}
+
+func buildFix(serverURL, zoneToken string, id int64) {
+
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	url := fmt.Sprintf("%v/game?cmd=buildFix&token=%v&id=%v&now=%v", serverURL, zoneToken, id, now)
+	httpGetReturnJson(url)
+}
+
+// 1=大队长 2=偷钱 4=打建筑 3=防偷钱
+func followCompanion(serverURL, zoneToken string, id int64) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	url := fmt.Sprintf("%v/game?cmd=followCompanion&token=%v&id=%v&now=%v", serverURL, zoneToken, id, now)
+	httpGetReturnJson(url)
+}
+
+// https://s147.11h5.com:3148/115_159_203_142/3147/
+
+// https://s147.11h5.com:3147/118_89_198_182/3149/
+
+// https://s147.11h5.com:3147/118_89_198_182/3149/
 
 // 【摇一摇】--分享获取金币
 func getDayShareGold(serverURL, zoneToken string) {
@@ -2043,6 +2406,11 @@ func sendMsg(msg string) {
 // runner
 
 func RunnerDraw() (err error) {
+
+	if runnerStatus("drawStatus") == "0" {
+		return
+	}
+
 	hour := time.Now().Hour()
 	if hour == 1 || hour == 4 || hour == 7 || hour == 10 || hour == 13 || hour == 16 || hour == 19 || hour == 22 {
 		log.Println("start draw")
@@ -2077,13 +2445,40 @@ func RunnerDraw() (err error) {
 			goZoneToken := u.ZoneToken
 			go func() {
 				log.Printf("---------------------------[%v]开始转盘---------------------------", goName)
+				followCompanion(goServerURL, goZoneToken, 2)
 				for i := 0; i < 50; i++ {
 					draw(goUid, goServerURL, goZoneToken, 1)
 					time.Sleep(time.Millisecond * 2100)
 				}
-				log.Printf("---------------------------[%v]结束转盘---------------------------", u.Name)
+				if goUid == "302691822" {
+					followCompanion(goServerURL, goZoneToken, 3)
+				} else {
+					followCompanion(goServerURL, goZoneToken, 1)
+				}
+				log.Printf("---------------------------[%v]结束转盘---------------------------", goName)
 
 			}()
+		}
+
+		if hour == 4 {
+			SQL = "select id, token, name from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
+			var cowBoyUid, cowBoyToken, cowBoyName string
+			Pool.QueryRow(SQL).Scan(&cowBoyUid, &cowBoyToken, &cowBoyName)
+			serverURL := getServerURL()
+			zoneToken := getZoneToken(serverURL, cowBoyToken)
+
+			go func() {
+				log.Printf("---------------------------[%v]开始转盘---------------------------", cowBoyName)
+				followCompanion(serverURL, zoneToken, 2)
+				for i := 0; i < 20; i++ {
+					draw(cowBoyUid, serverURL, zoneToken, 1)
+					time.Sleep(time.Millisecond * 2500)
+				}
+				followCompanion(serverURL, zoneToken, 3)
+				log.Printf("---------------------------[%v]结束转盘---------------------------", cowBoyName)
+
+			}()
+
 		}
 
 	} else {

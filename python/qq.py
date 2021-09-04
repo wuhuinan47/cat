@@ -130,11 +130,11 @@ class Cat():
                 if result==1:
                     print("userID is ", userID)
                     print("token is ", token)
+                    self.browser.quit()
                     return
-                
                 sleep(2)
 
-        
+        self.browser.quit()
         print("超时未扫码，页面已关闭")
 
      

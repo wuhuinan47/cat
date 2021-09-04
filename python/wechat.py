@@ -104,11 +104,14 @@ class Cat():
                 print("zoneToken is ", zoneToken)
 
                 # 更新token到数据库
-                updateToken(userID, nickname, token)
-                print("userID is ", userID)
-                print("token is ", token)
-                self.browser.quit()
-                return
+                result=updateToken(userID, nickname, token)
+                if result==1:
+                    print("userID is ", userID)
+                    print("token is ", token)
+                    self.browser.quit()
+                    return
+                sleep(2)
+
         
         
 

@@ -11,7 +11,7 @@
 
 
     <select style="font-size:40px;width:400px; height:100px;" name="Oper_Type" id="Oper_Type">
-        <option selected="selected" value="302691822">🐮🐮🌱besos</option>
+        <!-- <option selected="selected" value="302691822">🐮🐮🌱besos</option> -->
         </select>
     
         <button style="font-size:40px;width:400px; height:100px;" onclick="login('')">
@@ -34,6 +34,16 @@
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="stopPullAnimal()">
     关闭动物定时器
+</button>
+
+<br>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="startDrawStatus()">
+    开启摇一摇状态
+</button>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="stopDrawStatus()">
+    关闭摇一摇状态
 </button>
 
 <br>
@@ -86,10 +96,25 @@
 <!-- singleBossAttack -->
 
 
+<select style="font-size:40px;width:400px; height:100px;" name="SelectMyBoss" id="SelectMyBoss">
+    <option selected="selected" value="0">请选择</option>
+    </select>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="attackMyBoss()">
+    打自己龙到4200血
+</button>
+
+
+<br>
+
 <select style="font-size:40px;width:200px; height:100px;" name="SingleBossSelect" id="SingleBossSelect">
     <option selected="selected" value="1">蜜龙组</option>
     <option value="2">牛龙组</option>
     <option value="3">龙组3</option>
+    <option value="4">笨蛋小峰组</option>
+    <option value="5">云颜辛巴组</option>
+    
+    
     </select>
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="singleBossAttack()">
@@ -254,16 +279,32 @@
     一键小号打龙
 </button>
 
+
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(4)">
+    牛组
+</button>
+
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(5)">
+    蜜组
+</button>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(6)">
+    BOSS组
+</button>
+
+
 <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(1)">
-    蜜龙组
+    笨蛋小峰组
 </button>
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(2)">
-    牛龙组
+    云颜辛巴组
 </button>
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(3)">
-    龙组3
+    其他组
 </button>
 
 
@@ -352,7 +393,7 @@
 
     loginByQQ = function(){
         $.get("https://cat.rosettawe.com/loginByQrcode?id=2",function (data) {
-            console.log("loginByWechat:", data)
+            console.log("loginByQQ:", data)
             alert(data)
             window.status = "1";
         });
@@ -361,7 +402,7 @@
 
     startPullAnimal = function(){
         $.get("https://cat.rosettawe.com/setConfig?confKey=pullAnimalGoStatus&confValue=1",function (data) {
-            console.log("loginByWechat:", data)
+            console.log("startPullAnimal:", data)
             alert(data)
             window.status = "1";
         });
@@ -369,11 +410,28 @@
 
     stopPullAnimal = function(){
         $.get("https://cat.rosettawe.com/setConfig?confKey=pullAnimalGoStatus&confValue=0",function (data) {
-            console.log("loginByWechat:", data)
+            console.log("stopPullAnimal:", data)
             alert(data)
             window.status = "1";
         });
     }
+
+    startDrawStatus = function(){
+        $.get("https://cat.rosettawe.com/setConfig?confKey=drawStatus&confValue=1",function (data) {
+            console.log("startPullAnimal:", data)
+            alert(data)
+            window.status = "1";
+        });
+    }
+
+    stopDrawStatus = function(){
+        $.get("https://cat.rosettawe.com/setConfig?confKey=drawStatus&confValue=0",function (data) {
+            console.log("stopPullAnimal:", data)
+            alert(data)
+            window.status = "1";
+        });
+    }
+
 
     checkToken = function(){
         $.get("https://cat.rosettawe.com/setConfig?checkToken",function (data) {
@@ -496,6 +554,22 @@
     }
 
 
+    attackMyBoss = function(){
+        var r = confirm("是否继续")
+		if (r == true) {
+        var boxUID = $("#SelectMyBoss option:selected").val();
+
+        console.log("SelectMyBoss:", boxUID);
+
+        $.get("https://cat.rosettawe.com/attackMyBoss?id="+boxUID,function (data) {
+        console.log("SelectMyBoss:", data)
+        alert(data)
+        window.status = "1";
+        });
+        }
+    }
+
+
     throwDice = function(){
 
 
@@ -595,6 +669,10 @@
                 tOption.text = jsarr[i]["name"];
                 tOption.selected = false;
                 tOption.value = jsarr[i]["id"];
+
+                if (jsarr[i]["id"] == "302691822"){
+                    tOption.selected = true;
+                }
                 document.getElementById("Oper_Type").options.add(tOption);
                 }
 
@@ -678,6 +756,18 @@
                 tOption.value = jsarr[i]["id"];
                 document.getElementById("PiecePrizeSelect").options.add(tOption);
                 }
+
+                for(var i=0;i<jsarr.length;i++){  
+                var tOption= document.createElement("Option");
+                tOption.text = jsarr[i]["name"];
+
+                // console.log(tOption.text)
+                tOption.selected = false;
+                tOption.value = jsarr[i]["id"];
+                document.getElementById("SelectMyBoss").options.add(tOption);
+                }
+
+                
 
 
                 
@@ -772,6 +862,15 @@
         });
     }
     getAllTokens();
+    var url = window.location.href;
+    console.log("window.location.href:",url);
+    var url = self.location.href;
+    console.log("self.location.href:",url);
+    var url = document.URL;
+    console.log("document.URL:",url);
+    var url = document.location;
+    console.log("document.location:",url["protocol"]+"//"+url["host"]);
+
 
 </script>
 
