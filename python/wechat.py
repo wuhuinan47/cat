@@ -56,13 +56,13 @@ def getGoldMineHelpList(serverURL, zoneToken):
 def updateToken(userID, nickname, token):
     if userID == None:
         print("empty userID ", userID)
-        return
+        return 0
     else:
         url = 'https://cat.rosettawe.com/update?id='+userID+'&token='+token+'&name='+nickname
         response=session.get(url)
         data = response.content.decode('utf-8')
         print("update token result is ", data)
-        return
+        return 1
 
 class Cat():
 

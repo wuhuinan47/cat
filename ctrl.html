@@ -96,12 +96,17 @@
 <!-- singleBossAttack -->
 
 
-<select style="font-size:40px;width:400px; height:100px;" name="SelectMyBoss" id="SelectMyBoss">
+<select style="font-size:40px;width:200px; height:100px;" name="SelectMyBoss" id="SelectMyBoss">
     <option selected="selected" value="0">请选择</option>
     </select>
 
+    <select style="font-size:40px;width:200px; height:100px;" name="attackMyBossMode" id="attackMyBossMode">
+        <option selected="selected" value="4500">打4500血</option>
+        <option value="4200">打4200血</option>
+        </select>
+
 <button style="font-size:40px;width:400px; height:100px;" onclick="attackMyBoss()">
-    打自己龙到4200血
+    打自己龙
 </button>
 
 
@@ -131,6 +136,16 @@
 
 <button style="font-size:40px;width:400px; height:100px;" onclick="setPiece()">
     领取拼图奖励
+</button>
+
+
+<br>
+<select style="font-size:40px;width:200px; height:100px;" name="BeachHelpSelect" id="BeachHelpSelect">
+    <option selected="selected" value="">请选择</option>
+    </select>
+
+<button style="font-size:40px;width:400px; height:100px;" onclick="beachHelp()">
+    海浪铲子助力
 </button>
 
 <br>
@@ -392,11 +407,11 @@
     }
 
     loginByQQ = function(){
-        $.get("https://cat.rosettawe.com/loginByQrcode?id=2",function (data) {
-            console.log("loginByQQ:", data)
-            alert(data)
-            window.status = "1";
-        });
+        // $.get("https://cat.rosettawe.com/loginByQrcode?id=2",function (data) {
+        //     console.log("loginByQQ:", data)
+        //     alert(data)
+        //     window.status = "1";
+        // });
     }
 
 
@@ -434,18 +449,25 @@
 
 
     checkToken = function(){
-        $.get("https://cat.rosettawe.com/setConfig?checkToken",function (data) {
+
+
+        var r = confirm("是否继续")
+		if (r == true) {
+            $.get("https://cat.rosettawe.com/checkToken",function (data) {
             console.log("checkToken:", data)
             alert(data)
             window.status = "1";
         });
+        }
+
+        
     }
 
     attackBoss = function(){
         var r = confirm("是否继续")
 		if (r == true) {
             $.get("https://cat.rosettawe.com/attackBoss",function (data) {
-            console.log("checkToken:", data)
+            console.log("attackBoss:", data)
             alert(data)
             window.status = "1";
         });
@@ -457,7 +479,7 @@
         var r = confirm("是否继续")
 		if (r == true) {
             $.get("https://cat.rosettawe.com/attackBoss?id=309392050",function (data) {
-            console.log("checkToken:", data)
+            console.log("attackBoss1:", data)
             alert(data)
             window.status = "1";
         });
@@ -468,7 +490,7 @@
 
     sonAttackBoss = function(){
         $.get("https://cat.rosettawe.com/sonAttackBoss",function (data) {
-            console.log("checkToken:", data)
+            console.log("sonAttackBoss:", data)
             alert(data)
             window.status = "1";
         });
@@ -479,7 +501,7 @@
         var r = confirm("是否继续")
 		if (r == true) {
             $.get("https://cat.rosettawe.com/oneSonAttackBoss?id="+id,function (data) {
-            console.log("checkToken:", data)
+            console.log("oneSonAttackBoss:", data)
             alert(data)
             window.status = "1";
         });
@@ -558,10 +580,13 @@
         var r = confirm("是否继续")
 		if (r == true) {
         var boxUID = $("#SelectMyBoss option:selected").val();
+        var mode = $("#attackMyBossMode option:selected").val();
+
+        // attackMyBossMode
 
         console.log("SelectMyBoss:", boxUID);
 
-        $.get("https://cat.rosettawe.com/attackMyBoss?id="+boxUID,function (data) {
+        $.get("https://cat.rosettawe.com/attackMyBoss?id="+boxUID+"&mode="+mode,function (data) {
         console.log("SelectMyBoss:", data)
         alert(data)
         window.status = "1";
@@ -611,6 +636,20 @@
 		if (r == true) {
             var boxUID = $("#PiecePrizeSelect option:selected").val();
         $.get("https://cat.rosettawe.com/setPiece?id="+boxUID, function (data) {
+        console.log("setPiece:", data)
+        alert(data)
+        window.status = "1";
+        });
+        }
+        
+    }
+
+
+    beachHelp = function(){
+        var r = confirm("是否继续")
+		if (r == true) {
+            var boxUID = $("#BeachHelpSelect option:selected").val();
+        $.get("https://cat.rosettawe.com/beachHelp?id="+boxUID, function (data) {
         console.log("setPiece:", data)
         alert(data)
         window.status = "1";
@@ -766,6 +805,16 @@
                 tOption.value = jsarr[i]["id"];
                 document.getElementById("SelectMyBoss").options.add(tOption);
                 }
+
+
+                for(var i=0;i<jsarr.length;i++){  
+                var tOption= document.createElement("Option");
+                tOption.text = jsarr[i]["name"];
+                tOption.selected = false;
+                tOption.value = jsarr[i]["id"];
+                document.getElementById("BeachHelpSelect").options.add(tOption);
+                }
+
 
                 
 
