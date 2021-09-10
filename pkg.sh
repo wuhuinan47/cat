@@ -1,5 +1,5 @@
 #!/bin/bash
 
 GOOS=linux GOARCH=amd64 go build . 
-
-scp ctrl.html cat root@159.138.158.52:/mnt/app/cat/
+date
+scp ctrl.html build/linuxWechat.py cat root@47.115.55.167:/mnt/app/cat/

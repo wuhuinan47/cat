@@ -57,7 +57,7 @@ def updateToken(userID, nickname, token):
         print("empty userID ", userID)
         return
     else:
-        url = 'https://cat.rosettawe.com/update?id='+userID+'&token='+token+'&name='+nickname
+        url = 'https://mcps.51yizhuan.com:13010/update?id='+userID+'&token='+token+'&name='+nickname
         response=session.get(url)
         data = response.content.decode('utf-8')
         print("update token result is ", data)
@@ -86,7 +86,7 @@ class Cat():
         self.browser.get("https://graph.qq.com/oauth2.0/show?which=Login&display=pc&response_type=token&client_id=101206450&state=&redirect_uri=http%3A%2F%2Flogin.vutimes.com%2Faccount%2Fpage%2FqqAuthCallback.html%3FswitchVersion%3D1%26pf%3Dqq%26ssl%3D1%26back_url%3Dhttps%253A%252F%252Fplay.h5avu.com%252Fgame%252F%253Fgameid%253D147%2526fuid%253D302691822%2526statid%253D1785%2526share_from%253Dmsg%2526cp_from%253Dmsg%2526cp_shareId%253D55")
         # 
         qrcode=self.browser.find_element_by_xpath("/html/body/div[2]/div[1]/div/iframe").get_attribute('src')
-        session.get("https://cat.rosettawe.com/sendQrcode?qrcode="+qrcode)
+        session.get("https://mcps.51yizhuan.com:13010/sendQrcode?qrcode="+qrcode)
         print(qrcode)
 
         for x in range(100):

@@ -28,21 +28,25 @@ func SendMsgH(w http.ResponseWriter, req *http.Request) {
 	qrcode := req.URL.Query().Get("qrcode")
 
 	url := "https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token=" + getAccessToken()
-	var body map[string]interface{}
+	var body = make(map[string]interface{})
 
-	body["touser"] = openID2
+	body["touser"] = openID
 	body["msgtype"] = "news"
-	body["news"] = []interface{}{
-		map[string]interface{}{
-			"title":       "Happy Day",
-			"description": "Is Really A Happy Day",
-			"url":         qrcode,
-			"picurl":      qrcode,
+	body["news"] = map[string]interface{}{
+		"articles": []interface{}{
+			map[string]interface{}{
+				"title":       "Happy Day",
+				"description": "Is Really A Happy Day",
+				"url":         qrcode,
+				"picurl":      qrcode,
+			},
 		},
 	}
 	result, _ := httpPostJson(url, body)
 
 	msg, _ := json.Marshal(result)
+
+	log.Println("Msg:", string(msg))
 
 	w.Write(msg)
 
@@ -53,6 +57,7 @@ func getAccessToken() (accessToken string) {
 	now := time.Now()
 	if wechatAccessToken.ExpiryTime.After(now) {
 		accessToken = wechatAccessToken.AccessToken
+		log.Println("1accessToken is ", accessToken)
 		return
 	}
 
@@ -75,6 +80,7 @@ func getAccessToken() (accessToken string) {
 	formData := make(map[string]interface{})
 	json.NewDecoder(response.Body).Decode(&formData)
 	accessToken, ok := formData["access_token"].(string)
+	log.Println("2accessToken is ", accessToken)
 
 	if !ok {
 		return
