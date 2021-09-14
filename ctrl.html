@@ -1,71 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
-    <meta http-equiv="Pragma" content="no-cache"/>
-    <meta http-equiv="Expires" content="0"/>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>猫来了辅助简易版</title>
 </head>
+
 <body>
 
 
     <select style="font-size:40px;width:400px; height:100px;" name="Oper_Type" id="Oper_Type">
-        <!-- <option selected="selected" value="302691822">🐮🐮🌱besos</option> -->
-        </select>
-    
-        <button style="font-size:40px;width:400px; height:100px;" onclick="login('')">
-            登录
-        </button>
+    </select>
 
-<br>
-<button style="font-size:40px;width:400px; height:100px;" onclick="pullAnimal()">
-    拉动物
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="login('')">
+        登录
+    </button>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="familySign()">
-    公会签到
-</button>
-<br>
+    <br>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="pullAnimal()">
+        拉动物
+    </button>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="startPullAnimal()">
-    开启动物定时器
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="familySign()">
+        公会签到
+    </button>
+    <br>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="stopPullAnimal()">
-    关闭动物定时器
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="startPullAnimal()">
+        开启动物定时器
+    </button>
 
-<br>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="stopPullAnimal()">
+        关闭动物定时器
+    </button>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="startDrawStatus()">
-    开启摇一摇状态
-</button>
+    <br>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="stopDrawStatus()">
-    关闭摇一摇状态
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="startDrawStatus()">
+        开启摇一摇状态
+    </button>
 
-<br>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="stopDrawStatus()">
+        关闭摇一摇状态
+    </button>
 
-<select style="font-size:40px;width:150px; height:100px;" name="boxUidsSelect" id="boxUidsSelect">
-    <option selected="selected" value="">请选择</option>
+    <br>
+
+    <select style="font-size:40px;width:150px; height:100px;" name="boxUidsSelect" id="boxUidsSelect">
+        <option selected="selected" value="">请选择</option>
     </select>
     <select style="font-size:40px;width:150px; height:100px;" name="BCSelect2" id="BCSelect2">
         <option value="1">普通</option>
         <option value="2">稀有</option>
         <option selected="selected" value="3">传奇</option>
-        </select>
-<input id="boxAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="目标数量" value="3"/>
+    </select>
+    <input id="boxAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="目标数量" value="3" />
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="getBox()">
-    抓宝箱
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getBox()">
+        抓宝箱
+    </button>
 
-<br>
+    <br>
 
-<select style="font-size:40px;width:150px; height:100px;" name="Oper_Candy" id="Oper_Candy">
-    <option selected="selected" value="">请选择</option>
+    <select style="font-size:40px;width:150px; height:100px;" name="Oper_Candy" id="Oper_Candy">
+        <option selected="selected" value="">请选择</option>
     </select>
 
 
@@ -73,176 +74,178 @@
         <option value="1">普通</option>
         <option value="2">稀有</option>
         <option selected="selected" value="3">传奇</option>
-        </select>
-<input id="candyAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="目标数量" value="3" />
+    </select>
+    <input id="candyAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="目标数量"
+        value="3" />
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="hitCandy()">
-    打糖果
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="hitCandy()">
+        打糖果
+    </button>
 
-<br>
-<button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss()">
-    我打龙
-</button>
+    <br>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss()">
+        我打龙
+    </button>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss1()">
-    蜜打龙
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss1()">
+        蜜打龙
+    </button>
 
-<br>
+    <br>
 
-<!-- singleBossAttack -->
+    <!-- singleBossAttack -->
 
 
-<select style="font-size:40px;width:200px; height:100px;" name="SelectMyBoss" id="SelectMyBoss">
-    <option selected="selected" value="0">请选择</option>
+    <select style="font-size:40px;width:200px; height:100px;" name="SelectMyBoss" id="SelectMyBoss">
+        <option selected="selected" value="0">请选择</option>
     </select>
 
     <select style="font-size:40px;width:200px; height:100px;" name="attackMyBossMode" id="attackMyBossMode">
         <option selected="selected" value="4500">打4500血</option>
         <option value="4200">打4200血</option>
-        </select>
-
-<button style="font-size:40px;width:400px; height:100px;" onclick="attackMyBoss()">
-    打自己龙
-</button>
-
-
-<br>
-
-<select style="font-size:40px;width:200px; height:100px;" name="SingleBossSelect" id="SingleBossSelect">
-    <option value="1">蜜龙组</option>
-    <option value="2">牛龙组</option>
-    <option value="3">龙组3</option>
-    <option selected="selected" value="4">笨蛋小峰组</option>
-    <option value="5">云颜辛巴组</option>
-    
-</select>
-
-<button style="font-size:40px;width:400px; height:100px;" onclick="singleBossAttack()">
-    把龙打到600血
-</button>
-
-
-
-
-<br>
-<select style="font-size:40px;width:200px; height:100px;" name="PiecePrizeSelect" id="PiecePrizeSelect">
-    <option selected="selected" value="">请选择</option>
     </select>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="setPiece()">
-    领取拼图奖励
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="attackMyBoss()">
+        打自己龙
+    </button>
 
 
-<br>
-<select style="font-size:40px;width:200px; height:100px;" name="BeachHelpSelect" id="BeachHelpSelect">
-    <option selected="selected" value="">请选择</option>
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="SingleBossSelect" id="SingleBossSelect">
+        <option value="1">蜜龙组</option>
+        <option value="2">牛龙组</option>
+        <option value="3">龙组3</option>
+        <option selected="selected" value="4">笨蛋小峰组</option>
+        <option value="5">云颜辛巴组</option>
+
     </select>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="beachHelp()">
-    海浪铲子助力
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="singleBossAttack()">
+        把龙打到600血
+    </button>
 
 
-<br>
 
-<select style="font-size:40px;width:150px; height:100px;" name="UseShovelFrom" id="UseShovelFrom">
-    <option selected="selected" value="">请选择</option>
+
+    <br>
+    <select style="font-size:40px;width:200px; height:100px;" name="PiecePrizeSelect" id="PiecePrizeSelect">
+        <option selected="selected" value="">请选择</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="setPiece()">
+        领取拼图奖励
+    </button>
+
+
+    <br>
+    <select style="font-size:40px;width:200px; height:100px;" name="BeachHelpSelect" id="BeachHelpSelect">
+        <option selected="selected" value="">请选择</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="beachHelp()">
+        海浪铲子助力
+    </button>
+
+
+    <br>
+
+    <select style="font-size:40px;width:150px; height:100px;" name="UseShovelFrom" id="UseShovelFrom">
+        <option selected="selected" value="">请选择</option>
     </select>
 
     <select style="font-size:40px;width:150px; height:100px;" name="UseShovelTo" id="UseShovelTo">
         <option selected="selected" value="">自己</option>
-        </select>
-
-<button style="font-size:40px;width:400px; height:100px;" onclick="useShovel()">
-    使用铲子
-</button>
-
-
-<br>
-
-<select style="font-size:40px;width:150px; height:100px;" name="GetBeachLineRewardsH" id="GetBeachLineRewardsH">
-    <option selected="selected" value="">请选择</option>
     </select>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="getBeachLineRewards()">
-    领取海滩奖励
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="useShovel()">
+        使用铲子
+    </button>
 
 
-<br>
-<button style="font-size:40px;width:400px; height:100px;" onclick="checkToken()">
-    检测账号状态
-</button>
+    <br>
 
-<br>
-
-<button style="font-size:40px;width:400px; height:100px;" onclick="loginByWechat()">
-    微信登录
-</button>
-
-<button style="font-size:40px;width:400px; height:100px;" onclick="loginByQQ()">
-    QQ登录
-</button>
-
-<br>
-
-<select style="font-size:40px;width:400px; height:100px;" name="Oper_Boss" id="Oper_Boss">
-    <option selected="selected" value="">请选择</option>
+    <select style="font-size:40px;width:150px; height:100px;" name="GetBeachLineRewardsH" id="GetBeachLineRewardsH">
+        <option selected="selected" value="">请选择</option>
     </select>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="getFreeBossCannon()">
-    领取免费龙炮弹
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getBeachLineRewards()">
+        领取海滩奖励
+    </button>
 
 
+    <br>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="checkToken()">
+        检测账号状态
+    </button>
 
-<br>
+    <br>
 
-<select style="font-size:40px;width:200px; height:100px;" name="Oper_Dice" id="Oper_Dice">
-    <option selected="selected" value="">请选择</option>
-    </select>
-    <input id="diceAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="目标数量" value="10"/>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="loginByWechat()">
+        微信登录
+    </button>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="throwDice()">
-    扔骰子
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="loginByQQ()">
+        QQ登录
+    </button>
 
+    <br>
 
-
-<br>
-
-<select style="font-size:40px;width:200px; height:100px;" name="Oper_Dice" id="Oper_Mail">
-    <option selected="selected" value="">请选择</option>
-    </select>
-
-<button style="font-size:40px;width:400px; height:100px;" onclick="getMailPrize()">
-    领取邮件奖励
-</button>
-
-
-<br>
-
-<select style="font-size:40px;width:200px; height:100px;" name="Oper_BossPrize" id="Oper_BossPrize">
-    <option selected="selected" value="">一键领取</option>
+    <select style="font-size:40px;width:400px; height:100px;" name="Oper_Boss" id="Oper_Boss">
+        <option selected="selected" value="">请选择</option>
     </select>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="getBossPrize()">
-    领取龙奖励
-</button>
-
-<br>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getFreeBossCannon()">
+        领取免费龙炮弹
+    </button>
 
 
-<select style="font-size:40px;width:150px; height:100px;" name="Oper_pieceFrom" id="Oper_pieceFrom">
-    <option selected="selected" value="">发送者</option>
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="Oper_Dice" id="Oper_Dice">
+        <option selected="selected" value="">请选择</option>
+    </select>
+    <input id="diceAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="目标数量"
+        value="10" />
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="throwDice()">
+        扔骰子
+    </button>
+
+
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="Oper_Dice" id="Oper_Mail">
+        <option selected="selected" value="">请选择</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getMailPrize()">
+        领取邮件奖励
+    </button>
+
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="Oper_BossPrize" id="Oper_BossPrize">
+        <option selected="selected" value="">一键领取</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getBossPrize()">
+        领取龙奖励
+    </button>
+
+    <br>
+
+
+    <select style="font-size:40px;width:150px; height:100px;" name="Oper_pieceFrom" id="Oper_pieceFrom">
+        <option selected="selected" value="">发送者</option>
     </select>
 
     <select style="font-size:40px;width:150px; height:100px;" name="Oper_pieceTo" id="Oper_pieceTo">
         <option selected="selected" value="">接受者</option>
-        </select>
+    </select>
 
 
     <select style="font-size:40px;width:150px; height:100px;" name="PieceSelect" id="PieceSelect">
@@ -256,35 +259,35 @@
         <option value="7">7</option>
         <option value="8">8</option>
         <option value="9">9</option>
-        </select>
+    </select>
 
 
-        <select style="font-size:40px;width:150px; height:100px;" name="PieceAmount" id="PieceAmount">
-            <option selected="selected" value="">数量</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            <option value="10">10</option>
-            </select>
+    <select style="font-size:40px;width:150px; height:100px;" name="PieceAmount" id="PieceAmount">
+        <option selected="selected" value="">数量</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+    </select>
 
-<button style="font-size:40px;width:200px; height:100px;" onclick="giftPiece()">
-    赠送拼图
-</button>
-
-
+    <button style="font-size:40px;width:200px; height:100px;" onclick="giftPiece()">
+        赠送拼图
+    </button>
 
 
 
-<br>
 
-<select style="font-size:40px;width:150px; height:100px;" name="Oper_Draw" id="Oper_Draw">
-    <option selected="selected" value="">请选择</option>
+
+    <br>
+
+    <select style="font-size:40px;width:150px; height:100px;" name="Oper_Draw" id="Oper_Draw">
+        <option selected="selected" value="">请选择</option>
     </select>
 
 
@@ -294,795 +297,810 @@
         <option value="3">3倍</option>
         <option value="4">4倍</option>
         <option value="5">5倍</option>
-        </select>
-<input id="drawAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="摇次数" value="50" />
+    </select>
+    <input id="drawAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="摇次数" value="50" />
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="draw()">
-    转盘
-</button>
-
-
-
-<br>
-
-<button style="font-size:40px;width:400px; height:100px;" onclick="getServerLogs()">
-    查看服务器日志
-</button>
-
-<button style="font-size:40px;width:400px; height:100px;" onclick="delServerLogs()">
-    删除服务器日志
-</button>
-<br>
-
-<button style="font-size:40px;width:400px; height:100px;" onclick="sonAttackBoss()">
-    一键小号打龙
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="draw()">
+        转盘
+    </button>
 
 
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(4)">
-    牛组
-</button>
+    <br>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getServerLogs()">
+        查看服务器日志
+    </button>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="delServerLogs()">
+        删除服务器日志
+    </button>
+    <br>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="sonAttackBoss()">
+        一键小号打龙
+    </button>
 
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(5)">
-    蜜组
-</button>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(6)">
-    BOSS组
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(4)">
+        牛组
+    </button>
 
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(1)">
-    笨蛋小峰组
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(5)">
+        蜜组
+    </button>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(2)">
-    云颜辛巴组
-</button>
-
-<button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(3)">
-    其他组
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(6)">
+        BOSS组
+    </button>
 
 
-<br>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(1)">
+        笨蛋小峰组
+    </button>
 
-<select style="font-size:40px;width:200px; height:100px;" name="RunnerUsers" id="RunnerUsers">
-    <option selected="selected" value="">请选择</option>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(2)">
+        云颜辛巴组
+    </button>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(3)">
+        其他组
+    </button>
+
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="RunnerUsers" id="RunnerUsers">
+        <option selected="selected" value="">请选择</option>
     </select>
 
     <select style="font-size:40px;width:200px; height:100px;" name="RunnerSelect" id="RunnerSelect">
         <option selected="selected" value="1">海滩刷新</option>
-        </select>
-
-<button style="font-size:40px;width:400px; height:100px;" onclick="setRunner()">
-    设置定时器
-</button>
-
-
-<br>
-
-<select style="font-size:40px;width:200px; height:100px;" name="buildUpUsers" id="buildUpUsers">
-    <option selected="selected" value="">请选择</option>
     </select>
 
-<button style="font-size:40px;width:400px; height:100px;" onclick="buildUp()">
-    过岛(24下)
-</button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="setRunner()">
+        设置定时器
+    </button>
 
 
-<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <br>
 
-<script type="text/javascript">
-    window.status = "1";
+    <select style="font-size:40px;width:200px; height:100px;" name="buildUpUsers" id="buildUpUsers">
+        <option selected="selected" value="">请选择</option>
+    </select>
 
-    pullAnimal = function(){
-        $.get("https://mcps.51yizhuan.com:13010/pullAnimal",function (data) {
-            console.log("pullAnimal:", data)
-            alert(data)
-            window.status = "1";
-        });
-    }
+    <button style="font-size:40px;width:400px; height:100px;" onclick="buildUp()">
+        过岛(25下)
+    </button>
 
-    familySign = function(){
-        $.get("https://mcps.51yizhuan.com:13010/familySign",function (data) {
-            console.log("familySign:", data)
-            alert(data)
-            window.status = "1";
-        });
-    }
 
-    getSignPrize = function(){
-        $.get("https://mcps.51yizhuan.com:13010/getSignPrize",function (data) {
-            console.log("getSignPrize:", data)
-            alert(data)
-            window.status = "1";
-        });
-    }
+    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 
-    getBox = function(){
-
-        var r = confirm("是否继续")
-		if (r == true) {
-            var boxUID = $("#boxUidsSelect option:selected").val();
-
-        var boxQuality = $("#BCSelect2 option:selected").val();
-
-        var boxAmount=document.getElementById("boxAmount");
-        console.log("boxUID:", boxUID);
-        console.log("boxQuality:", boxQuality);
-        console.log("boxAmount:", boxAmount.value);
-
-        $.get("https://mcps.51yizhuan.com:13010/diamond?id="+boxUID+"&quality="+boxQuality+"&amount="+boxAmount.value,function (data) {
-            console.log("getSignPrize:", data)
-            alert(data)
-            window.status = "1";
-        });
-        }
-
-        
-    }
-
-    hitCandy = function(){
-        var r = confirm("是否继续")
-		if (r == true) {
-            var boxUID = $("#Oper_Candy option:selected").val();
-        var boxQuality = $("#BCSelect option:selected").val();
-
-        var boxAmount=document.getElementById("candyAmount");
-        console.log("candyUID:", boxUID);
-        console.log("candyQuality:", boxQuality);
-        console.log("candyAmount:", boxAmount.value);
-
-        $.get("https://mcps.51yizhuan.com:13010/hitCandy?id="+boxUID+"&quality="+boxQuality+"&amount="+boxAmount.value,function (data) {
-        console.log("getSignPrize:", data)
-        alert(data)
+    <script type="text/javascript">
         window.status = "1";
-        });
+
+        pullAnimal = function () {
+            $.get(APIURL + "/pullAnimal", function (data) {
+                console.log("pullAnimal:", data)
+                alert(data)
+                window.status = "1";
+            });
         }
 
-        
-    }
+        familySign = function () {
+
+            var r = confirm("公会签到是否继续")
+            if (r == true) {
+                var GetBeachLineRewardsH = $("#GetBeachLineRewardsH option:selected").val();
+
+                $.get(APIURL + "/familySign", function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
 
 
-    useShovel = function(){
-        var r = confirm("是否继续")
-if (r == true) {
-    var UseShovelFrom = $("#UseShovelFrom option:selected").val();
-    var UseShovelTo = $("#UseShovelTo option:selected").val();
 
-$.get("https://mcps.51yizhuan.com:13010/useShovel?id="+UseShovelFrom+"&toid="+UseShovelTo,function (data) {
-    console.log("useShovel:", data)
-    alert(data)
-    window.status = "1";
-});
-}
         }
 
-getBeachLineRewards = function(){
-
-var r = confirm("是否继续")
-if (r == true) {
-    var GetBeachLineRewardsH = $("#GetBeachLineRewardsH option:selected").val();
-
-$.get("https://mcps.51yizhuan.com:13010/getBeachLineRewards?id="+GetBeachLineRewardsH,function (data) {
-    console.log("getSignPrize:", data)
-    alert(data)
-    window.status = "1";
-});
-}
-
-
-}
-
-
-    loginByWechat = function(){
-        $.get("https://mcps.51yizhuan.com:13010/loginByQrcode?id=1",function (data) {
-            console.log("loginByWechat:", data)
-            // alert(data)
-            window.status = "1";
-            window.open(data);
-        });
-    }
-
-    loginByQQ = function(){
-        // $.get("https://mcps.51yizhuan.com:13010/loginByQrcode?id=2",function (data) {
-        //     console.log("loginByQQ:", data)
-        //     alert(data)
-        //     window.status = "1";
-        // });
-    }
-
-
-    startPullAnimal = function(){
-        $.get("https://mcps.51yizhuan.com:13010/setConfig?confKey=pullAnimalGoStatus&confValue=1",function (data) {
-            console.log("startPullAnimal:", data)
-            alert(data)
-            window.status = "1";
-        });
-    }
-
-    stopPullAnimal = function(){
-        $.get("https://mcps.51yizhuan.com:13010/setConfig?confKey=pullAnimalGoStatus&confValue=0",function (data) {
-            console.log("stopPullAnimal:", data)
-            alert(data)
-            window.status = "1";
-        });
-    }
-
-    startDrawStatus = function(){
-        $.get("https://mcps.51yizhuan.com:13010/setConfig?confKey=drawStatus&confValue=1",function (data) {
-            console.log("startPullAnimal:", data)
-            alert(data)
-            window.status = "1";
-        });
-    }
-
-    stopDrawStatus = function(){
-        $.get("https://mcps.51yizhuan.com:13010/setConfig?confKey=drawStatus&confValue=0",function (data) {
-            console.log("stopPullAnimal:", data)
-            alert(data)
-            window.status = "1";
-        });
-    }
-
-
-    checkToken = function(){
-
-
-        var r = confirm("是否继续")
-		if (r == true) {
-            $.get("https://mcps.51yizhuan.com:13010/checkToken",function (data) {
-            console.log("checkToken:", data)
-            alert(data)
-            window.status = "1";
-        });
+        getSignPrize = function () {
+            $.get(APIURL + "/getSignPrize", function (data) {
+                console.log("getSignPrize:", data)
+                alert(data)
+                window.status = "1";
+            });
         }
 
-        
-    }
+        getBox = function () {
 
-    attackBoss = function(){
-        var r = confirm("是否继续")
-		if (r == true) {
-            $.get("https://mcps.51yizhuan.com:13010/attackBoss",function (data) {
-            console.log("attackBoss:", data)
-            alert(data)
-            window.status = "1";
-        });
-        }
-        
-    }
+            var r = confirm("是否继续")
+            if (r == true) {
+                var boxUID = $("#boxUidsSelect option:selected").val();
 
-    attackBoss1 = function(){
-        var r = confirm("是否继续")
-		if (r == true) {
-            $.get("https://mcps.51yizhuan.com:13010/attackBoss?id=309392050",function (data) {
-            console.log("attackBoss1:", data)
-            alert(data)
-            window.status = "1";
-        });
-        }
-        
-    }
+                var boxQuality = $("#BCSelect2 option:selected").val();
+
+                var boxAmount = document.getElementById("boxAmount");
+                console.log("boxUID:", boxUID);
+                console.log("boxQuality:", boxQuality);
+                console.log("boxAmount:", boxAmount.value);
+
+                $.get(APIURL + "/diamond?id=" + boxUID + "&quality=" + boxQuality + "&amount=" + boxAmount.value, function (data) {
+                    console.log("getSignPrize:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
 
 
-    sonAttackBoss = function(){
-        $.get("https://mcps.51yizhuan.com:13010/sonAttackBoss",function (data) {
-            console.log("sonAttackBoss:", data)
-            alert(data)
-            window.status = "1";
-        });
-    }
-
-
-    oneSonAttackBoss = function(id){
-        var r = confirm("是否继续")
-		if (r == true) {
-            $.get("https://mcps.51yizhuan.com:13010/oneSonAttackBoss?id="+id,function (data) {
-            console.log("oneSonAttackBoss:", data)
-            alert(data)
-            window.status = "1";
-        });
-        }
-        
-    }
-
-
-    login = function(id){
-        if (id == "") {
-            var str = $("#Oper_Type option:selected").val();
-            console.log("login uid is ", str)
-            id = str
-        }
-        // window.location.href = "https://mcps.51yizhuan.com:13010/login?id="+id;
-        window.open("https://mcps.51yizhuan.com:13010/login?id="+id)
-    }
-
-    getFreeBossCannon = function(id){
-        var r = confirm("是否继续")
-		if (r == true) {
-            var id = $("#Oper_Boss option:selected").val();
-        $.get("https://mcps.51yizhuan.com:13010/getFreeBossCannon?id="+id,function (data) {
-            alert(data)
-            window.status = "1";
-        });
         }
 
-        
-    }
+        hitCandy = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var boxUID = $("#Oper_Candy option:selected").val();
+                var boxQuality = $("#BCSelect option:selected").val();
+
+                var boxAmount = document.getElementById("candyAmount");
+                console.log("candyUID:", boxUID);
+                console.log("candyQuality:", boxQuality);
+                console.log("candyAmount:", boxAmount.value);
+
+                $.get(APIURL + "/hitCandy?id=" + boxUID + "&quality=" + boxQuality + "&amount=" + boxAmount.value, function (data) {
+                    console.log("getSignPrize:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
 
 
-
-    giftPiece = function(){
-        var r = confirm("是否继续")
-		if (r == true) {
-            var fromUid = $("#Oper_pieceFrom option:selected").val();
-        var toUid = $("#Oper_pieceTo option:selected").val();
-        var id = $("#PieceSelect option:selected").val();
-        var amount = $("#PieceAmount option:selected").val();
-        
-
-        $.get("https://mcps.51yizhuan.com:13010/giftPiece?id="+id+"&fromUid="+fromUid+"&toUid="+toUid+"&amount="+amount,function (data) {
-        console.log("giftPiece:", data)
-        alert(data)
-        window.status = "1";
-        });
-        }
-
-        
-    }
-    // 
-
-    draw = function(){
-        var r = confirm("是否继续")
-		if (r == true) {
-            var id = $("#Oper_Draw option:selected").val();
-        var drawMulti = $("#DrawSelect option:selected").val();
-        var drawAmount=document.getElementById("drawAmount");
-
-        console.log("draw id:", id)
-        console.log("draw drawMulti:", drawMulti)
-        console.log("draw drawAmount:", drawAmount.value)
-
-        $.get("https://mcps.51yizhuan.com:13010/draw?id="+id+"&drawMulti="+drawMulti+"&amount="+drawAmount.value,function (data) {
-        console.log("draw:", data)
-        alert(data)
-        window.status = "1";
-        });
-		}
-
-    }
-
-
-    buildUp = function(){
-        // buildUpUsers
-
-        var r = confirm("是否继续")
-		if (r == true) {
-            var id = $("#buildUpUsers option:selected").val();
-
-        $.get("https://mcps.51yizhuan.com:13010/buildUp?id="+id,function (data) {
-        console.log("buildUp:", data)
-        alert(data)
-        window.status = "1";
-        });
-		}
-
-    }
-
-    setRunner = function(){
-        var r = confirm("是否继续")
-		if (r == true) {
-            var id = $("#RunnerUsers option:selected").val();
-        var drawMulti = $("#RunnerSelect option:selected").val();
-
-        $.get("https://mcps.51yizhuan.com:13010/setRunner?id="+id+"&key="+drawMulti,function (data) {
-        console.log("setRunner:", data)
-        alert(data)
-        window.status = "1";
-        });
-		}
-
-    }
-
-
-    attackMyBoss = function(){
-        var r = confirm("是否继续")
-		if (r == true) {
-        var boxUID = $("#SelectMyBoss option:selected").val();
-        var mode = $("#attackMyBossMode option:selected").val();
-
-        // attackMyBossMode
-
-        console.log("SelectMyBoss:", boxUID);
-
-        $.get("https://mcps.51yizhuan.com:13010/attackMyBoss?id="+boxUID+"&mode="+mode,function (data) {
-        console.log("SelectMyBoss:", data)
-        alert(data)
-        window.status = "1";
-        });
-        }
-    }
-
-
-    throwDice = function(){
-
-
-        var r = confirm("是否继续")
-		if (r == true) {
-        var boxUID = $("#Oper_Dice option:selected").val();
-
-        var boxAmount=document.getElementById("diceAmount");
-        console.log("diceUID:", boxUID);
-        console.log("diceAmount:", boxAmount.value);
-
-        $.get("https://mcps.51yizhuan.com:13010/throwDice?id="+boxUID+"&amount="+boxAmount.value,function (data) {
-        console.log("throwDice:", data)
-        alert(data)
-        window.status = "1";
-        });
-        }
-
-        
-    }
-
-
-    singleBossAttack = function(){
-        var r = confirm("是否继续")
-		if (r == true) {
-            var boxUID = $("#SingleBossSelect option:selected").val();
-        $.get("https://mcps.51yizhuan.com:13010/singleBossAttack?id="+boxUID, function (data) {
-        console.log("singleBossAttack:", data)
-        alert(data)
-        window.status = "1";
-        });
-        }
-
-       
-    }
-
-    setPiece = function(){
-        var r = confirm("是否继续")
-		if (r == true) {
-            var boxUID = $("#PiecePrizeSelect option:selected").val();
-        $.get("https://mcps.51yizhuan.com:13010/setPiece?id="+boxUID, function (data) {
-        console.log("setPiece:", data)
-        if (data == "SUCCESS"){
-            alert(data)
-        } else {
-            window.open(data);
-        }
-        window.status = "1";
-        });
-        }
-        
-    }
-
-
-    beachHelp = function(){
-        var r = confirm("是否继续")
-		if (r == true) {
-            var boxUID = $("#BeachHelpSelect option:selected").val();
-        $.get("https://mcps.51yizhuan.com:13010/beachHelp?id="+boxUID, function (data) {
-        console.log("setPiece:", data)
-        alert(data)
-        window.status = "1";
-        });
-        }
-        
-    }
-
-    getMailPrize = function(){
-        var r = confirm("是否继续")
-		if (r == true) {
-            var boxUID = $("#Oper_Mail option:selected").val();
-        $.get("https://mcps.51yizhuan.com:13010/getMailPrize?id="+boxUID, function (data) {
-        console.log("getMailPrize:", data)
-        alert(data)
-        window.status = "1";
-        });
         }
 
 
-        
-    }
+        useShovel = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var UseShovelFrom = $("#UseShovelFrom option:selected").val();
+                var UseShovelTo = $("#UseShovelTo option:selected").val();
 
-    getBossPrize = function(){
-        var r = confirm("是否继续")
-		if (r == true) {
-            var boxUID = $("#Oper_BossPrize option:selected").val();
-        $.get("https://mcps.51yizhuan.com:13010/getBossPrize?id="+boxUID, function (data) {
-        console.log("getMailPrize:", data)
-        alert(data)
-        window.status = "1";
-        });
+                $.get(APIURL + "/useShovel?id=" + UseShovelFrom + "&toid=" + UseShovelTo, function (data) {
+                    console.log("useShovel:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
         }
 
-        
-    }
+        getBeachLineRewards = function () {
+
+            var r = confirm("是否继续")
+            if (r == true) {
+                var GetBeachLineRewardsH = $("#GetBeachLineRewardsH option:selected").val();
+
+                $.get(APIURL + "/getBeachLineRewards?id=" + GetBeachLineRewardsH, function (data) {
+                    console.log("getSignPrize:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
 
 
-    getServerLogs = function(){
-        window.open("https://mcps.51yizhuan.com:13010/getServerLogs");
-    }
-
-    delServerLogs = function(){
-        $.get("https://mcps.51yizhuan.com:13010/delServerLogs", function (data) {
-        console.log("delServerLogs:", data)
-        alert(data)
-        window.status = "1";
-        });
-    }
-
-    getAllTokens = function(){
-        $.get("https://mcps.51yizhuan.com:13010/getAllTokens",function (data) {
-            var jsarr=JSON.parse( data );
-            for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-
-                if (jsarr[i]["id"] == "302691822"){
-                    tOption.selected = true;
-                }
-                document.getElementById("Oper_Type").options.add(tOption);
-                }
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption1= document.createElement("Option");
-                tOption1.text = jsarr[i]["name"];
-                tOption1.selected = false;
-                tOption1.value = jsarr[i]["id"];
-                document.getElementById("boxUidsSelect").options.add(tOption1);
-                }
-
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("Oper_Candy").options.add(tOption);
-                }
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("Oper_Boss").options.add(tOption);
-                }
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("Oper_pieceFrom").options.add(tOption);
-                }
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("Oper_pieceTo").options.add(tOption);
-                }
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("Oper_Draw").options.add(tOption);
-                }
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("Oper_Dice").options.add(tOption);
-                }
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("Oper_Mail").options.add(tOption);
-                }
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("Oper_BossPrize").options.add(tOption);
-                }
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("PiecePrizeSelect").options.add(tOption);
-                }
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-
-                // console.log(tOption.text)
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("SelectMyBoss").options.add(tOption);
-                }
-
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("BeachHelpSelect").options.add(tOption);
-                }
-
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("UseShovelFrom").options.add(tOption);
-                }
-
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("UseShovelTo").options.add(tOption);
-                }
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("GetBeachLineRewardsH").options.add(tOption);
-                }
-
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("RunnerUsers").options.add(tOption);
-                }
-
-                for(var i=0;i<jsarr.length;i++){  
-                var tOption= document.createElement("Option");
-                tOption.text = jsarr[i]["name"];
-                tOption.selected = false;
-                tOption.value = jsarr[i]["id"];
-                document.getElementById("buildUpUsers").options.add(tOption);
-                }
-                
-                
-                
-
-
-                
-                
-            window.status = "1";
-        });
-    }
-
-
-
-    // 
-
-
-    // 
-
-
-    // 
-
-    // 
-
-    toubi = function(){
-        $.get("http://192.168.1.13:21000/print?command=1",function () {
-            console.log("djkslfjalskjdkf2223")
-            window.status = "1";
-        });
-    }
-
-    you = function(){
-        $.get("http://192.168.1.13:21000/print?command=2",function () {
-            console.log("djkslfjalskjdkf2223")
-            window.status = "1";
-        });
-    }
-
-    youstop = function(){
-        $.get("http://192.168.1.13:21000/print?command=3",function () {
-            console.log("djkslfjalskjdkf2223")
-            window.status = "1";
-        });
-    }
-
-    hou = function(){
-        $.get("http://192.168.1.13:21000/print?command=4",function () {
-            console.log("djkslfjalskjdkf2223")
-            window.status = "1";
-        });
-    }
-
-    houstop = function(){
-        $.get("http://192.168.1.13:21000/print?command=5",function () {
-            console.log("djkslfjalskjdkf2223")
-            window.status = "1";
-        });
-    }
-
-    third = function(){
-        $.get("http://192.168.1.13:21000/print?command=6",function () {
-            console.log("djkslfjalskjdkf2223")
-            window.status = "1";
-        });
-    }
-
-    thirdstop = function(){
-        $.get("http://192.168.1.13:21000/print?command=7",function () {
-            console.log("djkslfjalskjdkf2223")
-            window.status = "1";
-        });
-    }
-
-    gopen = function (i) {
-        console.log("gopen ", window.status != "1")
-        if (window.status != "1") {
-            return;
         }
-        console.log("open ", i)
-        window.status = "0";
-        $.get("http://8.134.19.98:8888/open/" + i,function () {
-            console.log("djkslfjalskjdkf2223")
-            window.status = "1";
-        });
-    }
 
-    gclose = function (i) {
-        console.log("close ", window.status != "1")
-        if (window.status != "1") {
-            return;
+
+        loginByWechat = function () {
+            $.get(APIURL + "/loginByQrcode?id=1", function (data) {
+                // alert(data)
+                window.status = "1";
+                window.open(data);
+            });
         }
-        window.status = "0";
-        $.get("http://8.134.19.98:8888/close/" + i,function () {
-            console.log("djkslfjalskjdkf2223")
-            window.status = "1";
-        });
-    }
-    getAllTokens();
-    var url = window.location.href;
-    console.log("window.location.href:",url);
-    var url = self.location.href;
-    console.log("self.location.href:",url);
-    var url = document.URL;
-    console.log("document.URL:",url);
-    var url = document.location;
-    console.log("document.location:",url["protocol"]+"//"+url["host"]);
+
+        loginByQQ = function () {
+            $.get(APIURL + "/loginByQrcode?id=4", function (data) {
+                // alert(data)
+                window.status = "1";
+                window.open(data);
+            });
+        }
 
 
-</script>
+        startPullAnimal = function () {
+            $.get(APIURL + "/setConfig?confKey=pullAnimalGoStatus&confValue=1", function (data) {
+                console.log("startPullAnimal:", data)
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        stopPullAnimal = function () {
+            $.get(APIURL + "/setConfig?confKey=pullAnimalGoStatus&confValue=0", function (data) {
+                console.log("stopPullAnimal:", data)
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        startDrawStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=drawStatus&confValue=1", function (data) {
+                console.log("startPullAnimal:", data)
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        stopDrawStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=drawStatus&confValue=0", function (data) {
+                console.log("stopPullAnimal:", data)
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+
+        checkToken = function () {
+
+
+            var r = confirm("是否继续")
+            if (r == true) {
+                $.get(APIURL + "/checkToken", function (data) {
+                    console.log("checkToken:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
+        }
+
+        attackBoss = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                $.get(APIURL + "/attackBoss", function (data) {
+                    console.log("attackBoss:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        attackBoss1 = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                $.get(APIURL + "/attackBoss?id=309392050", function (data) {
+                    console.log("attackBoss1:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+        sonAttackBoss = function () {
+            $.get(APIURL + "/sonAttackBoss", function (data) {
+                console.log("sonAttackBoss:", data)
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+
+        oneSonAttackBoss = function (id) {
+            var r = confirm("是否继续")
+            if (r == true) {
+                $.get(APIURL + "/oneSonAttackBoss?id=" + id, function (data) {
+                    console.log("oneSonAttackBoss:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+        login = function (id) {
+            if (id == "") {
+                var str = $("#Oper_Type option:selected").val();
+                console.log("login uid is ", str)
+                id = str
+            }
+            // window.location.href = APIURL+"/login?id="+id;
+            window.open(APIURL + "/login?id=" + id)
+        }
+
+        getFreeBossCannon = function (id) {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var id = $("#Oper_Boss option:selected").val();
+                $.get(APIURL + "/getFreeBossCannon?id=" + id, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
+        }
+
+
+
+        giftPiece = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var fromUid = $("#Oper_pieceFrom option:selected").val();
+                var toUid = $("#Oper_pieceTo option:selected").val();
+                var id = $("#PieceSelect option:selected").val();
+                var amount = $("#PieceAmount option:selected").val();
+
+
+                $.get(APIURL + "/giftPiece?id=" + id + "&fromUid=" + fromUid + "&toUid=" + toUid + "&amount=" + amount, function (data) {
+                    console.log("giftPiece:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
+        }
+        // 
+
+        draw = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var id = $("#Oper_Draw option:selected").val();
+                var drawMulti = $("#DrawSelect option:selected").val();
+                var drawAmount = document.getElementById("drawAmount");
+
+                console.log("draw id:", id)
+                console.log("draw drawMulti:", drawMulti)
+                console.log("draw drawAmount:", drawAmount.value)
+
+                $.get(APIURL + "/draw?id=" + id + "&drawMulti=" + drawMulti + "&amount=" + drawAmount.value, function (data) {
+                    console.log("draw:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+        buildUp = function () {
+            // buildUpUsers
+
+            var r = confirm("是否继续")
+            if (r == true) {
+                var id = $("#buildUpUsers option:selected").val();
+
+                $.get(APIURL + "/buildUp?id=" + id, function (data) {
+                    console.log("buildUp:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        setRunner = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var id = $("#RunnerUsers option:selected").val();
+                var drawMulti = $("#RunnerSelect option:selected").val();
+
+                $.get(APIURL + "/setRunner?id=" + id + "&key=" + drawMulti, function (data) {
+                    console.log("setRunner:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+        attackMyBoss = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var boxUID = $("#SelectMyBoss option:selected").val();
+                var mode = $("#attackMyBossMode option:selected").val();
+
+                // attackMyBossMode
+
+                console.log("SelectMyBoss:", boxUID);
+
+                $.get(APIURL + "/attackMyBoss?id=" + boxUID + "&mode=" + mode, function (data) {
+                    console.log("SelectMyBoss:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+        }
+
+
+        throwDice = function () {
+
+
+            var r = confirm("是否继续")
+            if (r == true) {
+                var boxUID = $("#Oper_Dice option:selected").val();
+
+                var boxAmount = document.getElementById("diceAmount");
+                console.log("diceUID:", boxUID);
+                console.log("diceAmount:", boxAmount.value);
+
+                $.get(APIURL + "/throwDice?id=" + boxUID + "&amount=" + boxAmount.value, function (data) {
+                    console.log("throwDice:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
+        }
+
+
+        singleBossAttack = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var boxUID = $("#SingleBossSelect option:selected").val();
+                $.get(APIURL + "/singleBossAttack?id=" + boxUID, function (data) {
+                    console.log("singleBossAttack:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
+        }
+
+        setPiece = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var boxUID = $("#PiecePrizeSelect option:selected").val();
+                $.get(APIURL + "/setPiece?id=" + boxUID, function (data) {
+                    console.log("setPiece:", data)
+                    if (data == "SUCCESS") {
+                        alert(data)
+                    } else {
+                        window.open(data);
+                    }
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+        beachHelp = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var boxUID = $("#BeachHelpSelect option:selected").val();
+                $.get(APIURL + "/beachHelp?id=" + boxUID, function (data) {
+                    console.log("setPiece:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        getMailPrize = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var boxUID = $("#Oper_Mail option:selected").val();
+                $.get(APIURL + "/getMailPrize?id=" + boxUID, function (data) {
+                    console.log("getMailPrize:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
+
+        }
+
+        getBossPrize = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var boxUID = $("#Oper_BossPrize option:selected").val();
+                $.get(APIURL + "/getBossPrize?id=" + boxUID, function (data) {
+                    console.log("getMailPrize:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
+        }
+
+
+        getServerLogs = function () {
+            window.open(APIURL + "/getServerLogs");
+        }
+
+        delServerLogs = function () {
+            $.get(APIURL + "/delServerLogs", function (data) {
+                console.log("delServerLogs:", data)
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        getAllTokens = function () {
+            $.get(APIURL + "/getAllTokens", function (data) {
+                var jsarr = JSON.parse(data);
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+
+                    if (jsarr[i]["id"] == "302691822") {
+                        tOption.selected = true;
+                    }
+                    document.getElementById("Oper_Type").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption1 = document.createElement("Option");
+                    tOption1.text = jsarr[i]["name"];
+                    tOption1.selected = false;
+                    tOption1.value = jsarr[i]["id"];
+                    document.getElementById("boxUidsSelect").options.add(tOption1);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_Candy").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_Boss").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_pieceFrom").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_pieceTo").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_Draw").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_Dice").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_Mail").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_BossPrize").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("PiecePrizeSelect").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+
+                    // console.log(tOption.text)
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("SelectMyBoss").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("BeachHelpSelect").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("UseShovelFrom").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("UseShovelTo").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("GetBeachLineRewardsH").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("RunnerUsers").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("buildUpUsers").options.add(tOption);
+                }
+
+
+
+
+
+
+
+                window.status = "1";
+            });
+        }
+
+
+
+        // 
+
+
+        // 
+
+
+        // 
+
+        // 
+
+        toubi = function () {
+            $.get("http://192.168.1.13:21000/print?command=1", function () {
+                console.log("djkslfjalskjdkf2223")
+                window.status = "1";
+            });
+        }
+
+        you = function () {
+            $.get("http://192.168.1.13:21000/print?command=2", function () {
+                console.log("djkslfjalskjdkf2223")
+                window.status = "1";
+            });
+        }
+
+        youstop = function () {
+            $.get("http://192.168.1.13:21000/print?command=3", function () {
+                console.log("djkslfjalskjdkf2223")
+                window.status = "1";
+            });
+        }
+
+        hou = function () {
+            $.get("http://192.168.1.13:21000/print?command=4", function () {
+                console.log("djkslfjalskjdkf2223")
+                window.status = "1";
+            });
+        }
+
+        houstop = function () {
+            $.get("http://192.168.1.13:21000/print?command=5", function () {
+                console.log("djkslfjalskjdkf2223")
+                window.status = "1";
+            });
+        }
+
+        third = function () {
+            $.get("http://192.168.1.13:21000/print?command=6", function () {
+                console.log("djkslfjalskjdkf2223")
+                window.status = "1";
+            });
+        }
+
+        thirdstop = function () {
+            $.get("http://192.168.1.13:21000/print?command=7", function () {
+                console.log("djkslfjalskjdkf2223")
+                window.status = "1";
+            });
+        }
+
+        gopen = function (i) {
+            console.log("gopen ", window.status != "1")
+            if (window.status != "1") {
+                return;
+            }
+            console.log("open ", i)
+            window.status = "0";
+            $.get("http://8.134.19.98:8888/open/" + i, function () {
+                console.log("djkslfjalskjdkf2223")
+                window.status = "1";
+            });
+        }
+
+        gclose = function (i) {
+            console.log("close ", window.status != "1")
+            if (window.status != "1") {
+                return;
+            }
+            window.status = "0";
+            $.get("http://8.134.19.98:8888/close/" + i, function () {
+                console.log("djkslfjalskjdkf2223")
+                window.status = "1";
+            });
+        }
+
+        var url = document.location;
+
+        var APIURL = url["protocol"] + "//" + url["host"]
+
+        console.log("APIURL:", APIURL)
+
+        getAllTokens();
+    // var url = window.location.href;
+    // console.log("window.location.href:",url);
+    // var url = self.location.href;
+    // console.log("self.location.href:",url);
+    // var url = document.URL;
+    // console.log("document.URL:",url);
+    // var url = document.location;
+    // console.log("document.location:",url["protocol"]+"//"+url["host"]);
+
+
+    </script>
 
 
 </body>
+
 </html>

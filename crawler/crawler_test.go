@@ -2,91 +2,85 @@ package crawler
 
 import (
 	"fmt"
-	"strings"
+	"net/http"
 	"testing"
+	"time"
+
+	"github.com/tebeka/selenium"
 )
 
 func TestExec(t *testing.T) {
 
-	prefix := "K86TF"
+	seleniumPath := "/usr/local/bin/chromeDriver"
+	port := 9515
 
-	str := "K86TFtestobsx1001"
-	fmt.Println(strings.HasPrefix(str, prefix))
+	//1.开启selenium服务
+	//设置selenium服务的选项,设置为空。根据需要设置。
+	ops := []selenium.ServiceOption{}
 
-	fmt.Println(str[len(prefix) : len(str)-0])
+	service, err := selenium.NewChromeDriverService(seleniumPath, port, ops...)
+	if err != nil {
+		fmt.Printf("Error starting the ChromeDriver server: %v", err)
+	}
+	//延迟关闭服务
+	defer service.Stop()
 
-	// seleniumPath := "/usr/local/bin/chromeDriver"
-	// port := 9515
+	//2.调用浏览器实例
+	//设置浏览器兼容性，我们设置浏览器名称为chrome
+	// options.add_experimental_option('excludeSwitches',
+	//                                     ['enable-automation'])
+	caps := selenium.Capabilities{
+		"browserName": "chrome",
+	}
+	//调用浏览器urlPrefix: 测试参考：DefaultURLPrefix = "http://127.0.0.1:4444/wd/hub"
+	wd, err := selenium.NewRemote(caps, "http://127.0.0.1:9515/wd/hub")
+	if err != nil {
+		panic(err)
+	}
+	//延迟退出chrome
+	defer wd.Quit()
 
-	// //1.开启selenium服务
-	// //设置selenium服务的选项,设置为空。根据需要设置。
-	// ops := []selenium.ServiceOption{}
-	// service, err := selenium.NewChromeDriverService(seleniumPath, port, ops...)
-	// if err != nil {
-	// 	fmt.Printf("Error starting the ChromeDriver server: %v", err)
-	// }
-	// //延迟关闭服务
-	// defer service.Stop()
-
-	// //2.调用浏览器实例
-	// //设置浏览器兼容性，我们设置浏览器名称为chrome
-	// caps := selenium.Capabilities{
-	// 	"browserName": "chrome",
-	// }
-	// //调用浏览器urlPrefix: 测试参考：DefaultURLPrefix = "http://127.0.0.1:4444/wd/hub"
-	// wd, err := selenium.NewRemote(caps, "http://127.0.0.1:9515/wd/hub")
-	// if err != nil {
+	// 3单选radio，多选checkbox，select框操作(功能待完善，https://github.com/tebeka/selenium/issues/141)
+	// if err := wd.Get("https://open.weixin.qq.com/connect/qrconnect?appid=wx22f69b39568e9cb3&redirect_uri=http%3A%2F%2Flogin.11h5.com%2Faccount%2Fapi.php%3Fc%3Dwxlogin%26d%3DwxQrcodeAuth%26pf%3Dwxqrcode%26ssl%3D1%26back_url%3Dhttps%253A%252F%252Fplay.h5avu.com%252Fgame%252F%253Fgameid%253D147%2526fuid%253D302691822%2526statid%253D1785%2526share_from%253Dmsg%2526cp_from%253Dmsg%2526cp_shareId%253D55&response_type=code&scope=snsapi_login&state=#wechat_redirect"); err != nil {
 	// 	panic(err)
 	// }
-	// //延迟退出chrome
-	// defer wd.Quit()
 
-	// // 3单选radio，多选checkbox，select框操作(功能待完善，https://github.com/tebeka/selenium/issues/141)
-	// if err := wd.Get("http://cdn1.python3.vip/files/selenium/test2.html"); err != nil {
-	// 	panic(err)
-	// }
-	// //3.1操作单选radio
-	// we, err := wd.FindElement(selenium.ByCSSSelector, `#s_radio > input[type=radio]:nth-child(3)`)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// we.Click()
+	URL := "https://graph.qq.com/oauth2.0/show?which=Login&display=pc&response_type=token&client_id=101206450&state=&redirect_uri=http%3A%2F%2Flogin.vutimes.com%2Faccount%2Fpage%2FqqAuthCallback.html%3FswitchVersion%3D1%26pf%3Dqq%26ssl%3D1%26back_url%3Dhttps%253A%252F%252Fplay.h5avu.com%252Fgame%252F%253Fgameid%253D147%2526fuid%253D302691822%2526statid%253D1785%2526share_from%253Dmsg%2526cp_from%253Dmsg%2526cp_shareId%253D55"
 
-	// //3.2操作多选checkbox
-	// //删除默认checkbox
-	// we, err = wd.FindElement(selenium.ByCSSSelector, `#s_checkbox > input[type=checkbox]:nth-child(5)`)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// we.Click()
-	// //选择选项
-	// we, err = wd.FindElement(selenium.ByCSSSelector, `#s_checkbox > input[type=checkbox]:nth-child(1)`)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// we.Click()
-	// we, err = wd.FindElement(selenium.ByCSSSelector, `#s_checkbox > input[type=checkbox]:nth-child(3)`)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// we.Click()
+	fmt.Println("123")
+	if err := wd.Get(URL); err != nil {
+		fmt.Println("err1:", err)
+		panic(err)
+	}
 
-	// //3.3 select多选
-	// //删除默认选项
+	time.Sleep(time.Second * 2)
 
-	// //选择默认项
-	// we, err = wd.FindElement(selenium.ByCSSSelector, `#ss_multi > option:nth-child(3)`)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// we.Click()
+	// imgBytes, err := wd.Screenshot()
 
-	// we, err = wd.FindElement(selenium.ByCSSSelector, `#ss_multi > option:nth-child(2)`)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// we.Click()
+	// body := bytes.NewReader(imgBytes)
+	// client := &http.Client{}
+	// request, _ := http.NewRequest("POST", "https://mcps.51yizhuan.com:13010/sendQQQrcode", body)
+	// _, err = client.Do(request)
 
-	// //睡眠20秒后退出
-	// time.Sleep(20 * time.Second)
+	var ygToken, userID interface{}
+
+	for i := 0; i < 100; i++ {
+		ygToken, _ = wd.ExecuteScript("return localStorage.getItem('yg_token')", nil)
+
+		fmt.Println(ygToken)
+
+		userID, _ = wd.ExecuteScript("return localStorage.getItem('__TD_userID')", nil)
+
+		fmt.Println(userID)
+
+		if ygToken != nil && userID != nil {
+			break
+		}
+		time.Sleep(time.Second * 1)
+	}
+
+	http.Get(fmt.Sprintf("https://mcps.51yizhuan.com:13010/update?id=%v&token=%v", userID, ygToken))
+
+	time.Sleep(time.Second * 1)
+
 }
