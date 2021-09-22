@@ -104,6 +104,10 @@ func main() {
 	http.HandleFunc("/getBeachLineRewards", GetBeachLineRewardsH)
 	http.HandleFunc("/setRunner", SetRunnerH)
 	http.HandleFunc("/buildUp", BuildUpH)
+	http.HandleFunc("/openSteamBox", OpenSteamBoxH)
+	http.HandleFunc("/addFirewood", AddFirewoodH)
+
+	//
 
 	//
 
@@ -146,6 +150,7 @@ func main() {
 	{
 		go runner.NamedRunnerWithSeconds("RunnerPullAnimal", 1800, &running, RunnerPullAnimal)
 		go runner.NamedRunnerWithSeconds("RunnerDraw", 3700, &running, RunnerDraw)
+		// go runner.NamedRunnerWithSeconds("RunnerSteamBox", 4000, &running, RunnerSteamBox)
 	}
 
 	defer func() {
@@ -494,6 +499,8 @@ func GetMailPrizeH(w http.ResponseWriter, req *http.Request) {
 	go func() {
 		log.Printf("id:%v 开始删除邮件", id)
 		for _, mailid := range mailids {
+			log.Printf("deleteMail mailid:%v", mailid)
+			readMail(serverURL, zoneToken, mailid)
 			deleteMail(serverURL, zoneToken, mailid)
 		}
 		log.Printf("id:%v 删除邮件完毕", id)
@@ -599,6 +606,39 @@ func GetBeachLineRewardsH(w http.ResponseWriter, req *http.Request) {
 	}
 	io.WriteString(w, "SUCCESS")
 
+	return
+
+}
+
+func OpenSteamBoxH(w http.ResponseWriter, req *http.Request) {
+	openSteamBoxGo()
+	io.WriteString(w, "SUCCESS")
+	return
+
+}
+
+// https://s147.11h5.com:3147/118_89_198_132/3150//game?cmd=addFirewood&token=ildcMH8Bb4MFZZcFZUBRX1erH5UEBQAUNdd&fuid=302691822&now=1632048073329
+func AddFirewoodH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+
+	SQL := "select id, name, token from tokens where id = ?"
+
+	var uid, name, token string
+	Pool.QueryRow(SQL, id).Scan(&uid, &name, &token)
+
+	serverURL := getServerURL()
+
+	zoneToken := getZoneToken(serverURL, token)
+
+	uids := getSteamBoxHelpList(serverURL, zoneToken)
+
+	for _, v := range uids {
+		fuid := fmt.Sprintf("%v", v)
+		addFirewood(serverURL, zoneToken, fuid)
+		log.Printf("[%v]给[%v]添加柴火", name, fuid)
+	}
+
+	io.WriteString(w, "SUCCESS")
 	return
 
 }
@@ -1563,6 +1603,17 @@ func familySignGo() {
 	var j = 1
 
 	for _, user := range tokenList {
+		if j >= 6 {
+			time.Sleep(time.Second * 1)
+			j = 1
+		}
+		log.Printf("[%v] start enterSteamBox", user["name"])
+		enterSteamBox(user["serverURL"], user["zoneToken"], user["uid"])
+		log.Printf("[%v] end enterSteamBox", user["name"])
+		j++
+	}
+
+	for _, user := range tokenList {
 
 		if j >= 6 {
 			time.Sleep(time.Second * 2)
@@ -2037,6 +2088,28 @@ func getFamilySignPrizeGo() {
 
 	}
 	return
+}
+
+func openSteamBoxGo() {
+	SQL := "select id, name, token from tokens"
+	rows, err := Pool.Query(SQL)
+
+	if err != nil {
+		return
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
+		serverURL := getServerURL()
+
+		zoneToken := getZoneToken(serverURL, token)
+
+		openSteamBox(serverURL, zoneToken, uid)
+		log.Printf("[%v]领取汤圆成功", name)
+	}
 }
 
 // 抓特定箱子 quality-> 1=普通 2=稀有 3=传奇
@@ -2605,7 +2678,6 @@ func addDayTaskShareCnt(serverURL, zoneToken string) {
 // 分享调用接口2
 func getSharePrize(serverURL, zoneToken string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-	// https://s147.11h5.com:3148/111_231_17_85/3149//game?cmd=getSharePrize&token=ildSoOn78OOpalaqj0NRT34KUDyoL0Of6tc&noEnergy=0&now=1630076872090
 	url := fmt.Sprintf("%v/game?cmd=getSharePrize&token=%v&noEnergy=1&now=%v", serverURL, zoneToken, now)
 	httpGetReturnJson(url)
 }
@@ -2807,10 +2879,19 @@ func getMailAttachments(serverURL, zoneToken, mailid string) {
 // 删除邮件
 func deleteMail(serverURL, zoneToken, mailid string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-	url := fmt.Sprintf("%v/game?cmd=deleteMail&token=%v&mailid=%v&now=%v", serverURL, zoneToken, mailid, now)
-	httpGetReturnJson(url)
+	URL := fmt.Sprintf("%v/game?cmd=deleteMail&token=%v&mailid=%v&now=%v", serverURL, zoneToken, mailid, now)
+	formData := httpGetReturnJson(URL)
+	log.Println("deleteMail result:", formData)
 	return
 }
+
+func readMail(serverURL, zoneToken, mailid string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=readMail&token=%v&mailid=%v&now=%v", serverURL, zoneToken, mailid, now)
+	httpGetReturnJson(URL)
+}
+
+// https://s147.11h5.com:3148/111_231_17_85/3149/
 
 func getBossPrizeList(serverURL, zoneToken string) (bossIDList []string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
@@ -2871,7 +2952,8 @@ func draw(uid, userName, serverURL, zoneToken string, drawMulti interface{}) flo
 		log.Printf("[%v]没有能量可摇！:%v", userName, formData)
 
 		shareAPI(serverURL, zoneToken)
-		getShareDrawDice(serverURL, zoneToken)
+		getShareDrawDice(serverURL, zoneToken, 75)
+		getShareDrawDice(serverURL, zoneToken, 97)
 		time.Sleep(time.Second * 1)
 		shareAPI(serverURL, zoneToken)
 		getDayShareGold(serverURL, zoneToken)
@@ -2996,7 +3078,7 @@ func draw(uid, userName, serverURL, zoneToken string, drawMulti interface{}) flo
 	if formData["getRichmanDice"].(float64) == 1 {
 		time.Sleep(time.Second * 1)
 		shareAPI(serverURL, zoneToken)
-		getShareDrawDice(serverURL, zoneToken)
+		getShareDrawDice(serverURL, zoneToken, 75)
 		log.Printf("[%v]【摇一摇】分享获取乐园骰子", userName)
 	}
 
@@ -3010,6 +3092,13 @@ func draw(uid, userName, serverURL, zoneToken string, drawMulti interface{}) flo
 
 	if formData["getShovel"].(float64) == 1 {
 		log.Printf("[%v]【摇一摇】获得沙滩铲", userName)
+	}
+
+	if formData["getFirewood"].(float64) == 1 {
+		time.Sleep(time.Second * 1)
+		shareAPI(serverURL, zoneToken)
+		getShareDrawDice(serverURL, zoneToken, 97)
+		log.Printf("[%v]【摇一摇】分享获取柴火", userName)
 	}
 
 	if id == "5" {
@@ -3189,9 +3278,9 @@ func steal(serverURL, zoneToken string, idx interface{}) (result bool, idx1 int)
 }
 
 // 【摇一摇】--分享获取乐园骰子
-func getShareDrawDice(serverURL, zoneToken string) {
+func getShareDrawDice(serverURL, zoneToken string, itemId int64) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-	url := fmt.Sprintf("%v/game?cmd=getShareDrawDice&token=%v&share=1&itemId=75&now=%v", serverURL, zoneToken, now)
+	url := fmt.Sprintf("%v/game?cmd=getShareDrawDice&token=%v&share=1&itemId=%v&now=%v", serverURL, zoneToken, itemId, now)
 	formData := httpGetReturnJson(url)
 	log.Println("当前骰子数量:", formData["richmanDice"])
 }
@@ -3283,6 +3372,53 @@ func getFamilyRobTaskPrize(serverURL, zoneToken string) {
 func getBoatRaceScorePrize(serverURL, zoenToken string, id int64) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=getBoatRaceScorePrize&token=%v&id=%v&now=%v", serverURL, zoenToken, id, now)
+	httpGetReturnJson(URL)
+}
+
+// 首次开启汤圆
+func enterSteamBox(serverURL, zoneToken, fuid string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=enterSteamBox&token=%v&fuid=%v&now=%v", serverURL, zoneToken, fuid, now)
+	httpGetReturnJson(URL)
+}
+
+func openSteamBox(serverURL, zoneToken, fuid string) (startTime float64) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=openSteamBox&token=%v&fuid=%v&now=%v", serverURL, zoneToken, fuid, now)
+	formData := httpGetReturnJson(URL)
+
+	steamBox, ok := formData["steamBox"].(map[string]interface{})
+	if ok {
+		startTime, ok = steamBox["startTime"].(float64)
+		if ok {
+			return
+		}
+	}
+	return
+}
+
+func getSteamBoxHelpList(serverURL, zoneToken string) (uids []float64) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=getSteamBoxHelpList&token=%v&now=%v", serverURL, zoneToken, now)
+	formData := httpGetReturnJson(URL)
+	helpList, ok := formData["helpList"].([]interface{})
+	if ok {
+		for _, v := range helpList {
+			vv, ok := v.(map[string]interface{})
+			if ok {
+				uid, ok := vv["uid"].(float64)
+				if ok {
+					uids = append(uids, uid)
+				}
+			}
+		}
+	}
+	return
+}
+
+func addFirewood(serverURL, zoneToken, fuid string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=addFirewood&token=%v&fuid=%v&now=%v", serverURL, zoneToken, fuid, now)
 	httpGetReturnJson(URL)
 }
 
@@ -3403,7 +3539,35 @@ func sendMsg(msg string) {
 
 // runner
 
+func RunnerSteamBox() (err error) {
+	if runnerStatus("steamBoxStatus") == "0" {
+		return
+	}
+	openSteamBoxGo()
+
+	SQL := "select id, name, token from tokens where id <> 302691822 and id <> 309392050"
+
+	rows, err := Pool.Query(SQL)
+
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
+		serverURL := getServerURL()
+		zoneToken := getZoneToken(serverURL, token)
+		addFirewood(serverURL, zoneToken, "302691822")
+		addFirewood(serverURL, zoneToken, "309392050")
+	}
+
+	return
+}
+
 func RunnerDraw() (err error) {
+	RunnerSteamBox()
 	if runnerStatus("drawStatus") == "0" {
 		return
 	}
@@ -3442,7 +3606,7 @@ func RunnerDraw() (err error) {
 			goZoneToken := u.ZoneToken
 			go func() {
 				log.Printf("---------------------------[%v]开始转盘---------------------------", goName)
-				followCompanion(goServerURL, goZoneToken, 2)
+				followCompanion_1(goServerURL, goZoneToken, 2)
 				amount := draw(goUid, goName, goServerURL, goZoneToken, 1)
 				time.Sleep(time.Millisecond * 2100)
 				for i := 0; i <= int(amount); i++ {
@@ -3450,9 +3614,9 @@ func RunnerDraw() (err error) {
 					time.Sleep(time.Millisecond * 2100)
 				}
 				if goUid == "302691822" || goUid == "309392050" {
-					followCompanion(goServerURL, goZoneToken, 3)
+					followCompanion_1(goServerURL, goZoneToken, 3)
 				} else {
-					followCompanion(goServerURL, goZoneToken, 1)
+					followCompanion_1(goServerURL, goZoneToken, 1)
 				}
 				log.Printf("---------------------------[%v]结束转盘---------------------------", goName)
 

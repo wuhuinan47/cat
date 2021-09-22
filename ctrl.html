@@ -173,6 +173,20 @@
         领取海滩奖励
     </button>
 
+    <br>
+
+    <button style="font-size:40px;width:300px; height:100px;" onclick="openSteamBox()">
+        一键领取汤圆
+    </button>
+
+    <select style="font-size:40px;width:250px; height:100px;" name="addFirewoodOps" id="addFirewoodOps">
+        <!-- <option selected="selected" value="">请选择</option> -->
+    </select>
+
+    <button style="font-size:40px;width:300px; height:100px;" onclick="addFirewood()">
+        汤圆助力
+    </button>
+
 
     <br>
     <button style="font-size:40px;width:400px; height:100px;" onclick="checkToken()">
@@ -393,8 +407,6 @@
 
             var r = confirm("公会签到是否继续")
             if (r == true) {
-                var GetBeachLineRewardsH = $("#GetBeachLineRewardsH option:selected").val();
-
                 $.get(APIURL + "/familySign", function (data) {
                     alert(data)
                     window.status = "1";
@@ -404,6 +416,17 @@
 
 
         }
+
+        openSteamBox = function(){
+            var r = confirm("领取汤圆是否继续")
+            if (r == true) {
+                $.get(APIURL + "/openSteamBox", function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+        }
+
 
         getSignPrize = function () {
             $.get(APIURL + "/getSignPrize", function (data) {
@@ -676,6 +699,23 @@
 
                 $.get(APIURL + "/buildUp?id=" + id, function (data) {
                     console.log("buildUp:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+        addFirewood = function () {
+            // buildUpUsers
+
+            var r = confirm("addFirewood是否继续")
+            if (r == true) {
+                var id = $("#addFirewoodOps option:selected").val();
+
+                $.get(APIURL + "/addFirewood?id=" + id, function (data) {
+                    console.log("addFirewood:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -987,7 +1027,17 @@
 
 
 
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
 
+                    if (jsarr[i]["id"] == "302691822") {
+                        tOption.selected = true;
+                    }
+                    document.getElementById("addFirewoodOps").options.add(tOption);
+                }
 
 
 
