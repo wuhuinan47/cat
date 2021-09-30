@@ -152,6 +152,25 @@ func NamedRunnerWithSeconds(name string, seconds int, running *bool, call func()
 	log.Printf("%v is stopped \n", name)
 }
 
+//NamedRunner will run call by delay
+func NamedRunnerWithSecondsOnly(name string, seconds, extra int, running *bool, call func() error) {
+	log.Printf("%v is starting \n", name)
+	firstDiff := time.Duration(RunPerfectTime(seconds)) * time.Second
+	log.Println("first runner interval is :", firstDiff)
+	time.Sleep(firstDiff)
+	for *running {
+		err := call()
+		if err != nil {
+			log.Printf("%v is fail with %v \n", name, err)
+		}
+		nextDiff := time.Duration(seconds+extra) * time.Second
+		// nextDiff := time.Duration(seconds) * time.Second
+		log.Println("next runner interval is :", nextDiff)
+		time.Sleep(nextDiff)
+	}
+	log.Printf("%v is stopped \n", name)
+}
+
 // 指定时间 x时x分x秒 
 func NextDiff(hour, minute, second int64) (seconds time.Duration) {
 	log.Println("hour:", hour)

@@ -113,10 +113,11 @@
     <br>
 
     <select style="font-size:40px;width:200px; height:100px;" name="SingleBossSelect" id="SingleBossSelect">
+        <option selected="selected" value="0">小号</option>
         <option value="1">蜜龙组</option>
         <option value="2">牛龙组</option>
         <option value="3">龙组3</option>
-        <option selected="selected" value="4">笨蛋小峰组</option>
+        <option value="4">笨蛋小峰组</option>
         <option value="5">云颜辛巴组</option>
 
     </select>
@@ -231,8 +232,14 @@
 
     <br>
 
-    <select style="font-size:40px;width:200px; height:100px;" name="Oper_Dice" id="Oper_Mail">
-        <option selected="selected" value="">请选择</option>
+    <select style="font-size:40px;width:200px; height:100px;" name="Oper_Mail" id="Oper_Mail">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="Oper_MailTitle" id="Oper_MailTitle">
+        <option selected="selected" value="">全部</option>
+        <option value="煮汤圆成功开启">煮汤圆成功开启</option>
+        <option value="福利礼包">福利礼包</option>
     </select>
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="getMailPrize()">
@@ -829,7 +836,8 @@
             var r = confirm("是否继续")
             if (r == true) {
                 var boxUID = $("#Oper_Mail option:selected").val();
-                $.get(APIURL + "/getMailPrize?id=" + boxUID, function (data) {
+                var title = $("#Oper_MailTitle option:selected").val();
+                $.get(APIURL + "/getMailPrize?id=" + boxUID+"&title="+title, function (data) {
                     console.log("getMailPrize:", data)
                     alert(data)
                     window.status = "1";

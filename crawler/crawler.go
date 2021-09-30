@@ -10,7 +10,7 @@ import (
 	"github.com/tebeka/selenium/chrome"
 )
 
-func QQScan() (ygToken, userID interface{}) {
+func QQScan() (ygToken, userID interface{}, err error) {
 	seleniumPath := "/usr/bin/chromedriver"
 	port := 9515
 
@@ -71,7 +71,7 @@ func QQScan() (ygToken, userID interface{}) {
 
 	URL := "https://graph.qq.com/oauth2.0/show?which=Login&display=pc&response_type=token&client_id=101206450&state=&redirect_uri=http%3A%2F%2Flogin.vutimes.com%2Faccount%2Fpage%2FqqAuthCallback.html%3FswitchVersion%3D1%26pf%3Dqq%26ssl%3D1%26back_url%3Dhttps%253A%252F%252Fplay.h5avu.com%252Fgame%252F%253Fgameid%253D147%2526fuid%253D302691822%2526statid%253D1785%2526share_from%253Dmsg%2526cp_from%253Dmsg%2526cp_shareId%253D55"
 
-	if err := wd.Get(URL); err != nil {
+	if err = wd.Get(URL); err != nil {
 		log.Println("get url:", err)
 		return
 	}
@@ -82,7 +82,7 @@ func QQScan() (ygToken, userID interface{}) {
 		return
 	}
 
-	if err := ioutil.WriteFile("./static/qqQrCode.png", imgBytes, 0644); err != nil {
+	if err = ioutil.WriteFile("./static/qqQrCode.png", imgBytes, 0644); err != nil {
 		log.Println("WriteFile:", err)
 		return
 	}
