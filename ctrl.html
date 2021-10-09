@@ -83,13 +83,19 @@
     </button>
 
     <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="attackBossUsers" id="attackBossUsers">
+        <option selected="selected" value="">默认牛号</option>
+    </select>
+    <!-- attackBoss -->
+
     <button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss()">
-        我打龙
+        打500-800血龙
     </button>
 
-    <button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss1()">
+    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss1()">
         蜜打龙
-    </button>
+    </button> -->
 
     <br>
 
@@ -97,7 +103,7 @@
 
 
     <select style="font-size:40px;width:200px; height:100px;" name="SelectMyBoss" id="SelectMyBoss">
-        <option selected="selected" value="0">请选择</option>
+        <option selected="selected" value="">全部(除大号)</option>
     </select>
 
     <select style="font-size:40px;width:200px; height:100px;" name="attackMyBossMode" id="attackMyBossMode">
@@ -188,6 +194,14 @@
         汤圆助力
     </button>
 
+    <br>
+
+    <select style="font-size:40px;width:250px; height:100px;" name="exchangeRiceCake" id="exchangeRiceCake">
+        <option selected="selected" value="">请选择</option>
+    </select>
+    <button style="font-size:40px;width:300px; height:100px;" onclick="exchangeRiceCake()">
+        领取汤圆奖励
+    </button>
 
     <br>
     <button style="font-size:40px;width:400px; height:100px;" onclick="checkToken()">
@@ -338,7 +352,7 @@
     </button>
     <br>
 
-    <button style="font-size:40px;width:400px; height:100px;" onclick="sonAttackBoss()">
+    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="sonAttackBoss()">
         一键小号打龙
     </button>
 
@@ -371,7 +385,7 @@
     </button>
 
 
-    <br>
+    <br> -->
 
     <select style="font-size:40px;width:200px; height:100px;" name="RunnerUsers" id="RunnerUsers">
         <option selected="selected" value="">请选择</option>
@@ -585,9 +599,10 @@
         }
 
         attackBoss = function () {
-            var r = confirm("是否继续")
+            var r = confirm("打500-800龙是否继续")
             if (r == true) {
-                $.get(APIURL + "/attackBoss", function (data) {
+                var id = $("#attackBossUsers option:selected").val();
+                $.get(APIURL + "/attackBoss?id="+id, function (data) {
                     console.log("attackBoss:", data)
                     alert(data)
                     window.status = "1";
@@ -729,6 +744,24 @@
             }
 
         }
+
+
+        exchangeRiceCake = function () {
+            // buildUpUsers
+
+            var r = confirm("exchangeRiceCake是否继续")
+            if (r == true) {
+                var id = $("#exchangeRiceCake option:selected").val();
+
+                $.get(APIURL + "/exchangeRiceCake?id=" + id, function (data) {
+                    console.log("exchangeRiceCake:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
 
         setRunner = function () {
             var r = confirm("是否继续")
@@ -981,6 +1014,18 @@
                     document.getElementById("SelectMyBoss").options.add(tOption);
                 }
 
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+
+                    // console.log(tOption.text)
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("attackBossUsers").options.add(tOption);
+                }
+
+                // 
+
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
@@ -1046,6 +1091,16 @@
                     }
                     document.getElementById("addFirewoodOps").options.add(tOption);
                 }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("exchangeRiceCake").options.add(tOption);
+                }
+
+                // exchangeRiceCake
 
 
 
