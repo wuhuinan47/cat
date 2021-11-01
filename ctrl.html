@@ -27,6 +27,10 @@
     <button style="font-size:40px;width:400px; height:100px;" onclick="familySign()">
         公会签到
     </button>
+
+    <select style="font-size:40px;width:150px; height:100px;" name="familySignSelect" id="familySignSelect">
+        <option selected="selected" value="">请选择</option>
+    </select>
     <br>
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="startPullAnimal()">
@@ -197,10 +201,10 @@
     <br>
 
     <select style="font-size:40px;width:250px; height:100px;" name="exchangeRiceCake" id="exchangeRiceCake">
-        <option selected="selected" value="">请选择</option>
+        <option selected="selected" value="">全部</option>
     </select>
-    <button style="font-size:40px;width:300px; height:100px;" onclick="exchangeRiceCake()">
-        领取汤圆奖励
+    <button style="font-size:40px;width:500px; height:100px;" onclick="exchangeRiceCake()">
+        领取汤圆/骰子奖励
     </button>
 
     <br>
@@ -251,8 +255,8 @@
     </select>
 
     <select style="font-size:40px;width:200px; height:100px;" name="Oper_MailTitle" id="Oper_MailTitle">
-        <option selected="selected" value="">全部</option>
-        <option value="煮汤圆成功开启">煮汤圆成功开启</option>
+        <option value="">全部</option>
+        <option selected="selected" value="煮汤圆成功开启">煮汤圆成功开启</option>
         <option value="福利礼包">福利礼包</option>
     </select>
 
@@ -388,7 +392,7 @@
     <br> -->
 
     <select style="font-size:40px;width:200px; height:100px;" name="RunnerUsers" id="RunnerUsers">
-        <option selected="selected" value="">请选择</option>
+        <option selected="selected" value="">全部</option>
     </select>
 
     <select style="font-size:40px;width:200px; height:100px;" name="RunnerSelect" id="RunnerSelect">
@@ -399,6 +403,26 @@
         设置定时器
     </button>
 
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="searchFamily" id="searchFamily">
+        <option selected="selected" value="">请选择</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="searchFamily()">
+        查看公会信息
+    </button>
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="unlockWorker" id="unlockWorker">
+        <option selected="selected" value="">请选择</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="unlockWorker()">
+        解锁工人
+    </button>
 
     <br>
 
@@ -426,9 +450,11 @@
 
         familySign = function () {
 
+            var UID = $("#familySignSelect option:selected").val();
+
             var r = confirm("公会签到是否继续")
             if (r == true) {
-                $.get(APIURL + "/familySign", function (data) {
+                $.get(APIURL + "/familySign?id="+UID, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -704,6 +730,41 @@
 
                 $.get(APIURL + "/draw?id=" + id + "&drawMulti=" + drawMulti + "&amount=" + drawAmount.value, function (data) {
                     console.log("draw:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+        
+
+        unlockWorker = function () {
+            // unlockWorker
+
+            var r = confirm("unlockWorker是否继续")
+            if (r == true) {
+                var id = $("#unlockWorker option:selected").val();
+
+                $.get(APIURL + "/unlockWorker?id=" + id, function (data) {
+                    console.log("unlockWorker:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        searchFamily = function () {
+            // unlockWorker
+
+            var r = confirm("searchFamily")
+            if (r == true) {
+                var id = $("#searchFamily option:selected").val();
+
+                $.get(APIURL + "/searchFamily?id=" + id, function (data) {
+                    console.log("searchFamily:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -1100,6 +1161,33 @@
                     document.getElementById("exchangeRiceCake").options.add(tOption);
                 }
 
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("familySignSelect").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("unlockWorker").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("searchFamily").options.add(tOption);
+                }
+
+
+                // 
+                
                 // exchangeRiceCake
 
 
