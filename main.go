@@ -18,6 +18,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/codingeasygo/util/xprop"
@@ -599,24 +600,36 @@ func UseShovelH(w http.ResponseWriter, req *http.Request) {
 
 func GetBeachLineRewardsH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
-	SQL := "select id, name, token from tokens where id = ?"
+	SQL := fmt.Sprintf("select id, name, token from tokens where id = %s", id)
 
-	var uid, name, token string
-	Pool.QueryRow(SQL, id).Scan(&uid, &name, &token)
-
-	serverURL, zoneToken := getSeverURLAndZoneToken(token)
-
-	for i := 0; i <= 4; i++ {
-		log.Printf("[%v]领取海滩奖励x%v", name, i)
-		getBeachLineRewards(serverURL, zoneToken, i, 0)
-		time.Sleep(time.Millisecond * 100)
+	if id == "" {
+		SQL = "select id, name, token from tokens"
 	}
 
-	for i := 0; i <= 4; i++ {
-		log.Printf("[%v]领取海滩奖励x%v", name, i)
-		getBeachLineRewards(serverURL, zoneToken, i, 1)
-		time.Sleep(time.Millisecond * 100)
+	rows, err := Pool.Query(SQL)
+	if err != nil {
+		return
 	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
+		serverURL, zoneToken := getSeverURLAndZoneToken(token)
+
+		for i := 0; i <= 4; i++ {
+			log.Printf("[%v]领取海滩奖励x%v", name, i)
+			getBeachLineRewards(serverURL, zoneToken, i, 0)
+			time.Sleep(time.Millisecond * 100)
+		}
+
+		for i := 0; i <= 4; i++ {
+			log.Printf("[%v]领取海滩奖励x%v", name, i)
+			getBeachLineRewards(serverURL, zoneToken, i, 1)
+			time.Sleep(time.Millisecond * 100)
+		}
+	}
+
 	io.WriteString(w, "SUCCESS")
 
 	return
@@ -850,11 +863,25 @@ func SetRunnerH(w http.ResponseWriter, req *http.Request) {
 								time.Sleep(time.Millisecond * time.Duration(seconds))
 								// serverURL = getServerURL()
 								// zoneToken := getZoneToken(serverURL, token)
+
+								serverURL, zoneToken = getSeverURLAndZoneToken(token)
+
 								refreshBeach(serverURL, zoneToken)
 								fmt.Printf("[%s] refreshBeach finish ", name)
+								for i := 1; i <= 20; i++ {
+									log.Printf("[%v]使用铲子x%v", name, i)
+									useShovel(serverURL, zoneToken, "")
+									time.Sleep(time.Millisecond * 100)
+								}
 							}()
 						} else {
 							refreshBeach(serverURL, zoneToken)
+
+							for i := 1; i <= 20; i++ {
+								log.Printf("[%v]使用铲子x%v", name, i)
+								useShovel(serverURL, zoneToken, "")
+								time.Sleep(time.Millisecond * 100)
+							}
 						}
 					}
 				}
@@ -1715,15 +1742,15 @@ func attackBossGo() {
 // 一键拉动物
 func pullAnimalGo() {
 	log.Println("start pullAnimalGo")
-	SQL := "select id, token, name from tokens where id != 302691822"
+	SQL := "select id, token, name, pull_rows from tokens where id != 302691822"
 	rows, err := Pool.Query(SQL)
 	if err != nil {
 		return
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var uid, token, name string
-		rows.Scan(&uid, &token, &name)
+		var uid, token, name, pullRows string
+		rows.Scan(&uid, &token, &name, &pullRows)
 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
 
 		if zoneToken == "" {
@@ -1733,12 +1760,13 @@ func pullAnimalGo() {
 
 		log.Printf("[%v]开始拉动物", name)
 		foods := enterFamilyRob(serverURL, zoneToken)
-
 		for _, v := range foods {
 			myTeam := v["myTeam"].(int)
 			if myTeam != 4 {
-				robFamilyFood(serverURL, zoneToken, v["id"].(string))
-				break
+				if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
+					robFamilyFood(serverURL, zoneToken, v["id"].(string))
+					break
+				}
 			}
 
 		}
@@ -1924,12 +1952,18 @@ func familySignGo() {
 		}
 		if times > 3 {
 			log.Printf("[%v] 为蜜蜜海浪助力", user["name"])
-			beachHelp(user["serverURL"], user["zoneToken"], "309392050", 42)
+			if user["uid"] != "309392050" {
+				beachHelp(user["serverURL"], user["zoneToken"], "309392050", 42)
+				times++
+			}
 		} else {
 			log.Printf("[%v] 为牛海浪助力", user["name"])
-			beachHelp(user["serverURL"], user["zoneToken"], "302691822", 42)
+			if user["uid"] != "302691822" {
+				beachHelp(user["serverURL"], user["zoneToken"], "302691822", 42)
+				times++
+			}
 		}
-		times++
+
 	}
 
 	// 互相助力逻辑
@@ -2472,6 +2506,7 @@ func enterFamilyRob(serverURL, zoneToken string) (foods []map[string]interface{}
 		teamLen := len(vv["myTeam"].(map[string]interface{})["robList"].([]interface{}))
 		food["id"] = vv["id"].(string)
 		food["myTeam"] = teamLen
+		food["row"] = vv["row"].(float64)
 		foods = append(foods, food)
 	}
 
@@ -4115,10 +4150,10 @@ func RunnerPullAnimal() (err error) {
 
 		log.Println("现在开始拉动物")
 
-		SQL := "select id, token, name from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
-		var uid, token, name string
+		SQL := "select id, token, name, pull_rows from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
+		var uid, token, name, pullRows string
 
-		err = Pool.QueryRow(SQL).Scan(&uid, &token, &name)
+		err = Pool.QueryRow(SQL).Scan(&uid, &token, &name, &pullRows)
 
 		if err != nil {
 			return
@@ -4136,8 +4171,10 @@ func RunnerPullAnimal() (err error) {
 		for _, v := range foods {
 			myTeam := v["myTeam"].(int)
 			if myTeam != 4 {
-				robFamilyFood(serverURL, zoneToken, v["id"].(string))
-				break
+				if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
+					robFamilyFood(serverURL, zoneToken, v["id"].(string))
+					break
+				}
 			}
 
 		}
