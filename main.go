@@ -1436,7 +1436,7 @@ func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 
 	defer rows.Close()
 
-	var groupconcat string
+	var groupconcat1, groupconcat2 string
 
 	for rows.Next() {
 		var id, token, name string
@@ -1447,21 +1447,33 @@ func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 
 		if zoneToken == "" {
 			Pool.Exec("update tokens set token = '' where id = ?", id)
-			groupconcat += name
-			groupconcat += ":"
-			groupconcat += fmt.Sprintf("%v", flag)
-			groupconcat += "/"
+			groupconcat1 += "["
+			groupconcat1 += name
+			groupconcat1 += "]"
+			groupconcat1 += ":"
+			groupconcat1 += "失效"
+			groupconcat1 += "/"
+
 			sendMsg(id + ":" + name)
+		} else {
+			if flag {
+				groupconcat2 += name
+				groupconcat2 += ":"
+				groupconcat2 += fmt.Sprintf("%v", flag)
+				groupconcat2 += "/"
+			}
+
 		}
+
 		// time.Sleep(time.Millisecond * 100)
 
 	}
 
-	SQL = "select group_concat(name) as groupname from tokens where token = ''"
-	var reply string
-	Pool.QueryRow(SQL).Scan(&reply)
+	// SQL = "select group_concat(name) as groupname from tokens where token = ''"
+	// var reply string
+	// Pool.QueryRow(SQL).Scan(&reply)
 
-	io.WriteString(w, reply+"//"+groupconcat)
+	io.WriteString(w, groupconcat1+"||||"+groupconcat2)
 
 }
 
@@ -2708,16 +2720,16 @@ func summonBoss(serverURL, zoneToken string) string {
 		}
 		bossID, ok := myBoss["id"].(string)
 		if !ok {
-			return bossID
+			return ""
 		}
-		return ""
+		return bossID
 	}
 
 	bossID, ok := boss["id"].(string)
 	if !ok {
-		return bossID
+		return ""
 	}
-	return ""
+	return bossID
 }
 
 // 邀请BOSS
@@ -3992,7 +4004,8 @@ func RunnerDraw() (err error) {
 			goServerURL := u.ServerURL
 			goZoneToken := u.ZoneToken
 			goFamilyDayTask := u.FamilyDayTask
-			go func() {
+
+			if goUid == "302691822" {
 				log.Printf("---------------------------[%v]开始转盘---------------------------", goName)
 				followCompanion_1(goServerURL, goZoneToken, 2)
 				amount := draw(goUid, goName, goServerURL, goZoneToken, 1)
@@ -4025,15 +4038,58 @@ func RunnerDraw() (err error) {
 				collectMineGold(goServerURL, goZoneToken)
 
 				if goFamilyDayTask == nil {
-					return
+					return err
 				}
 
 				for k := range goFamilyDayTask.(map[string]interface{}) {
 					getFamilyDayTaskPrize(goServerURL, goZoneToken, k)
 					log.Printf("[%v]领取公会任务奖励[%v]", goName, k)
 				}
+			} else {
+				go func() {
+					log.Printf("---------------------------[%v]开始转盘---------------------------", goName)
+					followCompanion_1(goServerURL, goZoneToken, 2)
+					amount := draw(goUid, goName, goServerURL, goZoneToken, 1)
+					time.Sleep(time.Millisecond * 2100)
+					for i := 0; i <= int(amount); i++ {
+						draw(goUid, goName, goServerURL, goZoneToken, 1)
+						time.Sleep(time.Millisecond * 2100)
+					}
+					if goUid == "302691822" || goUid == "309392050" {
+						followCompanion_1(goServerURL, goZoneToken, 3)
+					} else {
+						followCompanion_1(goServerURL, goZoneToken, 1)
+					}
+					log.Printf("---------------------------[%v]结束转盘---------------------------", goName)
 
-			}()
+					taskIDs := getDayTasksInfo(goServerURL, goZoneToken)
+					log.Printf("[%v]领取日常任务奖励:%v", goName, taskIDs)
+					for _, taskID := range taskIDs {
+						// time.Sleep(time.Millisecond * 100)
+						getDayTaskAward(goServerURL, goZoneToken, taskID)
+					}
+
+					log.Printf("[%v]领取超值返利", goName)
+					getElevenEnergyPrize(goServerURL, goZoneToken, 1)
+					getElevenEnergyPrize(goServerURL, goZoneToken, 2)
+					getElevenEnergyPrize(goServerURL, goZoneToken, 3)
+					getElevenEnergyPrize(goServerURL, goZoneToken, 4)
+
+					log.Printf("[%v]collectMineGold", goName)
+					collectMineGold(goServerURL, goZoneToken)
+
+					if goFamilyDayTask == nil {
+						return
+					}
+
+					for k := range goFamilyDayTask.(map[string]interface{}) {
+						getFamilyDayTaskPrize(goServerURL, goZoneToken, k)
+						log.Printf("[%v]领取公会任务奖励[%v]", goName, k)
+					}
+
+				}()
+			}
+
 		}
 		return err
 
