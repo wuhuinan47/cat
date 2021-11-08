@@ -41,7 +41,19 @@
         关闭动物定时器
     </button>
 
+
     <br>
+
+    <select style="font-size:40px;width:150px; height:100px;" name="setPullRowsSelect" id="setPullRowsSelect">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <button style="font-size:40px;width:300px; height:100px;" onclick="setPullRows()">
+        设置几道
+    </button>
+    <input style="font-size:40px;width:200px; height:100px;" type="text" value="1,2,3,4,5,6" id="setPullRows" class="textClass" name="textName">
+    <br>
+
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="startDrawStatus()">
         开启摇一摇状态
@@ -167,6 +179,7 @@
 
     <select style="font-size:40px;width:150px; height:100px;" name="UseShovelTo" id="UseShovelTo">
         <option selected="selected" value="">自己</option>
+        <option value="all">全部</option>
     </select>
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="useShovel()">
@@ -204,7 +217,7 @@
         <option selected="selected" value="">全部</option>
     </select>
     <button style="font-size:40px;width:500px; height:100px;" onclick="exchangeRiceCake()">
-        领取汤圆/骰子奖励
+        领取汤圆/骰子/海滩奖励
     </button>
 
     <br>
@@ -578,6 +591,17 @@
 
         startPullAnimal = function () {
             $.get(APIURL + "/setConfig?confKey=pullAnimalGoStatus&confValue=1", function (data) {
+                console.log("startPullAnimal:", data)
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        setPullRows = function(){
+            var id = $("#setPullRowsSelect option:selected").val();
+
+            var value = document.getElementById("setPullRows").value
+            $.get(APIURL + "/setPullRows?input="+value+"&id="+id, function (data) {
                 console.log("startPullAnimal:", data)
                 alert(data)
                 window.status = "1";
@@ -1168,6 +1192,15 @@
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("familySignSelect").options.add(tOption);
                 }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("setPullRowsSelect").options.add(tOption);
+                }
+
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");

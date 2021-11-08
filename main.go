@@ -115,6 +115,7 @@ func main() {
 	http.HandleFunc("/setRunner", SetRunnerH)
 	http.HandleFunc("/buildUp", BuildUpH)
 	http.HandleFunc("/openSteamBox", OpenSteamBoxH)
+	http.HandleFunc("/setPullRows", SetPullRowsH)
 	http.HandleFunc("/addFirewood", AddFirewoodH)
 	http.HandleFunc("/exchangeRiceCake", ExchangeRiceCakeH)
 	http.HandleFunc("/unlockWorker", UnlockWorkerH)
@@ -560,6 +561,28 @@ func UseShovelH(w http.ResponseWriter, req *http.Request) {
 
 	serverURL, zoneToken := getSeverURLAndZoneToken(token)
 
+	if toid == "all" {
+		SQL = "select id, name from tokens where find_in_set(id, (select conf_value from config where conf_key = 'beachUidList'))"
+		rows, err := Pool.Query(SQL)
+		if err != nil {
+			return
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var uuid, uname string
+			rows.Scan(&uuid, &uname)
+			for i := 1; i <= 5; i++ {
+				log.Printf("[%v]为[%v]使用铲子x%v", name, uname, i)
+				useShovel(serverURL, zoneToken, uuid)
+				time.Sleep(time.Millisecond * 100)
+			}
+		}
+		io.WriteString(w, "SUCCESS")
+		return
+
+	}
+
 	if toid == "" {
 		for i := 1; i <= 20; i++ {
 			log.Printf("[%v]使用铲子x%v", name, i)
@@ -620,6 +643,17 @@ func OpenSteamBoxH(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, "SUCCESS")
 }
 
+func SetPullRowsH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	input := req.URL.Query().Get("input")
+	if id == "" {
+		Pool.Exec("update tokens set pull_rows = ?", input)
+	} else {
+		Pool.Exec("update tokens set pull_rows = ? where id = ?", input, id)
+	}
+	io.WriteString(w, "SUCCESS")
+}
+
 func ExchangeRiceCakeH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	SQL := fmt.Sprintf("select id, name, token from tokens where id = %s", id)
@@ -639,17 +673,26 @@ func ExchangeRiceCakeH(w http.ResponseWriter, req *http.Request) {
 		for _, v := range ids {
 			for {
 				flag := exchangeRiceCake(serverURL, zoneToken, v)
-				if flag {
+				if !flag {
 					break
 				}
 				log.Printf("[%s]领取汤圆奖励[%v]成功", name, v)
 			}
 			for {
 				flag := exchangeXmas(serverURL, zoneToken, v)
-				if flag {
+				if !flag {
 					break
 				}
 				log.Printf("[%s]领取骰子奖励[%v]成功", name, v)
+			}
+
+			for {
+				flag := exchangeBeachReward(serverURL, zoneToken, v)
+				if !flag {
+					break
+				}
+				log.Printf("[%s]领取海滩奖励[%v]成功", name, v)
+
 			}
 		}
 	}
@@ -1717,13 +1760,14 @@ func pullAnimalGo() {
 		log.Printf("[%v]开始拉动物", name)
 		foods := enterFamilyRob(serverURL, zoneToken)
 		for _, v := range foods {
-			myTeam := v["myTeam"].(int)
-			if myTeam != 4 {
-				if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
-					robFamilyFood(serverURL, zoneToken, v["id"].(string))
+			// myTeam := v["myTeam"].(int)
+			// if myTeam != 4 {
+			if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
+				if robFamilyFood(serverURL, zoneToken, v["id"].(string)) {
 					break
 				}
 			}
+			// }
 
 		}
 		log.Printf("[%v]拉动物完成", name)
@@ -2556,10 +2600,15 @@ func getFamilyId(serverURL, zoneToken string) (familyId float64, timeFlushList [
 	return
 }
 
-func robFamilyFood(serverURL, zoneToken, foodId string) {
+func robFamilyFood(serverURL, zoneToken, foodId string) bool {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := serverURL + "/game?cmd=robFamilyFood&token=" + zoneToken + "&foodId=" + foodId + "&now=" + now
-	httpGetReturnJson(url)
+	formData := httpGetReturnJson(url)
+	if _, ok := formData["error"]; ok {
+		return false
+	}
+	return true
+
 }
 
 // 查看宝箱帮助列表
@@ -3116,6 +3165,18 @@ func exchangeXmas(serverURL, zoneToken string, id int64) bool {
 	}
 	return true
 }
+
+func exchangeBeachReward(serverURL, zoneToken string, id int64) bool {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=exchangeBeachReward&token=%v&index=%v&now=%v", serverURL, zoneToken, id, now)
+	formData := httpGetReturnJson(URL)
+	if _, ok := formData["error"]; ok {
+		return false
+	}
+	return true
+}
+
+// https://s147.11h5.com:3147/118_89_198_11/3147/
 
 // 获取邮件列表
 func getMailList(serverURL, zoneToken, title string) (mailids []string) {
@@ -4137,14 +4198,16 @@ func RunnerPullAnimal() (err error) {
 
 		foods := enterFamilyRob(serverURL, zoneToken)
 
+		var nextFlag bool
 		for _, v := range foods {
-			myTeam := v["myTeam"].(int)
-			if myTeam != 4 {
-				if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
-					robFamilyFood(serverURL, zoneToken, v["id"].(string))
-					break
-				}
+			// myTeam := v["myTeam"].(int)
+			// if myTeam != 4 {
+			if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
+				robFamilyFood(serverURL, zoneToken, v["id"].(string))
+				nextFlag = true
+				break
 			}
+			// }
 
 		}
 		log.Printf("[%v]拉动物完成", name)
@@ -4152,6 +4215,32 @@ func RunnerPullAnimal() (err error) {
 		// log.Printf("cowboy serverURL:%v, zoneToken:%v\n", serverURL, zoneToken)
 
 		pullAnimalGo()
+
+		time.Sleep(900 * time.Second)
+
+		if nextFlag {
+			serverURL, zoneToken = getSeverURLAndZoneToken(token)
+
+			if zoneToken == "" {
+				sendMsg(uid + ":" + name)
+				log.Printf("[name: %v] token is invalid\n", name)
+			}
+
+			foods = enterFamilyRob(serverURL, zoneToken)
+
+			for _, v := range foods {
+				// myTeam := v["myTeam"].(int)
+				// if myTeam != 4 {
+				if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
+					robFamilyFood(serverURL, zoneToken, v["id"].(string))
+					break
+				}
+				// }
+
+			}
+			log.Printf("[%v]拉动物完成", name)
+		}
+
 		return
 	}
 
