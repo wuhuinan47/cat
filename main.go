@@ -4122,6 +4122,10 @@ func RunnerEveryOneSteamBox() {
 		if interval > 0 {
 			go func() {
 				time.Sleep(time.Millisecond * time.Duration(interval))
+
+				sql := "select token from tokens where id = ?"
+				Pool.QueryRow(sql).Scan(&token)
+
 				serverURL, zoneToken = getSeverURLAndZoneToken(token)
 				startTime = openSteamBox(serverURL, zoneToken, uid)
 				log.Printf("[%v]定时器首次领取汤圆成功[startTime:%v]", name, strconv.FormatFloat(startTime, 'f', 0, 64))
@@ -4131,6 +4135,8 @@ func RunnerEveryOneSteamBox() {
 						return
 						// time.Sleep(time.Second * 3601)
 					} else {
+						sql := "select token from tokens where id = ?"
+						Pool.QueryRow(sql).Scan(&token)
 						serverURL, zoneToken = getSeverURLAndZoneToken(token)
 						startTime = openSteamBox(serverURL, zoneToken, uid)
 						log.Printf("[%v]领取汤圆[start_time:%v]", name, strconv.FormatFloat(startTime, 'f', 0, 64))
