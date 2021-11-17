@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"gitlab.gmqrflz.cn/base/go/pgx"
+	"gtlb.zhongzefun.com/base/go/pgx"
 
 	"github.com/codingeasygo/util/xsql"
 )
@@ -115,6 +115,8 @@ func NamedRunnerWithHMS(name string, hour, minute, second int64, running *bool, 
 	for *running {
 		err := call()
 		log.Println("err:", err)
+		nextDiff := NextDiff(hour, minute, second)
+		time.Sleep(nextDiff)
 		if err == nil {
 			finishCount++
 			log.Println("finishCount:", finishCount)
@@ -126,7 +128,6 @@ func NamedRunnerWithHMS(name string, hour, minute, second int64, running *bool, 
 			log.Printf("%v is having %v finished", name, finishCount)
 		}
 		finishCount = 0
-		nextDiff := NextDiff(hour, minute, second)
 		log.Println("nextDiff:", nextDiff)
 		time.Sleep(nextDiff)
 	}
@@ -171,7 +172,7 @@ func NamedRunnerWithSecondsOnly(name string, seconds, extra int, running *bool, 
 	log.Printf("%v is stopped \n", name)
 }
 
-// 指定时间 x时x分x秒 
+// 指定时间 x时x分x秒
 func NextDiff(hour, minute, second int64) (seconds time.Duration) {
 	log.Println("hour:", hour)
 	log.Println("minute:", minute)
