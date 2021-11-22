@@ -121,6 +121,7 @@ func main() {
 	http.HandleFunc("/unlockWorker", UnlockWorkerH)
 	http.HandleFunc("/searchFamily", SearchFamilyH)
 	http.HandleFunc("/getTodayAnimal", GetTodayAnimalsH)
+	http.HandleFunc("/familyReward", FamilyRewardH)
 
 	//
 
@@ -414,6 +415,8 @@ func SixEnergyH(w http.ResponseWriter, req *http.Request) {
 }
 func SetPieceH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
+	amount := req.URL.Query().Get("amount")
+	intAmount, _ := strconv.Atoi(amount)
 	SQL := "select token from tokens where id = ?"
 
 	var token string
@@ -422,13 +425,20 @@ func SetPieceH(w http.ResponseWriter, req *http.Request) {
 	serverURL, zoneToken := getSeverURLAndZoneToken(token)
 
 	ids := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9}
-	for _, v := range ids {
-		log.Printf("设置拼图%v", v)
 
-		setPiece(serverURL, zoneToken, v)
-		// time.Sleep(time.Millisecond * 300)
+	var flag bool
+
+	for i := 0; i < intAmount; i++ {
+		for _, v := range ids {
+			log.Printf("设置拼图%v", v)
+			setPiece(serverURL, zoneToken, v)
+			// time.Sleep(time.Millisecond * 300)
+		}
+		flag = getPiecePrize(serverURL, zoneToken)
+		if !flag {
+			break
+		}
 	}
-	flag := getPiecePrize(serverURL, zoneToken)
 
 	log.Printf("拼图奖励领取状态:%v", flag)
 
@@ -722,20 +732,34 @@ func ExchangeRiceCakeH(w http.ResponseWriter, req *http.Request) {
 
 func AddFirewoodH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
+	qualityS := req.URL.Query().Get("quality")
+	quality, _ := strconv.ParseFloat(qualityS, 64)
 
-	SQL := "select id, name, token from tokens where id = ?"
+	// quality
 
-	var uid, name, token string
-	Pool.QueryRow(SQL, id).Scan(&uid, &name, &token)
+	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
 
-	serverURL, zoneToken := getSeverURLAndZoneToken(token)
+	if id == "0" {
+		SQL = "select id, name, token from tokens where id <> 302691822 and id <> 309392050"
+	}
 
-	uids := getSteamBoxHelpList(serverURL, zoneToken)
+	rows, err := Pool.Query(SQL)
+	if err != nil {
+		return
+	}
 
-	for _, v := range uids {
-		fuid := fmt.Sprintf("%v", v)
-		addFirewood(serverURL, zoneToken, fuid)
-		log.Printf("[%v]给[%v]添加柴火", name, fuid)
+	defer rows.Close()
+
+	for rows.Next() {
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
+		serverURL, zoneToken := getSeverURLAndZoneToken(token)
+		uids := getSteamBoxHelpList(serverURL, zoneToken, quality)
+		for _, v := range uids {
+			fuid := fmt.Sprintf("%v", v)
+			addFirewood(serverURL, zoneToken, fuid)
+			log.Printf("[%v]给[%v]添加柴火", name, fuid)
+		}
 	}
 
 	io.WriteString(w, "SUCCESS")
@@ -998,6 +1022,77 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 		}
 
 	}()
+
+	io.WriteString(w, "SUCCESS")
+
+}
+
+func FamilyRewardH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+
+	sql := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
+
+	if id == "" || id == "0" {
+		sql = "select id, name, token from tokens"
+	}
+
+	rows, err := Pool.Query(sql)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
+
+		serverURL, zoneToken := getSeverURLAndZoneToken(token)
+
+		for _, v1 := range []int64{1, 2, 3, 4, 5, 6, 7, 8} {
+			log.Printf("---------------------------[%v]getBoatRaceScorePrize[%v]---------------------------", name, v1)
+			getBoatRaceScorePrize(serverURL, zoneToken, v1)
+
+		}
+
+		for _, v2 := range []int64{1, 2, 3, 4, 5} {
+			log.Printf("---------------------------[%v]getFamilyRobScorePrize[%v]---------------------------", name, v2)
+			getFamilyRobScorePrize(serverURL, zoneToken, v2)
+
+		}
+		//
+
+		getFamilyBoatRacePrize(serverURL, zoneToken)
+		for i := 0; i < 4; i++ {
+			log.Printf("---------------------------[%v]openFamilyBox[%v]---------------------------", name, i)
+			openFamilyBox(serverURL, zoneToken)
+		}
+
+		for {
+			log.Printf("---------------------------[%v]getFamilyRobTaskPrize start---------------------------", name)
+
+			flag1 := getFamilyRobTaskPrize(serverURL, zoneToken, 0)
+			flag2 := getFamilyRobTaskPrize(serverURL, zoneToken, 1)
+			flag3 := getFamilyRobTaskPrize(serverURL, zoneToken, 2)
+
+			if !flag1 && !flag2 && !flag3 {
+				log.Printf("---------------------------[%v]getFamilyRobTaskPrize end---------------------------", name)
+				break
+			}
+
+		}
+
+		for {
+			log.Printf("---------------------------[%v]exchangeGoldChunk start---------------------------", name)
+
+			flag4 := exchangeGoldChunk(serverURL, zoneToken)
+			if !flag4 {
+				log.Printf("---------------------------[%v]exchangeGoldChunk end---------------------------", name)
+
+				break
+			}
+		}
+
+	}
 
 	io.WriteString(w, "SUCCESS")
 
@@ -3883,13 +3978,6 @@ func exchangeRiceCake(serverURL, zoneToken string, id int64) bool {
 	return true
 }
 
-// 兑换金条
-// func exchangeGoldChunk(serverURL, zoneToken string) {
-// 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-// 	URL := fmt.Sprintf("%v/game?cmd=exchangeGoldChunk&token=%v&now=%v", serverURL, zoneToken, now)
-// 	httpGetReturnJson(URL)
-// }
-
 // func getFamilyRobTaskPrize(serverURL, zoneToken string) {
 
 // }
@@ -3901,11 +3989,17 @@ func unlockWorker(serverURL, zoneToken, id string) {
 }
 
 // 公会赛季积分宝箱领取
-// func getBoatRaceScorePrize(serverURL, zoenToken string, id int64) {
-// 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-// 	URL := fmt.Sprintf("%v/game?cmd=getBoatRaceScorePrize&token=%v&id=%v&now=%v", serverURL, zoenToken, id, now)
-// 	httpGetReturnJson(URL)
-// }
+func getBoatRaceScorePrize(serverURL, zoenToken string, id int64) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=getBoatRaceScorePrize&token=%v&id=%v&now=%v", serverURL, zoenToken, id, now)
+	httpGetReturnJson(URL)
+}
+
+func getFamilyRobScorePrize(serverURL, zoenToken string, id int64) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=getFamilyRobScorePrize&token=%v&id=%v&now=%v", serverURL, zoenToken, id, now)
+	httpGetReturnJson(URL)
+}
 
 // 首次开启汤圆
 func enterSteamBox(serverURL, zoneToken, fuid string) (startTime, firewood float64) {
@@ -3940,7 +4034,7 @@ func collectMineGold(serverURL, zoneToken string) {
 	httpGetReturnJson(URL)
 }
 
-func getSteamBoxHelpList(serverURL, zoneToken string) (uids []float64) {
+func getSteamBoxHelpList(serverURL, zoneToken string, quality float64) (uids []float64) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=getSteamBoxHelpList&token=%v&now=%v", serverURL, zoneToken, now)
 	formData := httpGetReturnJson(URL)
@@ -3951,7 +4045,20 @@ func getSteamBoxHelpList(serverURL, zoneToken string) (uids []float64) {
 			if ok {
 				uid, ok := vv["uid"].(float64)
 				if ok {
-					uids = append(uids, uid)
+					if quality == 0 {
+						uids = append(uids, uid)
+					} else {
+						steamBox, ok := vv["steamBox"].(map[string]interface{})
+						if ok {
+							quality1, ok := steamBox["quality"].(float64)
+							if ok {
+								if quality1 == quality {
+									uids = append(uids, uid)
+								}
+							}
+						}
+					}
+
 				}
 			}
 		}
@@ -3967,9 +4074,46 @@ func addFirewood(serverURL, zoneToken, fuid string) {
 
 func familyChat(serverURL, zoneToken string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-	URL := fmt.Sprintf("%v/game?cmd=familyChat&token=%v&content=1&now=%v", serverURL, zoneToken, now)
+	URL := fmt.Sprintf("%v/game?cmd=familyChat&token=%v&content=HI&now=%v", serverURL, zoneToken, now)
 	httpGetReturnJson(URL)
 }
+
+func getFamilyBoatRacePrize(serverURL, zoneToken string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=getFamilyBoatRacePrize&token=%v&now=%v", serverURL, zoneToken, now)
+	httpGetReturnJson(URL)
+}
+
+func openFamilyBox(serverURL, zoneToken string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=openFamilyBox&token=%v&now=%v", serverURL, zoneToken, now)
+	httpGetReturnJson(URL)
+}
+
+// https://s147.11h5.com//game?cmd=getBoatRaceScorePrize&token=ildf5UMJf34CqgKsK0H4Dzyoir8LxSiOpXw&id=1&now=1637499323837
+
+func getFamilyRobTaskPrize(serverURL, zoneToken string, id int64) bool {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=getFamilyRobTaskPrize&token=%v&id=%v&now=%v", serverURL, zoneToken, id, now)
+	formData := httpGetReturnJson(URL)
+	if _, ok := formData["error"]; ok {
+		return false
+	}
+	return true
+}
+
+// 兑换金条
+func exchangeGoldChunk(serverURL, zoneToken string) bool {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=exchangeGoldChunk&token=%v&now=%v", serverURL, zoneToken, now)
+	formData := httpGetReturnJson(URL)
+	if _, ok := formData["error"]; ok {
+		return false
+	}
+	return true
+}
+
+// https://s147.11h5.com//game?cmd=getFamilyRobTaskPrize&token=ild5YDz39bv3yhUEL-5ekL2sQMGhQH9atcF&id=1&now=1637496250628
 
 // []string{"9","15","3"}
 func getFamilyDayTaskPrize(serverURL, zoneToken, id string) {

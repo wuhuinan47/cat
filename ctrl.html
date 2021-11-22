@@ -156,6 +156,19 @@
         <option selected="selected" value="">请选择</option>
     </select>
 
+    <select style="font-size:40px;width:150px; height:100px;" name="SetPieceAmount" id="SetPieceAmount">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option selected="selected" value="10">10</option>
+    </select>
+
     <button style="font-size:40px;width:400px; height:100px;" onclick="setPiece()">
         领取拼图奖励
     </button>
@@ -203,11 +216,18 @@
         一键领取汤圆
     </button>
 
-    <select style="font-size:40px;width:250px; height:100px;" name="addFirewoodOps" id="addFirewoodOps">
-        <!-- <option selected="selected" value="">请选择</option> -->
+    <select style="font-size:40px;width:150px; height:100px;" name="addFirewoodOps" id="addFirewoodOps">
+        <option selected="selected" value="0">全部</option>
     </select>
 
-    <button style="font-size:40px;width:300px; height:100px;" onclick="addFirewood()">
+    <select style="font-size:40px;width:150px; height:100px;" name="FirewoodQuality" id="FirewoodQuality">
+        <option selected="selected" value="0">全部</option>
+        <option value="1">普通</option>
+        <option value="2">稀有</option>
+        <option value="3">传奇</option>
+    </select>
+
+    <button style="font-size:40px;width:200px; height:100px;" onclick="addFirewood()">
         汤圆助力
     </button>
 
@@ -428,6 +448,18 @@
     </button>
 
     <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="familyReward" id="familyReward">
+        <option selected="selected" value="0">全部</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="familyReward()">
+        周六公会奖励
+    </button>
+
+
+    <br>
+    
 
     <select style="font-size:40px;width:200px; height:100px;" name="unlockWorker" id="unlockWorker">
         <option selected="selected" value="">请选择</option>
@@ -796,6 +828,24 @@
 
         }
 
+        familyReward = function () {
+            // unlockWorker
+
+            var r = confirm("familyReward")
+            if (r == true) {
+                var id = $("#familyReward option:selected").val();
+
+                $.get(APIURL + "/familyReward?id=" + id, function (data) {
+                    console.log("familyReward:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        
+
 
         buildUp = function () {
             // buildUpUsers
@@ -821,7 +871,9 @@
             if (r == true) {
                 var id = $("#addFirewoodOps option:selected").val();
 
-                $.get(APIURL + "/addFirewood?id=" + id, function (data) {
+                var quality = $("#FirewoodQuality option:selected").val();
+
+                $.get(APIURL + "/addFirewood?id=" + id+"&quality="+quality, function (data) {
                     console.log("addFirewood:", data)
                     alert(data)
                     window.status = "1";
@@ -923,7 +975,8 @@
             var r = confirm("是否继续")
             if (r == true) {
                 var boxUID = $("#PiecePrizeSelect option:selected").val();
-                $.get(APIURL + "/setPiece?id=" + boxUID, function (data) {
+                var amount = $("#SetPieceAmount option:selected").val();
+                $.get(APIURL + "/setPiece?id=" + boxUID+"&amount="+amount, function (data) {
                     console.log("setPiece:", data)
                     if (data == "SUCCESS") {
                         alert(data)
@@ -1171,9 +1224,9 @@
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
 
-                    if (jsarr[i]["id"] == "302691822") {
-                        tOption.selected = true;
-                    }
+                    // if (jsarr[i]["id"] == "302691822") {
+                    //     tOption.selected = true;
+                    // }
                     document.getElementById("addFirewoodOps").options.add(tOption);
                 }
 
@@ -1218,6 +1271,16 @@
                     document.getElementById("searchFamily").options.add(tOption);
                 }
 
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("familyReward").options.add(tOption);
+                }
+
+                // 
 
                 // 
                 

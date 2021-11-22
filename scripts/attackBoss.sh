@@ -68,3 +68,6 @@ done
 
 
 
+https://s147.11h5.com//game?cmd=enterBoss&token=&bossID=&now=
+
+https://s147.11h5.com//game?cmd=attackBoss&token=ildFYP6isOb9fwIGhlcHypVf4P6hShfgIOt&bossID=695923850_1637334722&damage=200&isPerfect=0&isDouble=1&now=1637335735340
