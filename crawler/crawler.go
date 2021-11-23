@@ -10,6 +10,100 @@ import (
 	"github.com/tebeka/selenium/chrome"
 )
 
+// func CatRun() {
+// 	seleniumPath := "/usr/bin/chromedriver"
+// 	port := 49515
+// 	ops := []selenium.ServiceOption{}
+// 	service, err := selenium.NewChromeDriverService(seleniumPath, port, ops...)
+// 	if err != nil {
+// 		fmt.Printf("Error starting the ChromeDriver server: %v", err)
+// 		return
+// 	}
+// 	imagCaps := map[string]interface{}{
+
+// 		"profile.managed_default_content_settings.images": 2,
+// 	}
+// 	chromeCaps := chrome.Capabilities{
+
+// 		Prefs: imagCaps,
+
+// 		Path: "",
+
+// 		Args: []string{
+
+// 			"--headless", // 设置Chrome无头模式
+
+// 			"--no-sandbox",
+
+// 			"--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36", // 模拟user-agent，防反爬
+
+// 		},
+// 	}
+
+// 	//延迟关闭服务
+// 	defer service.Stop()
+
+// 	caps := selenium.Capabilities{
+// 		"browserName": "chrome",
+// 	}
+// 	caps.AddChrome(chromeCaps)
+// 	//调用浏览器urlPrefix: 测试参考：DefaultURLPrefix = "http://127.0.0.1:4444/wd/hub"
+// 	wd, err := selenium.NewRemote(caps, "http://127.0.0.1:49515/wd/hub")
+// 	if err != nil {
+// 		log.Println("CatRun err :", err)
+// 		return
+// 		// panic(err)
+// 	}
+// 	//延迟退出chrome
+// 	defer wd.Quit()
+
+// 	var globalURL = "https://play.h5avu.com/game/?gameid=147&token="
+// 	var mtoken string
+
+// 	catdb.Pool.QueryRow("select token from tokens where id = 302691822").Scan(&mtoken)
+
+// 	URL := globalURL + mtoken
+
+// 	if err = wd.Get(URL); err != nil {
+// 		log.Println("get url:", err)
+// 		return
+// 	}
+
+// 	var updateToken string
+
+// 	for i := 0; i < 100; i++ {
+// 		ygToken, _ = wd.ExecuteScript("return localStorage.getItem('yg_token')", nil)
+// 		userID, _ = wd.ExecuteScript("return localStorage.getItem('__TD_userID')", nil)
+// 		if ygToken != nil && userID != nil {
+// 			log.Println("获取到token is", ygToken, " uid is", userID)
+// 			break
+// 		}
+// 		log.Println("qq Scan正在获取token...")
+
+// 		if i == 30 {
+// 			imgBytes, _ := wd.Screenshot()
+// 			ioutil.WriteFile("./static/qqQrCode.png", imgBytes, 0644)
+// 		}
+// 		time.Sleep(time.Second * 1)
+// 	}
+
+// 	log.Printf("login success")
+
+// 	for {
+
+// 		var crawlerStatus string
+// 		catdb.Pool.QueryRow("select conf_value from config where conf_key = 'crawlerStatus'").Scan(&crawlerStatus)
+
+// 		if crawlerStatus != "1" {
+// 			log.Println("crawlerStatus stop")
+// 			return
+// 		}
+
+// 		catdb.Pool.QueryRow("select token from tokens where id = 302691822")
+// 	}
+
+// }
+
 func QQScan() (ygToken, userID interface{}, err error) {
 	seleniumPath := "/usr/bin/chromedriver"
 	port := 9515

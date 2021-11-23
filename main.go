@@ -22,16 +22,26 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Centny/rediscache"
+	"github.com/codingeasygo/util/xmap"
 	"github.com/codingeasygo/util/xprop"
+	"github.com/codingeasygo/web"
+	"github.com/codingeasygo/web/filter"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/wuhuinan47/cat/catdb"
 	"github.com/wuhuinan47/cat/crawler"
 	"github.com/wuhuinan47/cat/runner"
 	wechatapi "github.com/wuhuinan47/cat/wechatAPI"
+	"gtlb.zhongzefun.com/base/go/session"
+	"gtlb.zhongzefun.com/base/go/util"
+	"gtlb.zhongzefun.com/base/go/xlog"
 )
 
 var Pool *sql.DB
 
 var run_dir, api_url string
+
+var adminUID int64 = 302691822
 
 // type CatData struct {
 // 	GoldMineHelpList []GoldMineHelpList `json:"helpList"`
@@ -80,6 +90,7 @@ func main() {
 	db.SetMaxIdleConns(16)                   //设置闲置连接数
 
 	Pool = db
+	catdb.Pool = db
 
 	http.HandleFunc("/login", LoginH)
 	http.HandleFunc("/update", UpdateH)
@@ -137,6 +148,7 @@ func main() {
 	http.HandleFunc("/wechatAPI/sendMsg", wechatapi.SendMsgH)
 
 	http.HandleFunc("/ctrl.html", IndexH)
+	http.HandleFunc("/maolaile.html", MaolaileH)
 	http.HandleFunc("/cat_demo.html", CatDemoH)
 	// http.HandleFunc("/qqQrCode.png", QQQrCodeH)
 
@@ -174,11 +186,176 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
+	{
+		rediscache.InitRedisPool(cfg.Str("redis_con"))
+		sb := session.NewDbSessionBuilder()
+		sb.Redis = rediscache.C
+		web.Shared.Builder = sb
+		web.Shared.ShowSlow = 1000
+
+		web.Shared.Filter("^.*$", filter.NewAllCORS())
+		web.Shared.FilterFunc("^/(index.html)?(\\?.*)?$", filter.NoCacheF)
+		web.Shared.FilterFunc("^/(usr|pub)/.*$", filter.NoCacheF)
+		web.Shared.StartMonitor()
+
+		web.HandleFunc("^/adm/status(\\?.*)?$", func(s *web.Session) web.Result {
+			res := xmap.M{}
+			res["http"], _ = web.Shared.State()
+			return s.SendJSON(res)
+		})
+
+		{
+			// cfg.Range("system", func(key string, val interface{}) { crsapi.LoadConfH[key] = val })
+		}
+		Handle("", web.Shared)
+		web.Shared.HandleNormal("^.*$", http.FileServer(http.Dir(cfg.StrDef("www", "www"))))
+
+		// running := true
+
+		go web.HandleSignal()
+		xlog.Infof("start new cat service on %v", cfg.Str("listen2"))
+		err = web.ListenAndServe(cfg.Str("listen2"))
+		if err != nil {
+			panic(err)
+		}
+
+	}
+
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 	<-c
 
+}
+
+func Handle(pre string, mux *web.SessionMux) {
+	// mux.FilterFunc("^"+pre+"/(index.html)?(\\?.*)?$", SellerIDF)
+	mux.FilterFunc("^"+pre+"/usr/.*$", LoginAccessF)
+	//index
+	// mux.HandleFunc("^"+pre+"/pub/loadIndex(\\?.*)?$", LoadIndexH)
+	// mux.HandleFunc("^"+pre+"/usr/updateIndex(\\?.*)?$", UpdateIndexH)
+
+	//user
+	mux.HandleFunc("^"+pre+"/pub/adminLogin(\\?.*)?$", AdminLoginH)
+	mux.HandleFunc("^"+pre+"/usr/logout(\\?.*)?$", LogoutH)
+
+	// "^"+pre+"/pub/login(\\?.*)?$
+
+	mux.HandleFunc("^"+pre+"/pub/login(\\?.*)?$", LoginH1)
+	mux.HandleFunc("^"+pre+"/pub/update(\\?.*)?$", UpdateH1)
+	mux.HandleFunc("^"+pre+"/usr/pullAnimal(\\?.*)?$", PullAnimalH1)
+	mux.HandleFunc("^"+pre+"/usr/diamond(\\?.*)?$", DiamondH1)
+	// mux.HandleFunc("^"+pre+"/usr/familySign(\\?.*)?$", familySignH1)
+	// mux.HandleFunc("^"+pre+"/pub/sendQrcode(\\?.*)?$", SendQrcodeH1)
+	// mux.HandleFunc("^"+pre+"/pub/sendQQQrcode(\\?.*)?$", SendQQQrcodeH1)
+
+	// mux.HandleFunc("^"+pre+"/pub/loginByQrcode(\\?.*)?$", LoginByQrcodeH1)
+	// mux.HandleFunc("^"+pre+"/usr/setConfig(\\?.*)?$", SetConfigH1)
+	mux.HandleFunc("^"+pre+"/usr/getAllTokens(\\?.*)?$", GetAllTokensH1)
+
+	// mux.HandleFunc("^"+pre+"/usr/hitCandy(\\?.*)?$", HitCandyH1)
+	// mux.HandleFunc("^"+pre+"/usr/getFreeBossCannon(\\?.*)?$", GetFreeBossCannonH1)
+
+	// mux.HandleFunc("^"+pre+"/usr/attackBoss(\\?.*)?$", AttackBossH1)
+	// mux.HandleFunc("^"+pre+"/usr/sonAttackBoss(\\?.*)?$", SonAttackBossH1)
+	// mux.HandleFunc("^"+pre+"/usr/oneSonAttackBoss(\\?.*)?$", OneSonAttackBossH1)
+	// mux.HandleFunc("^"+pre+"/usr/giftPiece(\\?.*)?$", GiftPieceH1)
+	// mux.HandleFunc("^"+pre+"/usr/draw(\\?.*)?$", DrawH1)
+	// mux.HandleFunc("^"+pre+"/usr/throwDice(\\?.*)?$", ThrowDiceH1)
+	// mux.HandleFunc("^"+pre+"/usr/getMailPrize(\\?.*)?$", GetMailPrizeH1)
+	// mux.HandleFunc("^"+pre+"/usr/getBossPrize(\\?.*)?$", GetBossPrizeH1)
+	// mux.HandleFunc("^"+pre+"/usr/singleBossAttack(\\?.*)?$", SingleBossAttackH1)
+	// mux.HandleFunc("^"+pre+"/usr/setPiece(\\?.*)?$", SetPieceH1)
+	// mux.HandleFunc("^"+pre+"/usr/sixEnergy(\\?.*)?$", SixEnergyH1)
+	// mux.HandleFunc("^"+pre+"/usr/attackMyBoss(\\?.*)?$", AttackMyBossH1)
+	// mux.HandleFunc("^"+pre+"/usr/beachHelp(\\?.*)?$", BeachHelpH1)
+	// mux.HandleFunc("^"+pre+"/usr/useShovel(\\?.*)?$", UseShovelH1)
+	// mux.HandleFunc("^"+pre+"/usr/getBeachLineRewards(\\?.*)?$", GetBeachLineRewardsH1)
+	// mux.HandleFunc("^"+pre+"/usr/setRunner(\\?.*)?$", SetRunnerH1)
+	// mux.HandleFunc("^"+pre+"/usr/buildUp(\\?.*)?$", BuildUpH1)
+	// mux.HandleFunc("^"+pre+"/usr/openSteamBox(\\?.*)?$", OpenSteamBoxH1)
+	// mux.HandleFunc("^"+pre+"/usr/setPullRows(\\?.*)?$", SetPullRowsH1)
+	// mux.HandleFunc("^"+pre+"/usr/addFirewood(\\?.*)?$", AddFirewoodH1)
+	// mux.HandleFunc("^"+pre+"/usr/exchangeRiceCake(\\?.*)?$", ExchangeRiceCakeH1)
+	// mux.HandleFunc("^"+pre+"/usr/unlockWorker(\\?.*)?$", UnlockWorkerH1)
+	mux.HandleFunc("^"+pre+"/usr/searchFamily(\\?.*)?$", SearchFamilyH1)
+	// mux.HandleFunc("^"+pre+"/usr/getTodayAnimal(\\?.*)?$", GetTodayAnimalsH1)
+	// mux.HandleFunc("^"+pre+"/usr/familyReward(\\?.*)?$", FamilyRewardH1)
+
+	//
+
+	// mux.HandleFunc("^"+pre+"/getServerURL(\\?.*)?$", GetServerURLH1)
+	// mux.HandleFunc("^"+pre+"/getZoneToken(\\?.*)?$", GetZoneTokenH1)
+
+	//
+	// mux.HandleFunc("^"+pre+"/checkToken(\\?.*)?$", CheckTokenH1)
+
+	//
+
+	// mux.HandleFunc("^"+pre+"/ctrl.html(\\?.*)?$", IndexH1)
+	// mux.HandleFunc("^"+pre+"/maolaile.html(\\?.*)?$", MaolaileH1)
+	// mux.HandleFunc("^"+pre+"/cat_demo.html(\\?.*)?$", CatDemoH1)
+
+	// mux.HandleFunc("^"+pre+"/(\\?.*)?$", StaticServer1)
+
+	// mux.HandleFunc("^"+pre+"/getServerLogs(\\?.*)?$", GetServerLogsH1)
+	// mux.HandleFunc("^"+pre+"/delServerLogs(\\?.*)?$", DelServerLogsH1)
+
+	//
+
+}
+
+//LoginAccessF is the normal user login access filter
+func LoginAccessF(s *web.Session) web.Result {
+	userID, ok := s.Value("uid").(int64)
+	if !ok || userID < 1 {
+		return s.SendJSON(xmap.M{
+			"code": 401,
+			"msg":  "not login",
+		})
+	}
+	return web.Continue
+}
+
+func AdminLoginH(s *web.Session) web.Result {
+	var username, password string
+	var err = s.ValidFormat(`
+		username,R|S,L:0;
+		password,R|S,L:1;
+	`, &username, &password)
+	if err != nil {
+		return s.SendJSON(xmap.M{
+			"code": 404,
+		})
+	}
+
+	var tid int64
+
+	if username != "302691822" || password != "Aa112211" {
+		return s.SendJSON(xmap.M{
+			"code": 404,
+		})
+	}
+
+	tid = adminUID
+
+	s.Clear()
+
+	s.SetValue("uid", tid)
+
+	s.Flush()
+	xlog.Infof("user login to system from %v success by uid:%v", s.R.RemoteAddr, tid)
+	return s.SendJSON(xmap.M{
+		"code":       0,
+		"data":       "data",
+		"session_id": s.ID(),
+	})
+}
+
+func LogoutH(s *web.Session) web.Result {
+	s.Clear()
+	s.Flush()
+	return util.ReturnCodeData(s, 0, "OK")
 }
 
 func StaticServer(w http.ResponseWriter, r *http.Request) {
@@ -188,6 +365,11 @@ func StaticServer(w http.ResponseWriter, r *http.Request) {
 
 func IndexH(w http.ResponseWriter, req *http.Request) {
 	t, _ := template.ParseFiles("ctrl.html")
+	t.Execute(w, nil)
+}
+
+func MaolaileH(w http.ResponseWriter, req *http.Request) {
+	t, _ := template.ParseFiles("maolaile.html")
 	t.Execute(w, nil)
 }
 
@@ -245,6 +427,35 @@ func GetAllTokensH(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.Write(bytes)
+}
+
+func GetAllTokensH1(s *web.Session) web.Result {
+
+	SQL := "select id, name from tokens"
+
+	rows, err := Pool.Query(SQL)
+
+	if err != nil {
+		return util.ReturnCodeErr(s, 10, err.Error())
+	}
+
+	defer rows.Close()
+
+	var list []map[string]interface{}
+
+	for rows.Next() {
+
+		var id, name string
+		rows.Scan(&id, &name)
+		list = append(list, map[string]interface{}{"id": id, "name": name})
+	}
+
+	bytes, err := json.Marshal(list)
+
+	if err != nil {
+		return util.ReturnCodeErr(s, 10, err.Error())
+	}
+	return s.SendString(string(bytes), "")
 }
 
 //
@@ -417,34 +628,40 @@ func SetPieceH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	amount := req.URL.Query().Get("amount")
 	intAmount, _ := strconv.Atoi(amount)
-	SQL := "select token from tokens where id = ?"
-
-	var token string
-	Pool.QueryRow(SQL, id).Scan(&token)
-
-	serverURL, zoneToken := getSeverURLAndZoneToken(token)
-
-	ids := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9}
-
-	var flag bool
-
-	for i := 0; i < intAmount; i++ {
-		for _, v := range ids {
-			log.Printf("设置拼图%v", v)
-			setPiece(serverURL, zoneToken, v)
-			// time.Sleep(time.Millisecond * 300)
-		}
-		flag = getPiecePrize(serverURL, zoneToken)
-		if !flag {
-			break
-		}
+	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
+	if id == "" {
+		SQL = "select id, name, token from tokens"
 	}
 
-	log.Printf("拼图奖励领取状态:%v", flag)
-
-	if !flag {
-		io.WriteString(w, "https://play.h5avu.com/game/?gameid=147&token="+token)
+	rows, err := Pool.Query(SQL)
+	if err != nil {
 		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var uid, name, token string
+
+		rows.Scan(&uid, &name, &token)
+
+		serverURL, zoneToken := getSeverURLAndZoneToken(token)
+
+		ids := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+		var flag bool
+
+		for i := 0; i < intAmount; i++ {
+			for _, v := range ids {
+				log.Printf("[%v]设置拼图%v", name, v)
+				setPiece(serverURL, zoneToken, v)
+				// time.Sleep(time.Millisecond * 300)
+			}
+			flag = getPiecePrize(serverURL, zoneToken)
+			log.Printf("[%v]拼图奖励领取状态:%v", name, flag)
+			if !flag {
+				break
+			}
+		}
 	}
 
 	io.WriteString(w, "SUCCESS")
@@ -497,6 +714,8 @@ func GetBossPrizeH(w http.ResponseWriter, req *http.Request) {
 func GetMailPrizeH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	title := req.URL.Query().Get("title")
+	amount := req.URL.Query().Get("amount")
+	intAmount, _ := strconv.Atoi(amount)
 	SQL := fmt.Sprintf("select name, token from tokens where id = %v", id)
 
 	if id == "" {
@@ -510,6 +729,30 @@ func GetMailPrizeH(w http.ResponseWriter, req *http.Request) {
 	}
 	defer rows.Close()
 
+	var titleNew, cakeID string
+
+	if title == "煮汤圆成功开启(芝麻)" {
+		titleNew = "煮汤圆成功开启"
+		cakeID = "98"
+	}
+	if title == "煮汤圆成功开启(花生)" {
+		titleNew = "煮汤圆成功开启"
+		cakeID = "99"
+	}
+	if title == "煮汤圆成功开启(抹茶)" {
+		titleNew = "煮汤圆成功开启"
+		cakeID = "100"
+	}
+	if title == "煮汤圆成功开启(紫薯)" {
+		titleNew = "煮汤圆成功开启"
+		cakeID = "101"
+	}
+	if title == "煮汤圆成功开启(草莓)" {
+		titleNew = "煮汤圆成功开启"
+		cakeID = "102"
+	}
+
+	var ss string
 	for rows.Next() {
 		var name, token string
 
@@ -517,16 +760,25 @@ func GetMailPrizeH(w http.ResponseWriter, req *http.Request) {
 
 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
 
-		mailids := getMailList(serverURL, zoneToken, title)
+		log.Printf("[%v] 查看邮件奖励[title:%v type:%v]", name, titleNew, cakeID)
 
-		log.Printf("[%v] 开始领取邮件奖励[title:%v]", name, title)
+		mailids := getMailList(serverURL, zoneToken, titleNew, cakeID)
+
+		log.Printf("[%v] 开始领取邮件奖励[title:%v][mailids:%v]", name, title, len(mailids))
+		var i = 0
 		for _, mailid := range mailids {
+			if i == intAmount {
+				break
+			}
 			if getMailAttachments(serverURL, zoneToken, mailid) {
+				i++
 				log.Printf("[%v] 领取邮件完毕[%v]", name, mailid)
 				readMail(serverURL, zoneToken, mailid)
 				log.Printf("[%v] 删除邮件完毕[%v]", name, mailid)
 			}
 		}
+
+		ss += fmt.Sprintf("[%v] 总共:%v 已领取:%v|||", name, len(mailids), i)
 
 		log.Printf("[%v] 领取邮件完毕", name)
 
@@ -544,7 +796,7 @@ func GetMailPrizeH(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	io.WriteString(w, "SUCCESS")
+	io.WriteString(w, ss)
 
 }
 
@@ -814,14 +1066,39 @@ func SearchFamilyH(w http.ResponseWriter, req *http.Request) {
 	familyName := searchFamily(serverURL, zoneToken, familyId)
 
 	familyName, _ = url.QueryUnescape(familyName)
+	ss := getTodayAnimal(id)
 
-	mapList := map[string]interface{}{"familyName": familyName, "familyId": familyId, "timeFlushList": timeFlushList}
+	mapList := map[string]interface{}{"familyName": familyName, "familyId": familyId, "timeFlushList": timeFlushList, "todayAnimals": ss}
 	jsonBytes, err := json.Marshal(mapList)
 	if err != nil {
 		io.WriteString(w, err.Error())
 		return
 	}
 	io.WriteString(w, string(jsonBytes))
+}
+
+func SearchFamilyH1(s *web.Session) web.Result {
+	var req *http.Request
+	req = s.R
+	id := req.URL.Query().Get("id")
+	SQL := "select id, name, token from tokens where id = ?"
+	var uid, name, token string
+	Pool.QueryRow(SQL, id).Scan(&uid, &name, &token)
+	log.Printf("[name:%v][id:%v]", name, id)
+	serverURL, zoneToken := getSeverURLAndZoneToken(token)
+	familyId, timeFlushList := getFamilyId(serverURL, zoneToken)
+	familyName := searchFamily(serverURL, zoneToken, familyId)
+
+	familyName, _ = url.QueryUnescape(familyName)
+	ss := getTodayAnimal(id)
+
+	mapList := map[string]interface{}{"familyName": familyName, "familyId": familyId, "timeFlushList": timeFlushList, "todayAnimals": ss}
+	jsonBytes, err := json.Marshal(mapList)
+	if err != nil {
+		return util.ReturnCodeErr(s, 10, err.Error())
+	}
+
+	return util.ReturnCodeData(s, 0, string(jsonBytes))
 }
 
 func UnlockWorkerH(w http.ResponseWriter, req *http.Request) {
@@ -1000,6 +1277,9 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 
 		log.Printf("[%v]collectMineGold", name)
 		collectMineGold(serverURL, zoneToken)
+
+		dayGetGiftBoxAward(serverURL, zoneToken)
+		activateDayTaskGift(serverURL, zoneToken)
 
 		if id == "302691822" || id == "309392050" {
 			followCompanion_1(serverURL, zoneToken, 3)
@@ -1631,6 +1911,9 @@ func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 	// SQL = "select group_concat(name) as groupname from tokens where token = ''"
 	// var reply string
 	// Pool.QueryRow(SQL).Scan(&reply)
+	if groupconcat1 == "" {
+		go checkPiece()
+	}
 
 	io.WriteString(w, groupconcat1+"||||"+groupconcat2)
 
@@ -1707,10 +1990,6 @@ func HitCandyH(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, "SUCCESS")
 
 }
-
-var animal76, animal77, animal78, animal79, animal80, animal81 = 10, 8, 6, 6, 4, 2
-
-var fen76, fen77, fen78, fen79, fen80, fen81 = 2, 2, 3, 3, 4, 6
 
 func GetTodayAnimalsH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
@@ -1829,6 +2108,25 @@ func DiamondH(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, str)
 }
 
+func DiamondH1(s *web.Session) web.Result {
+	var req *http.Request
+	req = s.R
+
+	id := req.URL.Query().Get("id")
+	quality := req.URL.Query().Get("quality")
+	amount := req.URL.Query().Get("amount")
+
+	v2, _ := strconv.ParseFloat(quality, 64)
+	v3, _ := strconv.ParseFloat(amount, 64)
+
+	total, all := getBoxPrizeGo(id, v2, v3)
+
+	rate, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", (total/all)*100), 64)
+	str := fmt.Sprintf("抓取次数:%v, 抓中次数:%v, 命中率:%v", all, total, fmt.Sprintf("%v", rate)+"%")
+
+	return util.ReturnCodeData(s, 0, str)
+}
+
 func familySignH(w http.ResponseWriter, req *http.Request) {
 
 	uid := req.URL.Query().Get("id")
@@ -1916,6 +2214,11 @@ func PullAnimalH(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func PullAnimalH1(s *web.Session) web.Result {
+	go pullAnimalGo()
+	return util.ReturnCodeData(s, 0, "SUCCESS")
+}
+
 func UpdateH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	name := req.URL.Query().Get("name")
@@ -1940,6 +2243,33 @@ func UpdateH(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func UpdateH1(s *web.Session) web.Result {
+	var w http.ResponseWriter
+	var req *http.Request
+	w = s.W
+	req = s.R
+	id := req.URL.Query().Get("id")
+	name := req.URL.Query().Get("name")
+	token := req.URL.Query().Get("token")
+	var serverURL, zoneToken string
+	if name == "" {
+		serverURL = getServerURL()
+		zoneToken, name = getNickName(serverURL, token)
+	}
+
+	log.Println("update token id is ", id, "name is ", name, "token is", token)
+
+	SQL := "replace into tokens (id, name, token, serverURL, zoneToken) values (?, ?, ?, ?, ?)"
+	_, err := Pool.Exec(SQL, id, name, token, serverURL, zoneToken)
+
+	if err != nil {
+		io.WriteString(w, err.Error())
+		return util.ReturnCodeErr(s, 10, err.Error())
+	}
+
+	return util.ReturnCodeData(s, 0, "SUCCESS")
+}
+
 func LoginH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	var token string
@@ -1954,6 +2284,20 @@ func LoginH(w http.ResponseWriter, req *http.Request) {
 
 	http.Redirect(w, req, url, http.StatusTemporaryRedirect)
 
+}
+
+func LoginH1(s *web.Session) web.Result {
+	id := s.R.URL.Query().Get("id")
+	var token string
+	Pool.QueryRow("select token from tokens where id = ?", id).Scan(&token)
+
+	if token == "" {
+		return util.ReturnCodeData(s, 0, "cannot find token")
+	}
+	url := "https://play.h5avu.com/game/?gameid=147&token="
+	url += token
+
+	return s.Redirect(url)
 }
 
 // goroutine
@@ -2552,24 +2896,11 @@ func getEnterInfo(uid, name, serverURL, token, key string) (zoneToken string, in
 	return
 }
 
-func checkZoneToken(serverURL, zoneToken string) bool {
-	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-	URL := fmt.Sprintf("%v/game?cmd=hasNewMail&token=%v&now=%v", serverURL, zoneToken, now)
-	// log.Println("checkZoneToken URL is :", URL)
-	formData := httpGetReturnJson(URL)
-	_, ok := formData["newMailCnt"].(float64)
-	if ok {
-		return true
-	}
-	log.Println("zoneToken is err :", formData["error"])
-	return false
-}
-
 func getSeverURLAndZoneToken(token string) (serverURL, zoneToken string) {
 
 	SQL := "select serverURL, zoneToken from tokens where token = ?"
 	Pool.QueryRow(SQL, token).Scan(&serverURL, &zoneToken)
-	if checkZoneToken(serverURL, zoneToken) {
+	if catdb.CheckZoneToken(serverURL, zoneToken) {
 		return
 	}
 	serverURL = getServerURL()
@@ -2757,6 +3088,25 @@ func enterFamilyRob(serverURL, zoneToken string) (foods []map[string]interface{}
 
 	return
 }
+
+func dayGetGiftBoxAward(serverURL, zoneToken string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	url := fmt.Sprintf("%v/game?cmd=dayGetGiftBoxAward&token=%v&now=%v", serverURL, zoneToken, now)
+	httpGetReturnJson(url)
+}
+
+func activateDayTaskGift(serverURL, zoneToken string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	url := fmt.Sprintf("%v/game?cmd=activateDayTaskGift&token=%v&now=%v", serverURL, zoneToken, now)
+	httpGetReturnJson(url)
+}
+
+// https://s147.11h5.com//game?cmd=activateDayTaskGift&token=ildL1f6n6pNT-wCsDiutcD8EAJUD4L39alc&now=1637631445665
+
+// https://s147.11h5.com//game?cmd=dayGetGiftBoxAward&token=ildL1f6n6pNT-wCsDiutcD8EAJUD4L39alc&now=1637631382467
+
+// https://s147.11h5.com//game?cmd=getDayTasksInfo&token=ildL1f6n6pNT-wCsDiutcD8EAJUD4L39alc&now=1637631326499
+// {"dayHelpCnt":0,"tasks":{"1":{"id":"1","do":3,"a":1},"4":{"id":"5","do":3,"a":1},"6":{"id":"9","do":1,"a":1},"9":{"id":"13","do":0,"a":0},"10":{"id":"14","do":1,"a":1},"11":{"id":"16","do":1,"a":1},"13":{"id":"20","do":0,"a":0,"fuids":[]},"15":{"id":"23","do":0,"a":0}},"codeGift":0,"giftBox":{"time":1637613640000,"a":0,"activate":1,"d":"2021-11-22"}}
 
 func getFamilyId(serverURL, zoneToken string) (familyId float64, timeFlushList []string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
@@ -3402,7 +3752,7 @@ func exchangeBeachReward(serverURL, zoneToken string, id int64) bool {
 // https://s147.11h5.com:3147/118_89_198_11/3147/
 
 // 获取邮件列表
-func getMailList(serverURL, zoneToken, title string) (mailids []string) {
+func getMailList(serverURL, zoneToken, title, cakeID string) (mailids []string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := fmt.Sprintf("%v/game?cmd=getMailList&token=%v&now=%v", serverURL, zoneToken, now)
 	formData := httpGetReturnJson(url)
@@ -3413,15 +3763,35 @@ func getMailList(serverURL, zoneToken, title string) (mailids []string) {
 	}
 
 	for _, v := range mailList {
-		if title != "" {
-			if v.(map[string]interface{})["title"].(string) == title {
+
+		if v.(map[string]interface{})["isRead"].(float64) == 0 {
+			if title != "" {
+				if v.(map[string]interface{})["title"].(string) == title {
+
+					if cakeID != "" {
+						attachments, ok := v.(map[string]interface{})["attachments"].([]interface{})
+						if ok {
+							for _, v2 := range attachments {
+
+								if v2.(map[string]interface{})["type"].(string) == cakeID {
+									mailid := v.(map[string]interface{})["mailid"].(string)
+									mailids = append(mailids, mailid)
+									break
+								}
+							}
+						}
+					} else {
+						mailid := v.(map[string]interface{})["mailid"].(string)
+						mailids = append(mailids, mailid)
+					}
+
+				}
+			} else {
 				mailid := v.(map[string]interface{})["mailid"].(string)
 				mailids = append(mailids, mailid)
 			}
-		} else {
-			mailid := v.(map[string]interface{})["mailid"].(string)
-			mailids = append(mailids, mailid)
 		}
+
 	}
 	return
 }
@@ -3913,6 +4283,201 @@ func getHelpItem(serverURL, zoneToken string, _type, index int) {
 	httpGetReturnJson(URL)
 }
 
+func recvFamilyDonate(serverURL, zoneToken string, pos float64) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=recvFamilyDonate&token=%v&pos=%v&now=%v", serverURL, zoneToken, pos, now)
+	httpGetReturnJson(URL)
+}
+
+func requestFamilyDonate(serverURL, zoneToken string, itemId, pos float64) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=requestFamilyDonate&token=%v&itemId=%v&pos=%v&now=%v", serverURL, zoneToken, itemId, pos, now)
+	httpGetReturnJson(URL)
+}
+
+func getFamilyDonateList(serverURL, zoneToken string, itemId float64) (ids []string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=getFamilyDonateList&token=%v&now=%v", serverURL, zoneToken, now)
+	formData := httpGetReturnJson(URL)
+	donateList, ok := formData["donateList"].([]interface{})
+
+	if ok {
+		for _, v := range donateList {
+			if v.(map[string]interface{})["itemId"].(float64) == itemId {
+				id := v.(map[string]interface{})["id"].(string)
+				ids = append(ids, id)
+			}
+		}
+	}
+
+	return
+
+}
+
+func responseFamilyDonate(serverURL, zoneToken, id string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=responseFamilyDonate&token=%v&id=%v&now=%v", serverURL, zoneToken, id, now)
+	httpGetReturnJson(URL)
+}
+
+func checkPiece() {
+	SQL := "select id, name, token from tokens where id in (301807377,302691822,309392050,309433834,374289806,375912362,380576240,381034522,381909995,382292124,385498006,439943689,445291795,690364007,690708340,693419844,694068717,694316841,694981971,695923850,696636309,696528833,696100351,697068758)"
+	rows, err := Pool.Query(SQL)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	var uids []map[string]string
+	for rows.Next() {
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
+
+		serverURL, zoneToken := getSeverURLAndZoneToken(token)
+		itemIds := getPieceList(serverURL, zoneToken)
+
+		var uidMap = make(map[string]string)
+		uidMap["uid"] = uid
+		uidMap["name"] = name
+		uidMap["token"] = token
+		uidMap["serverURL"] = serverURL
+		uidMap["zoneToken"] = zoneToken
+		uids = append(uids, uidMap)
+		var pos float64 = 1
+		for _, itemId := range itemIds {
+			if pos == 3 {
+				break
+			}
+			requestFamilyDonate(serverURL, zoneToken, itemId, pos)
+		}
+
+	}
+
+	for _, v := range uids {
+		cc := 0
+		itemIds := getMoreThanPieceList(v["serverURL"], v["zoneToken"])
+		for _, itemId := range itemIds {
+			if cc == 5 {
+				break
+			}
+			ids := getFamilyDonateList(v["serverURL"], v["zoneToken"], itemId)
+			for _, id := range ids {
+				if cc == 5 {
+					break
+				}
+				responseFamilyDonate(v["serverURL"], v["zoneToken"], id)
+				cc++
+				log.Printf("[%v] donate [%v]->[%v]", v["name"], id, itemId)
+			}
+		}
+	}
+
+	for _, v := range uids {
+		recvFamilyDonate(v["serverURL"], v["zoneToken"], 1)
+		recvFamilyDonate(v["serverURL"], v["zoneToken"], 2)
+	}
+}
+
+func getPieceList(serverURL, zoneToken string) (itemIds []float64) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=getPieceList&token=%v&now=%v", serverURL, zoneToken, now)
+	formData := httpGetReturnJson(URL)
+	pieceList, ok := formData["pieceList"].(map[string]interface{})
+	if ok {
+		for k, v := range pieceList {
+			count, ok := v.(map[string]interface{})["count"].(float64)
+			if ok {
+				if count < 10 {
+					ii := 10 - count
+					var i float64
+					for i = 0; i < ii; i++ {
+						var itemId float64
+						if k == "1" {
+							itemId = 83
+						}
+						if k == "2" {
+							itemId = 84
+						}
+						if k == "3" {
+							itemId = 85
+						}
+						if k == "4" {
+							itemId = 86
+						}
+						if k == "5" {
+							itemId = 87
+						}
+						if k == "6" {
+							itemId = 88
+						}
+						if k == "7" {
+							itemId = 89
+						}
+						if k == "8" {
+							itemId = 90
+						}
+						if k == "9" {
+							itemId = 91
+						}
+						itemIds = append(itemIds, itemId)
+					}
+				}
+			}
+		}
+	}
+	return
+}
+
+func getMoreThanPieceList(serverURL, zoneToken string) (itemIds []float64) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=getPieceList&token=%v&now=%v", serverURL, zoneToken, now)
+	formData := httpGetReturnJson(URL)
+	pieceList, ok := formData["pieceList"].(map[string]interface{})
+	if ok {
+		for k, v := range pieceList {
+			count, ok := v.(map[string]interface{})["count"].(float64)
+			if ok {
+				if count > 10 {
+					ii := count - 10
+					var i float64
+					for i = 0; i < ii; i++ {
+						var itemId float64
+						if k == "1" {
+							itemId = 83
+						}
+						if k == "2" {
+							itemId = 84
+						}
+						if k == "3" {
+							itemId = 85
+						}
+						if k == "4" {
+							itemId = 86
+						}
+						if k == "5" {
+							itemId = 87
+						}
+						if k == "6" {
+							itemId = 88
+						}
+						if k == "7" {
+							itemId = 89
+						}
+						if k == "8" {
+							itemId = 90
+						}
+						if k == "9" {
+							itemId = 91
+						}
+						itemIds = append(itemIds, itemId)
+					}
+				}
+			}
+		}
+	}
+	return
+}
+
 func useShovel(serverURL, zoneToken, toid string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=useShovel&token=%v&now=%v", serverURL, zoneToken, now)
@@ -4383,6 +4948,9 @@ func RunnerDraw() (err error) {
 			getElevenEnergyPrize(serverURL, zoneToken, 4)
 			log.Printf("[%v]collectMineGold", cowBoyName)
 			collectMineGold(serverURL, zoneToken)
+			dayGetGiftBoxAward(serverURL, zoneToken)
+			activateDayTaskGift(serverURL, zoneToken)
+
 			log.Printf("---------------------------[%v]结束转盘---------------------------", cowBoyName)
 
 		}()
@@ -4460,6 +5028,8 @@ func RunnerDraw() (err error) {
 
 				log.Printf("[%v]collectMineGold", goName)
 				collectMineGold(goServerURL, goZoneToken)
+				dayGetGiftBoxAward(goServerURL, goZoneToken)
+				activateDayTaskGift(goServerURL, goZoneToken)
 
 				if goFamilyDayTask == nil {
 					return err
@@ -4504,6 +5074,8 @@ func RunnerDraw() (err error) {
 
 					log.Printf("[%v]collectMineGold", goName)
 					collectMineGold(goServerURL, goZoneToken)
+					dayGetGiftBoxAward(goServerURL, goZoneToken)
+					activateDayTaskGift(goServerURL, goZoneToken)
 
 					if goFamilyDayTask == nil {
 						return
@@ -4780,4 +5352,101 @@ func ToJSON(src interface{}) []byte {
 
 	jval, _ := json.Marshal(src)
 	return jval
+}
+
+func getTodayAnimal(id string) (ss string) {
+	sql := `select id, name, token, init_animals from tokens where id = (select conf_value from config where conf_key = 'animalUid')`
+
+	if id != "" {
+		sql = fmt.Sprintf("select id, name, token, init_animals from tokens where id = %v", id)
+	}
+
+	var uid, name, token string
+	var initAnimals []byte
+	Pool.QueryRow(sql).Scan(&uid, &name, &token, &initAnimals)
+	serverURL := getServerURL()
+	_, animal := getEnterInfo(uid, name, serverURL, token, "animal")
+	log.Println("animal ", animal)
+
+	nowAnimal, ok := animal.(map[string]interface{})
+	log.Println("nowAnimal ", nowAnimal)
+
+	if ok {
+
+		todayInitAnimal := make(map[string]float64)
+
+		if string(initAnimals) != "" {
+			err := json.Unmarshal(initAnimals, &todayInitAnimal)
+			if err != nil {
+				return
+			}
+		} else {
+			sql = "select conf_value from config where conf_key = 'todayInitAnimal'"
+			var b []byte
+			Pool.QueryRow(sql).Scan(&b)
+			err := json.Unmarshal(b, &todayInitAnimal)
+			if err != nil {
+				return
+			}
+		}
+
+		log.Println("todayInitAnimal ", todayInitAnimal)
+		var s = make(map[string]float64)
+		var sum float64
+		ss = "我方今日已获得->"
+		for k, v1 := range nowAnimal {
+			v := v1.(float64)
+			initV := todayInitAnimal[k]
+
+			if k == "76" {
+				s["浣熊"] = v - initV
+				sum += s["浣熊"] * 2
+				ss += fmt.Sprintf("[浣熊:%v]", s["浣熊"])
+			}
+
+			if k == "77" {
+				s["企鹅"] = v - initV
+				sum += s["企鹅"] * 2
+				ss += fmt.Sprintf("[企鹅:%v]", s["企鹅"])
+			}
+
+			if k == "78" {
+				s["野猪"] = v - initV
+				sum += s["野猪"] * 3
+				ss += fmt.Sprintf("[野猪:%v]", s["野猪"])
+
+			}
+
+			if k == "79" {
+				s["羊驼"] = v - initV
+				sum += s["羊驼"] * 3
+				ss += fmt.Sprintf("[羊驼:%v]", s["羊驼"])
+
+			}
+
+			if k == "80" {
+				s["熊猫"] = v - initV
+				sum += s["熊猫"] * 4
+				ss += fmt.Sprintf("[熊猫:%v]", s["熊猫"])
+
+			}
+
+			if k == "81" {
+				s["大象"] = v - initV
+				sum += s["大象"] * 6
+				ss += fmt.Sprintf("[大象:%v]", s["大象"])
+
+			}
+		}
+
+		ss += fmt.Sprintf(";目前:%v分，还差:%v分", sum, 50-sum)
+
+		// data, err := json.Marshal(s)
+		// if err != nil {
+		// 	return
+		// }
+		// io.WriteString(w, string(data))
+		return
+	}
+	return
 }

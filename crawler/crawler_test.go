@@ -2,12 +2,102 @@ package crawler
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/tebeka/selenium"
+	"github.com/tebeka/selenium/chrome"
 )
+
+func TestCatRun(t *testing.T) {
+	seleniumPath := "/usr/local/bin/chromedriver"
+
+	// seleniumPath := "/usr/bin/chromedriver"
+	port := 49515
+	ops := []selenium.ServiceOption{}
+	service, err := selenium.NewChromeDriverService(seleniumPath, port, ops...)
+	if err != nil {
+		fmt.Printf("Error starting the ChromeDriver server: %v", err)
+		return
+	}
+	imagCaps := map[string]interface{}{
+
+		"profile.managed_default_content_settings.images": 2,
+	}
+	chromeCaps := chrome.Capabilities{
+
+		Prefs: imagCaps,
+
+		Path: "",
+
+		Args: []string{
+
+			"--headless", // 设置Chrome无头模式
+
+			"--no-sandbox",
+
+			"--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36", // 模拟user-agent，防反爬
+
+		},
+	}
+
+	//延迟关闭服务
+	defer service.Stop()
+
+	caps := selenium.Capabilities{
+		"browserName": "chrome",
+	}
+	caps.AddChrome(chromeCaps)
+	//调用浏览器urlPrefix: 测试参考：DefaultURLPrefix = "http://127.0.0.1:4444/wd/hub"
+	wd, err := selenium.NewRemote(caps, "http://127.0.0.1:49515/wd/hub")
+	if err != nil {
+		log.Println("CatRun err :", err)
+		return
+		// panic(err)
+	}
+	//延迟退出chrome
+	defer wd.Quit()
+
+	var globalURL = "https://play.h5avu.com/game/?gameid=147&token=db664c32188a286f285991cfebbe6520"
+	var mtoken string
+
+	// catdb.Pool.QueryRow("select token from tokens where id = 302691822").Scan(&mtoken)
+
+	URL := globalURL + mtoken
+
+	if err = wd.Get(URL); err != nil {
+		log.Println("get url:", err)
+		return
+	}
+
+	var ygToken, userID interface{}
+
+	for i := 0; i < 100; i++ {
+		ygToken, _ = wd.ExecuteScript("return localStorage.getItem('yg_token')", nil)
+		userID, _ = wd.ExecuteScript("return localStorage.getItem('__TD_userID')", nil)
+		if ygToken != nil && userID != nil {
+			log.Println("获取到token is", ygToken, " uid is", userID)
+			break
+		}
+
+		time.Sleep(time.Second * 1)
+	}
+
+	consoleLogs, _ := wd.Log("browser")
+	log.Println("FindElement:", consoleLogs)
+
+	// wd.FindElement(selenium.ByCSSSelector, "")
+
+	// pageSource, _ := wd.PageSource()
+	// log.Println("pageS:", pageSource)
+
+	// scriptToExecute := "var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;"
+	// var netData interface{}
+	// netData, _ := wd.ExecuteScript("var network = performance.getEntries() || {}; return network;", nil)
+	// log.Println("netData:", netData)
+}
 
 func TestExec(t *testing.T) {
 

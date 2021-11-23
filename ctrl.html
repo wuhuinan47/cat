@@ -153,7 +153,7 @@
 
     <br>
     <select style="font-size:40px;width:200px; height:100px;" name="PiecePrizeSelect" id="PiecePrizeSelect">
-        <option selected="selected" value="">请选择</option>
+        <option selected="selected" value="">全部</option>
     </select>
 
     <select style="font-size:40px;width:150px; height:100px;" name="SetPieceAmount" id="SetPieceAmount">
@@ -283,18 +283,25 @@
 
     <br>
 
-    <select style="font-size:40px;width:200px; height:100px;" name="Oper_Mail" id="Oper_Mail">
+    <select style="font-size:40px;width:120px; height:100px;" name="Oper_Mail" id="Oper_Mail">
         <option selected="selected" value="">全部</option>
     </select>
 
-    <select style="font-size:40px;width:200px; height:100px;" name="Oper_MailTitle" id="Oper_MailTitle">
+    <select style="font-size:40px;width:420px; height:100px;" name="Oper_MailTitle" id="Oper_MailTitle">
         <option value="">全部</option>
-        <option selected="selected" value="煮汤圆成功开启">煮汤圆成功开启</option>
+        <option value="煮汤圆成功开启">煮汤圆成功开启</option>
+        <option value="煮汤圆成功开启(芝麻)">煮汤圆成功开启(芝麻)</option>
+        <option value="煮汤圆成功开启(花生)">煮汤圆成功开启(花生)</option>
+        <option value="煮汤圆成功开启(抹茶)">煮汤圆成功开启(抹茶)</option>
+        <option value="煮汤圆成功开启(紫薯)">煮汤圆成功开启(紫薯)</option>
+        <option selected="selected" value="煮汤圆成功开启(草莓)">煮汤圆成功开启(草莓)</option>
         <option value="福利礼包">福利礼包</option>
     </select>
+    <input id="mailAmount" style="font-size:40px;width:100px; height:100px;" type="text" placeholder="次数"
+        value="20" />
 
-    <button style="font-size:40px;width:400px; height:100px;" onclick="getMailPrize()">
-        领取邮件奖励
+    <button style="font-size:40px;width:200px; height:100px;" onclick="getMailPrize()">
+        领取邮件
     </button>
 
 
@@ -1008,7 +1015,8 @@
             if (r == true) {
                 var boxUID = $("#Oper_Mail option:selected").val();
                 var title = $("#Oper_MailTitle option:selected").val();
-                $.get(APIURL + "/getMailPrize?id=" + boxUID+"&title="+title, function (data) {
+                var mailAmount = document.getElementById("mailAmount");
+                $.get(APIURL + "/getMailPrize?id=" + boxUID+"&title="+title+"&amount="+mailAmount.value, function (data) {
                     console.log("getMailPrize:", data)
                     alert(data)
                     window.status = "1";
