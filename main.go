@@ -4385,6 +4385,9 @@ func getPieceList(serverURL, zoneToken string) (itemIds []float64) {
 	pieceList, ok := formData["pieceList"].(map[string]interface{})
 	if ok {
 		for k, v := range pieceList {
+			if len(itemIds) >= 2 {
+				return
+			}
 			count, ok := v.(map[string]interface{})["count"].(float64)
 			if ok {
 				if count < 10 {
@@ -4880,6 +4883,33 @@ func RunnerSteamBox() (err error) {
 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
 		addFirewood(serverURL, zoneToken, "302691822")
 		addFirewood(serverURL, zoneToken, "309392050")
+	}
+
+	SQL = "select name, token from tokens where id in(302691822,309392050)"
+
+	rows, err = Pool.Query(SQL)
+
+	if err != nil {
+		return
+	}
+
+	for rows.Next() {
+		var uname, utoken string
+		rows.Scan(&uname, &utoken)
+		serverURL, zoneToken := getSeverURLAndZoneToken(utoken)
+		uids := getSteamBoxHelpList(serverURL, zoneToken, 2)
+		for _, v := range uids {
+			fuid := fmt.Sprintf("%v", v)
+			addFirewood(serverURL, zoneToken, fuid)
+			log.Printf("[%v]给[%v]添加柴火", uname, fuid)
+		}
+
+		uids = getSteamBoxHelpList(serverURL, zoneToken, 3)
+		for _, v := range uids {
+			fuid := fmt.Sprintf("%v", v)
+			addFirewood(serverURL, zoneToken, fuid)
+			log.Printf("[%v]给[%v]添加柴火", uname, fuid)
+		}
 	}
 
 	return
