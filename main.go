@@ -778,7 +778,9 @@ func GetMailPrizeH(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 
-		ss += fmt.Sprintf("[%v] 总共:%v 已领取:%v|||", name, len(mailids), i)
+		if len(mailids) > 0 {
+			ss += fmt.Sprintf("[%v] 总共:%v 已领取:%v|||", name, len(mailids), i)
+		}
 
 		log.Printf("[%v] 领取邮件完毕", name)
 
@@ -1066,9 +1068,9 @@ func SearchFamilyH(w http.ResponseWriter, req *http.Request) {
 	familyName := searchFamily(serverURL, zoneToken, familyId)
 
 	familyName, _ = url.QueryUnescape(familyName)
-	ss := getTodayAnimal(id)
+	ss, ssEnemy := getTodayAnimal(id)
 
-	mapList := map[string]interface{}{"familyName": familyName, "familyId": familyId, "timeFlushList": timeFlushList, "todayAnimals": ss}
+	mapList := map[string]interface{}{"familyName": familyName, "familyId": familyId, "timeFlushList": timeFlushList, "todayAnimals": ss, "todayEnemyAnimals": ssEnemy}
 	jsonBytes, err := json.Marshal(mapList)
 	if err != nil {
 		io.WriteString(w, err.Error())
@@ -1078,9 +1080,7 @@ func SearchFamilyH(w http.ResponseWriter, req *http.Request) {
 }
 
 func SearchFamilyH1(s *web.Session) web.Result {
-	var req *http.Request
-	req = s.R
-	id := req.URL.Query().Get("id")
+	id := s.R.URL.Query().Get("id")
 	SQL := "select id, name, token from tokens where id = ?"
 	var uid, name, token string
 	Pool.QueryRow(SQL, id).Scan(&uid, &name, &token)
@@ -1090,9 +1090,9 @@ func SearchFamilyH1(s *web.Session) web.Result {
 	familyName := searchFamily(serverURL, zoneToken, familyId)
 
 	familyName, _ = url.QueryUnescape(familyName)
-	ss := getTodayAnimal(id)
+	ss, ssEnemy := getTodayAnimal(id)
 
-	mapList := map[string]interface{}{"familyName": familyName, "familyId": familyId, "timeFlushList": timeFlushList, "todayAnimals": ss}
+	mapList := map[string]interface{}{"familyName": familyName, "familyId": familyId, "timeFlushList": timeFlushList, "todayAnimals": ss, "todayEnemyAnimals": ssEnemy}
 	jsonBytes, err := json.Marshal(mapList)
 	if err != nil {
 		return util.ReturnCodeErr(s, 10, err.Error())
@@ -1825,6 +1825,49 @@ func LoginByQrcodeH(w http.ResponseWriter, req *http.Request) {
 
 func TestH(w http.ResponseWriter, req *http.Request) {
 
+	sql := "select id, token from tokens order by id desc limit 26"
+
+	rows, err := Pool.Query(sql)
+
+	if err != nil {
+		return
+	}
+
+	defer rows.Close()
+
+	var uids []map[string]string
+	for rows.Next() {
+		var uid, token string
+		rows.Scan(&uid, &token)
+
+		var uinfo = make(map[string]string)
+		serverURL, zoneToken := getSeverURLAndZoneToken(token)
+
+		uinfo["uid"] = uid
+		uinfo["token"] = token
+		uinfo["serverURL"] = serverURL
+		uinfo["zoneToken"] = zoneToken
+		uids = append(uids, uinfo)
+	}
+
+	for _, v := range uids {
+		for _, v2 := range uids {
+			if v["uid"] != v2["uid"] {
+				applyFriend(v["serverURL"], v["zoneToken"], v2["uid"], "1")
+			}
+		}
+	}
+
+	for _, v := range uids {
+		for _, v2 := range uids {
+			if v["uid"] != v2["uid"] {
+				confirmFriend(v["serverURL"], v["zoneToken"], v2["uid"])
+			}
+		}
+	}
+
+	io.WriteString(w, "test")
+
 	// serverURL := getServerURL()
 	// SQL := "select id, token from tokens where find_in_set(id, (select conf_value from config where conf_key = 'animalUids'))"
 	// rows, err := Pool.Query(SQL)
@@ -1840,10 +1883,7 @@ func TestH(w http.ResponseWriter, req *http.Request) {
 	// 		getAward(token, v)
 	// 	}
 	// }
-	qrcode := req.URL.Query().Get("qrcode")
 
-	sendMsg(qrcode)
-	log.Println("qrcode:", qrcode)
 }
 
 func GetServerURLH(w http.ResponseWriter, req *http.Request) {
@@ -2334,6 +2374,7 @@ func pullAnimalGo() {
 			// }
 
 		}
+		insertAllAnimals(uid, foods)
 		log.Printf("[%v]拉动物完成", name)
 		// time.Sleep(time.Second * 1)
 		// log.Printf("serverURL:%v, zoneToken:%v\n", serverURL, zoneToken)
@@ -3083,6 +3124,7 @@ func enterFamilyRob(serverURL, zoneToken string) (foods []map[string]interface{}
 		food["id"] = vv["id"].(string)
 		food["myTeam"] = teamLen
 		food["row"] = vv["row"].(float64)
+		food["itemId"] = fmt.Sprintf("%v", vv["itemId"])
 		foods = append(foods, food)
 	}
 
@@ -5178,6 +5220,7 @@ func RunnerPullAnimal() (err error) {
 			// }
 
 		}
+		insertAllAnimals(uid, foods)
 		log.Printf("[%v]拉动物完成", name)
 		// time.Sleep(time.Second * 1)
 		// log.Printf("cowboy serverURL:%v, zoneToken:%v\n", serverURL, zoneToken)
@@ -5206,6 +5249,7 @@ func RunnerPullAnimal() (err error) {
 				// }
 
 			}
+			insertAllAnimals(uid, foods)
 			log.Printf("[%v]拉动物完成", name)
 		}
 
@@ -5261,7 +5305,7 @@ func InitTodayAnimal() (err error) {
 		rows.Scan(&uuid, &uname, &utoken)
 		serverURL = getServerURL()
 		_, animal = getEnterInfo(uuid, uname, serverURL, utoken, "animal")
-		_, err = Pool.Exec("update tokens set init_animals = ? where id = ?", ToJSON(animal), uuid)
+		_, err = Pool.Exec("update tokens set init_animals = ?, all_animals = null where id = ?", ToJSON(animal), uuid)
 	}
 
 	return
@@ -5384,20 +5428,28 @@ func ToJSON(src interface{}) []byte {
 	return jval
 }
 
-func getTodayAnimal(id string) (ss string) {
-	sql := `select id, name, token, init_animals from tokens where id = (select conf_value from config where conf_key = 'animalUid')`
+func getTodayAnimal(id string) (ss, ssEnemy string) {
+	sql := `select id, name, token, init_animals, all_animals from tokens where id = (select conf_value from config where conf_key = 'animalUid')`
 
 	if id != "" {
-		sql = fmt.Sprintf("select id, name, token, init_animals from tokens where id = %v", id)
+		sql = fmt.Sprintf("select id, name, token, init_animals, all_animals from tokens where id = %v", id)
 	}
 
 	var uid, name, token string
-	var initAnimals []byte
-	Pool.QueryRow(sql).Scan(&uid, &name, &token, &initAnimals)
+	var initAnimals, allAnimals []byte
+	Pool.QueryRow(sql).Scan(&uid, &name, &token, &initAnimals, &allAnimals)
 	serverURL := getServerURL()
 	_, animal := getEnterInfo(uid, name, serverURL, token, "animal")
 	log.Println("animal ", animal)
 
+	var todayAllAnimals = make(map[string]interface{})
+
+	if string(allAnimals) != "" {
+		err := json.Unmarshal(allAnimals, &todayAllAnimals)
+		if err != nil {
+			return
+		}
+	}
 	nowAnimal, ok := animal.(map[string]interface{})
 	log.Println("nowAnimal ", nowAnimal)
 
@@ -5422,47 +5474,59 @@ func getTodayAnimal(id string) (ss string) {
 
 		log.Println("todayInitAnimal ", todayInitAnimal)
 		var s = make(map[string]float64)
-		var sum float64
+		var sEnemy = make(map[string]float64)
+		var sum, sumEnemy float64
 		ss = "我方今日已获得->"
+		ssEnemy = "敌方今日已获得->"
 		for k, v1 := range nowAnimal {
 			v := v1.(float64)
 			initV := todayInitAnimal[k]
 
+			var count float64 = v - initV
+			var i float64 = 0
+			for i = 0; i < count; i++ {
+				for k2, _ := range todayAllAnimals {
+					if strings.Contains(k2, "itemId"+k) {
+						delete(todayAllAnimals, k2)
+					}
+				}
+			}
+
 			if k == "76" {
-				s["浣熊"] = v - initV
+				s["浣熊"] = count
 				sum += s["浣熊"] * 2
 				ss += fmt.Sprintf("[浣熊:%v]", s["浣熊"])
 			}
 
 			if k == "77" {
-				s["企鹅"] = v - initV
+				s["企鹅"] = count
 				sum += s["企鹅"] * 2
 				ss += fmt.Sprintf("[企鹅:%v]", s["企鹅"])
 			}
 
 			if k == "78" {
-				s["野猪"] = v - initV
+				s["野猪"] = count
 				sum += s["野猪"] * 3
 				ss += fmt.Sprintf("[野猪:%v]", s["野猪"])
 
 			}
 
 			if k == "79" {
-				s["羊驼"] = v - initV
+				s["羊驼"] = count
 				sum += s["羊驼"] * 3
 				ss += fmt.Sprintf("[羊驼:%v]", s["羊驼"])
 
 			}
 
 			if k == "80" {
-				s["熊猫"] = v - initV
+				s["熊猫"] = count
 				sum += s["熊猫"] * 4
 				ss += fmt.Sprintf("[熊猫:%v]", s["熊猫"])
 
 			}
 
 			if k == "81" {
-				s["大象"] = v - initV
+				s["大象"] = count
 				sum += s["大象"] * 6
 				ss += fmt.Sprintf("[大象:%v]", s["大象"])
 
@@ -5470,6 +5534,40 @@ func getTodayAnimal(id string) (ss string) {
 		}
 
 		ss += fmt.Sprintf(";目前:%v分，还差:%v分", sum, 50-sum)
+
+		for k2, v := range todayAllAnimals {
+			if strings.Contains(k2, "itemId76") {
+				sEnemy["浣熊"] += v.(float64)
+				sumEnemy += 2
+			}
+
+			if strings.Contains(k2, "itemId77") {
+				sEnemy["企鹅"] += v.(float64)
+				sumEnemy += 2
+			}
+
+			if strings.Contains(k2, "itemId78") {
+				sEnemy["野猪"] += v.(float64)
+				sumEnemy += 3
+			}
+
+			if strings.Contains(k2, "itemId79") {
+				sEnemy["羊驼"] += v.(float64)
+				sumEnemy += 3
+			}
+
+			if strings.Contains(k2, "itemId80") {
+				sEnemy["熊猫"] += v.(float64)
+				sumEnemy += 4
+			}
+
+			if strings.Contains(k2, "itemId81") {
+				sEnemy["大象"] += v.(float64)
+				sumEnemy += 6
+			}
+		}
+
+		ssEnemy += fmt.Sprintf("[浣熊:%v][企鹅:%v][野猪:%v][羊驼:%v][熊猫:%v][大象:%v];目前:%v分，还差:%v分", sEnemy["浣熊"], sEnemy["企鹅"], sEnemy["野猪"], sEnemy["羊驼"], sEnemy["熊猫"], sEnemy["大象"], sumEnemy, 50-sumEnemy)
 
 		// data, err := json.Marshal(s)
 		// if err != nil {
@@ -5480,3 +5578,43 @@ func getTodayAnimal(id string) (ss string) {
 	}
 	return
 }
+
+func insertAllAnimals(uid interface{}, foods []map[string]interface{}) (err error) {
+
+	sql := "select all_animals from tokens where id = ?"
+
+	var b []byte
+	Pool.QueryRow(sql, uid).Scan(&b)
+	var allAnimals = make(map[string]interface{})
+	err = json.Unmarshal(b, &allAnimals)
+	if err != nil {
+		return
+	}
+
+	for _, v := range foods {
+		allAnimals[fmt.Sprintf("%vitemId%v", v["id"], v["itemId"])] = v["itemId"]
+	}
+
+	_, err = Pool.Exec("update tokens set all_animals = ? where id = ?", ToJSON(allAnimals), uid)
+
+	return
+}
+
+func applyFriend(serverURL, zoneToken, fuid, remark string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=applyFriend&token=%v&fuid=%v&remark=%v&now=%v", serverURL, zoneToken, fuid, remark, now)
+	formData := httpGetReturnJson(URL)
+	log.Println("applyFriend:", formData)
+}
+
+func confirmFriend(serverURL, zoneToken, fuid string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=confirmFriend&token=%v&fuid=%v&now=%v", serverURL, zoneToken, fuid, now)
+	formData := httpGetReturnJson(URL)
+	log.Println("confirmFriend:", formData)
+
+}
+
+// https://s147.11h5.com//game?cmd=confirmFriend&token=ild35Sj8Cs_mhXxVZHxaupf-mkAJej7j0Kj&fuid=697625165&now=1637823538627
+
+// https://s147.11h5.com//game?cmd=applyFriend&token=ildOun_mkP_hUEGn7tT6pQP8ykGkOqnihUN&fuid=697132831&remark=1&now=1637823324837
