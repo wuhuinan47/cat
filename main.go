@@ -186,6 +186,8 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
+	// go crawler.DemoChromedp(`https://cdn.11h5.com/island/vutimes/?token=53125563657057628b128fb1f2bf8853&verify=1&_t=1637832090813&belong=wxPlus`)
+
 	{
 		rediscache.InitRedisPool(cfg.Str("redis_con"))
 		sb := session.NewDbSessionBuilder()
@@ -464,8 +466,8 @@ func SendQrcodeH(w http.ResponseWriter, req *http.Request) {
 	qrcode := req.URL.Query().Get("qrcode")
 	Pool.Exec("update config set conf_value = ? where conf_key = 'wechatLoginQrcode'", qrcode)
 
-	sendMsg(qrcode)
-	log.Println("qrcode:", qrcode)
+	// sendMsg(qrcode)
+	// log.Println("qrcode:", qrcode)
 	io.WriteString(w, qrcode)
 }
 
@@ -482,7 +484,7 @@ func SendQQQrcodeH(w http.ResponseWriter, req *http.Request) {
 	}
 
 	Pool.Exec("update config set conf_value = ? where conf_key = 'qqLoginQrcode'", fmt.Sprintf("%vstatic/qqQrCode.png", api_url))
-	sendMsg(fmt.Sprintf("%vstatic/qqQrCode.png", api_url))
+	// sendMsg(fmt.Sprintf("%vstatic/qqQrCode.png", api_url))
 
 	io.WriteString(w, fmt.Sprintf("%vstatic/qqQrCode.png", api_url))
 }
@@ -1011,7 +1013,9 @@ func AddFirewoodH(w http.ResponseWriter, req *http.Request) {
 		uids := getSteamBoxHelpList(serverURL, zoneToken, quality)
 		for _, v := range uids {
 			fuid := fmt.Sprintf("%v", v)
-			addFirewood(serverURL, zoneToken, fuid)
+			if !addFirewood(serverURL, zoneToken, fuid) {
+				break
+			}
 			log.Printf("[%v]给[%v]添加柴火", name, fuid)
 		}
 	}
@@ -3166,10 +3170,10 @@ func getFamilyId(serverURL, zoneToken string) (familyId float64, timeFlushList [
 		return
 	}
 
-	log.Println(foodList)
+	// log.Println(foodList)
 
 	myFlushTimeList, ok := familyRob["myFlushTimeList"].([]interface{})
-	log.Println(myFlushTimeList)
+	// log.Println(myFlushTimeList)
 
 	if !ok {
 		return
@@ -3183,7 +3187,7 @@ func getFamilyId(serverURL, zoneToken string) (familyId float64, timeFlushList [
 			return
 		}
 		timeInt, err := strconv.Atoi(vv)
-		log.Println(timeInt)
+		// log.Println(timeInt)
 
 		if err != nil {
 			return
@@ -4660,12 +4664,18 @@ func getSteamBoxHelpList(serverURL, zoneToken string, quality float64) (uids []f
 					} else {
 						steamBox, ok := vv["steamBox"].(map[string]interface{})
 						if ok {
-							quality1, ok := steamBox["quality"].(float64)
+							uidList, ok := steamBox["uidList"].([]interface{})
 							if ok {
-								if quality1 == quality {
-									uids = append(uids, uid)
+								if len(uidList) != 3 {
+									quality1, ok := steamBox["quality"].(float64)
+									if ok {
+										if quality1 == quality {
+											uids = append(uids, uid)
+										}
+									}
 								}
 							}
+
 						}
 					}
 
@@ -4676,10 +4686,13 @@ func getSteamBoxHelpList(serverURL, zoneToken string, quality float64) (uids []f
 	return
 }
 
-func addFirewood(serverURL, zoneToken, fuid string) {
+func addFirewood(serverURL, zoneToken, fuid string) bool {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=addFirewood&token=%v&fuid=%v&now=%v", serverURL, zoneToken, fuid, now)
 	httpGetReturnJson(URL)
+	// _, ok := formData["error"]
+	return true
+
 }
 
 func familyChat(serverURL, zoneToken string) {

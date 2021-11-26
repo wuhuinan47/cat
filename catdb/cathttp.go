@@ -8,14 +8,20 @@ import (
 	"time"
 )
 
+func CheckStat(URL string) bool {
+	formData := httpGetReturnJson(URL)
+	_, ok := formData["error"]
+	log.Println("CheckStat:", formData["error"])
+
+	return !ok
+}
+
 func CheckZoneToken(serverURL, zoneToken string) bool {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=hasNewMail&token=%v&now=%v", serverURL, zoneToken, now)
 	// log.Println("checkZoneToken URL is :", URL)
 	formData := httpGetReturnJson(URL)
 	_, ok := formData["newMailCnt"].(float64)
-	log.Printf("serverURL:%v zoneToken:%v newMailCnt :%v", serverURL, zoneToken, formData["newMailCnt"])
-
 	if ok {
 		return true
 	}

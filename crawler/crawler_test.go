@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -11,6 +12,193 @@ import (
 	"github.com/tebeka/selenium/chrome"
 )
 
+func TestSplit(t *testing.T) {
+	URL := "https://s147.11h5.com//game?cmd=stat&token=ildqsMCkAEdSjwFZR0FRasH89QP31cDlQBS&item=%E6%B8%B8%E6%88%8F%E5%88%9D%E5%A7%8B%E5%8C%96&subitem=Enter%E8%BF%94%E5%9B%9E%EF%BC%8C%E5%BC%80%E5%A7%8B%E9%A2%84%E5%8A%A0%E8%BD%BD%E8%B5%84%E6%BA%90&now=1637890836352"
+	sL := strings.Split(URL, "?")
+	log.Println("L:", sL)
+	var zoneToken string
+	sL1 := strings.Split(sL[1], "&")
+	log.Println("sL1:", sL1)
+
+	for _, v2 := range sL1 {
+		sL2 := strings.Split(v2, "=")
+		log.Println("sL2:", sL2)
+
+		if sL2[0] == "token" {
+			zoneToken = sL2[1]
+			break
+		}
+	}
+	log.Println("zoneToken:", zoneToken)
+}
+
+func TestNetwork(t *testing.T) {
+	DemoChromedp(`https://cdn.11h5.com/island/vutimes/?token=53125563657057628b128fb1f2bf8853&verify=1&_t=1637832090813&belong=wxPlus`)
+	// for i := 0; i < 100; i++ {
+	// 	time.Sleep(time.Second * 1)
+	// 	log.Println("globalCheckURL:", globalCheckURL)
+
+	// }
+
+}
+
+// func checkURL() chromedp.ActionFunc {
+// 	return func(ctx context.Context) (err error) {
+
+// 		for {
+// 			time.Sleep(time.Second * 2)
+// 			if globalCheckURL != "" {
+// 				// log.Println("globalCheckURL:", globalCheckURL)
+// 				globalFailCount = 0
+// 				if !catdb.CheckStat(globalCheckURL) {
+// 					return
+// 				}
+
+// 				if globalCheckBool == false {
+
+// 					sL := strings.Split(globalCheckURL, "token=")
+// 					// log.Println("sL:", sL)
+// 					sL1 := strings.Split(sL[1], "&item=")
+
+// 					zoneToken := sL1[0]
+// 					log.Println("zoneToken:", sL1[0])
+
+// 					catdb.Pool.Exec("update tokens set zoneToken = ? where id = 301807377", zoneToken)
+// 				}
+// 				globalCheckBool = true
+// 			} else {
+// 				globalFailCount++
+// 			}
+// 		}
+// 	}
+
+// }
+
+// func DemoChromedp(URL string) {
+// 	dir, err := ioutil.TempDir("", "chromedp-example")
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	defer os.RemoveAll(dir)
+
+// 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+// 		chromedp.DisableGPU,
+// 		chromedp.NoDefaultBrowserCheck,
+// 		chromedp.Flag("headless", false),
+// 		chromedp.Flag("ignore-certificate-errors", true),
+// 		chromedp.Flag("window-size", "50,400"),
+// 		chromedp.UserDataDir(dir),
+// 	)
+
+// 	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
+// 	defer cancel()
+
+// 	// also set up a custom logger
+// 	taskCtx, cancel := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
+// 	defer cancel()
+
+// 	// create a timeout
+// 	taskCtx, cancel = context.WithCancel(taskCtx)
+// 	defer cancel()
+
+// 	// ensure that the browser process is started
+// 	if err := chromedp.Run(taskCtx); err != nil {
+// 		panic(err)
+// 	}
+
+// 	// listen network event
+// 	listenForNetworkEvent(taskCtx)
+
+// 	for {
+// 		globalCheckURL = ""
+// 		chromedp.Run(taskCtx,
+// 			network.Enable(),
+// 			chromedp.Navigate(URL),
+// 			// saveCookies(),
+// 			// chromedp.MouseClickXY(150, 250),
+// 			checkURL(),
+// 			// chromedp.WaitVisible(`body`, chromedp.BySearch),
+// 		)
+
+// 		if globalFailCount > 10 {
+// 			return
+// 		}
+// 	}
+// }
+
+// var globalCheckURL = ""
+
+// var globalFailCount = 0
+
+// var globalCheckBool = false
+
+// func listenForNetworkEvent(ctx context.Context) {
+// 	chromedp.ListenTarget(ctx, func(ev interface{}) {
+// 		switch ev := ev.(type) {
+
+// 		case *network.EventResponseReceived:
+// 			resp := ev.Response
+// 			if len(resp.Headers) != 0 {
+
+// 				if strings.Contains(resp.URL, "s147.11h5.com//game?") {
+// 					globalCheckURL = resp.URL
+// 					log.Printf("received URL: %v", resp.URL)
+
+// 				}
+
+// 			}
+
+// 		case *network.EventRequestWillBeSent:
+// 			if strings.Contains(ev.Request.URL, "s147.11h5.com//game?") {
+// 				log.Printf("EventRequestWillBeSent: %v", ev.Request.URL)
+// 			}
+
+// 		// case *network.EventWebSocketFrameReceived:
+// 		// 	log.Printf("EventWebSocketFrameReceived:%v", ev.Response)
+// 		// case *network.EventWebSocketFrameSent:
+// 		// 	log.Printf("EventWebSocketFrameSent:%v", ev.Response)
+// 		// case *network.EventWebSocketHandshakeResponseReceived:
+// 		// 	log.Printf("EventWebSocketHandshakeResponseReceived:%v", ev.Response)
+// 		// case *network.EventWebSocketWillSendHandshakeRequest:
+// 		// 	log.Printf("EventWebSocketWillSendHandshakeRequest:%v", ev.Request)
+// 		// case *network.EventSubresourceWebBundleInnerResponseParsed:
+// 		// 	log.Printf("EventSubresourceWebBundleInnerResponseParsed:%v", ev.InnerRequestURL)
+// 		default:
+// 			// log.Printf("received ev: %v", ev)
+
+// 		}
+
+// 		// other needed network Event
+// 	})
+// }
+
+// // 保存Cookies
+// func saveCookies() chromedp.ActionFunc {
+// 	return func(ctx context.Context) (err error) {
+
+// 		var cookiesData []byte
+// 		for {
+// 			cookiesData = getCookies(ctx)
+// 			if string(cookiesData) != "{}" {
+// 				log.Println("cookiesData:", cookiesData)
+// 				return
+// 			}
+// 		}
+// 	}
+// }
+
+// func getCookies(ctx context.Context) (cookiesData []byte) {
+// 	cookies, err := network.GetAllCookies().Do(ctx)
+// 	if err != nil {
+// 		return
+// 	}
+// 	// 2. 序列化
+// 	cookiesData, err = network.GetAllCookiesReturns{Cookies: cookies}.MarshalJSON()
+// 	if err != nil {
+// 		return
+// 	}
+// 	return
+// }
 func TestCatRun(t *testing.T) {
 	seleniumPath := "/usr/local/bin/chromedriver"
 
@@ -34,11 +222,11 @@ func TestCatRun(t *testing.T) {
 
 		Args: []string{
 
-			"--headless", // 设置Chrome无头模式
+			// "--headless", // 设置Chrome无头模式
 
-			"--no-sandbox",
+			// "--no-sandbox",
 
-			"--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36", // 模拟user-agent，防反爬
+			"--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.55 Safari/537.36", // 模拟user-agent，防反爬
 
 		},
 	}
@@ -60,7 +248,7 @@ func TestCatRun(t *testing.T) {
 	//延迟退出chrome
 	defer wd.Quit()
 
-	var globalURL = "https://play.h5avu.com/game/?gameid=147&token=db664c32188a286f285991cfebbe6520"
+	var globalURL = "https://play.h5avu.com/game/?gameid=147&token=a4bf0df46da83de870a72527e9f90b6f"
 	var mtoken string
 
 	// catdb.Pool.QueryRow("select token from tokens where id = 302691822").Scan(&mtoken)
