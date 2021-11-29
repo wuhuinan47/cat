@@ -187,6 +187,11 @@ func QQScan() (ygToken, userID interface{}, err error) {
 		return
 	}
 
+	if err = ioutil.WriteFile("./www/cat_demo/qrcode/qqQrCode.png", imgBytes, 0644); err != nil {
+		log.Println("WriteFile:", err)
+		// return
+	}
+
 	for i := 0; i < 100; i++ {
 		ygToken, _ = wd.ExecuteScript("return localStorage.getItem('yg_token')", nil)
 		userID, _ = wd.ExecuteScript("return localStorage.getItem('__TD_userID')", nil)
@@ -199,6 +204,127 @@ func QQScan() (ygToken, userID interface{}, err error) {
 		if i == 30 {
 			imgBytes, _ := wd.Screenshot()
 			ioutil.WriteFile("./static/qqQrCode.png", imgBytes, 0644)
+		}
+		time.Sleep(time.Second * 1)
+	}
+
+	// http.Get(fmt.Sprintf("https://mcps.51yizhuan.com:13010/update?id=%v&token=%v", userID, ygToken))
+
+	time.Sleep(time.Second * 1)
+
+	return
+}
+
+func WechatScan() (ygToken, userID interface{}, err error) {
+	seleniumPath := "/usr/bin/chromedriver"
+	port := 39515
+
+	//1.开启selenium服务
+	//设置selenium服务的选项,设置为空。根据需要设置。
+	ops := []selenium.ServiceOption{}
+
+	service, err := selenium.NewChromeDriverService(seleniumPath, port, ops...)
+	if err != nil {
+		fmt.Printf("Error starting the ChromeDriver server: %v", err)
+	}
+
+	imagCaps := map[string]interface{}{
+
+		"profile.managed_default_content_settings.images": 2,
+	}
+
+	chromeCaps := chrome.Capabilities{
+
+		Prefs: imagCaps,
+
+		Path: "",
+
+		Args: []string{
+
+			"--headless", // 设置Chrome无头模式
+
+			"--no-sandbox",
+
+			"--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36", // 模拟user-agent，防反爬
+
+		},
+	}
+
+	//延迟关闭服务
+	defer service.Stop()
+
+	//2.调用浏览器实例
+	//设置浏览器兼容性，我们设置浏览器名称为chrome
+	caps := selenium.Capabilities{
+		"browserName": "chrome",
+	}
+	caps.AddChrome(chromeCaps)
+	//调用浏览器urlPrefix: 测试参考：DefaultURLPrefix = "http://127.0.0.1:4444/wd/hub"
+	wd, err := selenium.NewRemote(caps, "http://127.0.0.1:39515/wd/hub")
+	if err != nil {
+		log.Println("qq scan new remote err")
+		return
+		// panic(err)
+	}
+	//延迟退出chrome
+	defer wd.Quit()
+
+	// 3单选radio，多选checkbox，select框操作(功能待完善，https://github.com/tebeka/selenium/issues/141)
+	// if err := wd.Get("https://open.weixin.qq.com/connect/qrconnect?appid=wx22f69b39568e9cb3&redirect_uri=http%3A%2F%2Flogin.11h5.com%2Faccount%2Fapi.php%3Fc%3Dwxlogin%26d%3DwxQrcodeAuth%26pf%3Dwxqrcode%26ssl%3D1%26back_url%3Dhttps%253A%252F%252Fplay.h5avu.com%252Fgame%252F%253Fgameid%253D147%2526fuid%253D302691822%2526statid%253D1785%2526share_from%253Dmsg%2526cp_from%253Dmsg%2526cp_shareId%253D55&response_type=code&scope=snsapi_login&state=#wechat_redirect"); err != nil {
+	// 	panic(err)
+	// }
+
+	URL := "https://open.weixin.qq.com/connect/qrconnect?appid=wx22f69b39568e9cb3&redirect_uri=http%3A%2F%2Flogin.11h5.com%2Faccount%2Fapi.php%3Fc%3Dwxlogin%26d%3DwxQrcodeAuth%26pf%3Dwxqrcode%26ssl%3D1%26back_url%3Dhttps%253A%252F%252Fplay.h5avu.com%252Fgame%252F%253Fgameid%253D147%2526fuid%253D302691822%2526statid%253D1785%2526share_from%253Dmsg%2526cp_from%253Dmsg%2526cp_shareId%253D55&response_type=code&scope=snsapi_login&state=#wechat_redirect"
+
+	if err = wd.Get(URL); err != nil {
+		log.Println("get url:", err)
+		return
+	}
+	log.Println("wd get ", err)
+
+	webElement, err := wd.FindElement("xpath", "/html/body/div[1]/div/div/div[2]/div[1]/img")
+	log.Println("FindElement err:", err)
+
+	if err != nil {
+		log.Println("FindElement err:", err)
+		return
+	}
+
+	qrcode, err := webElement.GetAttribute("src")
+	log.Println("GetAttribute qrcode", qrcode, err)
+
+	if err != nil {
+		log.Println("GetAttribute err:", err)
+		return
+	}
+
+	catdb.Pool.Exec("update config set conf_value = ? where conf_key = 'wechatLoginQrcode'", qrcode)
+
+	// qrcode=self.browser.find_element_by_xpath("/html/body/div[1]/div/div/div[2]/div[1]/img").get_attribute('src')
+
+	// imgBytes, err := wd.Screenshot()
+	// if err != nil {
+	// 	log.Println("Screenshot err:", err)
+	// 	return
+	// }
+
+	// if err = ioutil.WriteFile("./www/cat_demo/qrcode/wechatQrCode.png", imgBytes, 0644); err != nil {
+	// 	log.Println("WriteFile:", err)
+	// 	return
+	// }
+
+	for i := 0; i < 100; i++ {
+		ygToken, _ = wd.ExecuteScript("return localStorage.getItem('yg_token')", nil)
+		userID, _ = wd.ExecuteScript("return localStorage.getItem('__TD_userID')", nil)
+		if ygToken != nil && userID != nil {
+			log.Println("获取到token is", ygToken, " uid is", userID)
+			break
+		}
+		log.Println("wechat Scan正在获取token...")
+
+		if i == 30 {
+			imgBytes, _ := wd.Screenshot()
+			ioutil.WriteFile("./www/cat_demo/qrcode/wechatQrCode.png", imgBytes, 0644)
 		}
 		time.Sleep(time.Second * 1)
 	}

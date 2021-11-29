@@ -11,11 +11,37 @@
 
 <body>
 
+    
 
     <!-- <select style="font-size:40px;width:150px; height:100px;" name="textDivSelect" id="textDivSelect">
         <option selected="selected" value="">全部</option>
     </select> -->
     <div id="textDiv"></div>
+    <br>
+
+   
+
+    <input id="adminUsername" style="font-size:40px;width:250px; height:100px;" type="text" placeholder="账号" value="" />
+    <input id="adminPassword" style="font-size:40px;width:250px; height:100px;" type="text" placeholder="密码" value="" />
+
+    <button style="font-size:40px;width:250px; height:100px;" onclick="adminLogin()">
+        admin登录
+    </button>
+
+    <br>
+    <button style="font-size:40px;width:300px; height:100px;" onclick="checkToken()">
+        检测账号状态
+    </button>
+    <br>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="loginByWechat()">
+        微信登录
+    </button>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="loginByQQ()">
+        QQ登录
+    </button>
+
     <br>
 
     <button style="font-size:40px;width:200px; height:100px;" onclick="pullAnimal()">
@@ -30,7 +56,7 @@
     </button>
     <br>
     <select style="font-size:40px;width:150px; height:100px;" name="setPullRowsSelect" id="setPullRowsSelect">
-        <option selected="selected" value="">全部</option>
+        <option selected="selected" value="请选择">请选择</option>
     </select>
     <button style="font-size:40px;width:300px; height:100px;" onclick="setPullRows()">
         设置几道
@@ -39,7 +65,7 @@
     <br>
 
     <select style="font-size:40px;width:150px; height:100px;" name="familySignSelect" id="familySignSelect">
-        <option selected="selected" value="">请选择</option>
+        <option selected="selected" value="请选择">请选择</option>
     </select>
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="familySign()">
@@ -109,7 +135,7 @@
 
 
     <select style="font-size:40px;width:200px; height:100px;" name="SelectMyBoss" id="SelectMyBoss">
-        <option selected="selected" value="">全部</option>
+        <option selected="selected" value="请选择">请选择</option>
     </select>
 
     <select style="font-size:40px;width:200px; height:100px;" name="attackMyBossMode" id="attackMyBossMode">
@@ -166,7 +192,7 @@
 
     <select style="font-size:40px;width:150px; height:100px;" name="UseShovelTo" id="UseShovelTo">
         <option selected="selected" value="">自己</option>
-        <option value="all">全部</option>
+        <!-- <option value="all">全部</option> -->
     </select>
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="useShovel()">
@@ -177,7 +203,8 @@
     <br>
 
     <select style="font-size:40px;width:150px; height:100px;" name="GetBeachLineRewardsH" id="GetBeachLineRewardsH">
-        <option selected="selected" value="">全部</option>
+        <!-- <option selected="selected" value="">全部</option> -->
+        <option selected="selected" value="请选择">请选择</option>
     </select>
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="getBeachLineRewards()">
@@ -191,7 +218,8 @@
     </button>
 
     <select style="font-size:40px;width:150px; height:100px;" name="addFirewoodOps" id="addFirewoodOps">
-        <option selected="selected" value="0">全部</option>
+        <!-- <option selected="selected" value="0">全部</option> -->
+        <option selected="selected" value="请选择">请选择</option>
     </select>
 
     <select style="font-size:40px;width:150px; height:100px;" name="FirewoodQuality" id="FirewoodQuality">
@@ -208,28 +236,15 @@
     <br>
 
     <select style="font-size:40px;width:250px; height:100px;" name="exchangeRiceCake" id="exchangeRiceCake">
-        <option selected="selected" value="">全部</option>
+        <!-- <option selected="selected" value="">全部</option> -->
+        <option selected="selected" value="请选择">请选择</option>
     </select>
     <button style="font-size:40px;width:500px; height:100px;" onclick="exchangeRiceCake()">
         领取汤圆/骰子/海滩奖励
     </button>
 
     <br>
-    <button style="font-size:40px;width:400px; height:100px;" onclick="checkToken()">
-        检测账号状态
-    </button>
-
-    <br>
-
-    <button style="font-size:40px;width:400px; height:100px;" onclick="loginByWechat()">
-        微信登录
-    </button>
-
-    <button style="font-size:40px;width:400px; height:100px;" onclick="loginByQQ()">
-        QQ登录
-    </button>
-
-    <br>
+    
 
 
     <select style="font-size:40px;width:200px; height:100px;" name="Oper_Dice" id="Oper_Dice">
@@ -247,7 +262,8 @@
     <br>
 
     <select style="font-size:40px;width:120px; height:100px;" name="Oper_Mail" id="Oper_Mail">
-        <option selected="selected" value="">全部</option>
+        <!-- <option selected="selected" value="">全部</option> -->
+        <option selected="selected" value="请选择">请选择</option>
     </select>
 
     <select style="font-size:40px;width:420px; height:100px;" name="Oper_MailTitle" id="Oper_MailTitle">
@@ -271,7 +287,8 @@
     <br>
 
     <select style="font-size:40px;width:200px; height:100px;" name="Oper_BossPrize" id="Oper_BossPrize">
-        <option selected="selected" value="">全部</option>
+        <!-- <option selected="selected" value="">全部</option> -->
+        <option selected="selected" value="请选择">请选择</option>
     </select>
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="getBossPrize()">
@@ -362,7 +379,8 @@
    
 
     <select style="font-size:40px;width:200px; height:100px;" name="RunnerUsers" id="RunnerUsers">
-        <option selected="selected" value="">全部</option>
+        <!-- <option selected="selected" value="">全部</option> -->
+        <option selected="selected" value="请选择">请选择</option>
     </select>
 
     <select style="font-size:40px;width:200px; height:100px;" name="RunnerSelect" id="RunnerSelect">
@@ -387,7 +405,8 @@
     <br>
 
     <select style="font-size:40px;width:200px; height:100px;" name="familyReward" id="familyReward">
-        <option selected="selected" value="0">全部</option>
+        <!-- <option selected="selected" value="0">全部</option> -->
+        <option selected="selected" value="请选择">请选择</option>
     </select>
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="familyReward()">
@@ -546,7 +565,7 @@
 
 
         loginByWechat = function () {
-            $.get(APIURL + "/loginByQrcode?id=1", function (data) {
+            $.get(APIURL1 + "/pub/loginByQrcode?id=1", function (data) {
                 // alert(data)
                 window.status = "1";
                 window.open(data);
@@ -554,7 +573,7 @@
         }
 
         loginByQQ = function () {
-            $.get(APIURL + "/loginByQrcode?id=4", function (data) {
+            $.get(APIURL1 + "/pub/loginByQrcode?id=4", function (data) {
                 // alert(data)
                 window.status = "1";
                 window.open(data);
@@ -606,6 +625,16 @@
         }
 
 
+        adminLogin = function (){
+            var adminUsername = document.getElementById("adminUsername");
+            var adminPassword = document.getElementById("adminPassword");
+                $.getJSON(APIURL1 + "/pub/adminLogin?username=" + adminUsername.value + "&password=" + adminPassword.value, function (data) {
+                    alert(data.code)
+                    window.status = "1";
+                });
+        }
+
+
         checkToken = function () {
 
 
@@ -646,27 +675,6 @@
 
         }
 
-
-        sonAttackBoss = function () {
-            $.get(APIURL + "/sonAttackBoss", function (data) {
-                console.log("sonAttackBoss:", data)
-                alert(data)
-                window.status = "1";
-            });
-        }
-
-
-        oneSonAttackBoss = function (id) {
-            var r = confirm("是否继续")
-            if (r == true) {
-                $.get(APIURL + "/oneSonAttackBoss?id=" + id, function (data) {
-                    console.log("oneSonAttackBoss:", data)
-                    alert(data)
-                    window.status = "1";
-                });
-            }
-
-        }
 
 
        
@@ -1262,8 +1270,8 @@
 
         var url = document.location;
 
-        // var APIURL = "https://mcps.51yizhuan.com:34010/usr"
-        var APIURL = url["protocol"] + "//" + url["host"]
+        var APIURL = "https://mcps.51yizhuan.com:34010/usr"
+        var APIURL1 = url["protocol"] + "//" + url["host"]
 
         console.log("APIURL:", APIURL)
 
