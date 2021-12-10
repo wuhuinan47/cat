@@ -70,4 +70,6 @@ done
 
 https://s147.11h5.com//game?cmd=enterBoss&token=&bossID=&now=
 
-https://s147.11h5.com//game?cmd=attackBoss&token=ildFYP6isOb9fwIGhlcHypVf4P6hShfgIOt&bossID=695923850_1637334722&damage=200&isPerfect=0&isDouble=1&now=1637335735340
+https://s147.11h5.com//game?cmd=enterBoss&token=ildrxf_n4N1QMIH-1EGoOsOr7ylSr5ZIHyv&bossID=406961861_1638803743&now=1638805977941
+
+https://s147.11h5.com//game?cmd=attackBoss&token=ildrxf_n4N1QMIH-1EGoOsOr7ylSr5ZIHyv&bossID=406961861_1638803743&damage=100&isPerfect=0&isDouble=0&now=1638805977941

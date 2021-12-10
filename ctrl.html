@@ -123,7 +123,7 @@
     </select>
 
     <select style="font-size:40px;width:200px; height:100px;" name="attackMyBossMode" id="attackMyBossMode">
-        <option selected="selected" value="4500">打4500血</option>
+        <option selected="selected" value="4400">打4400血</option>
         <option value="4200">打4200血</option>
     </select>
 
@@ -366,7 +366,7 @@
     <br>
 
     <select style="font-size:40px;width:150px; height:100px;" name="Oper_Draw" id="Oper_Draw">
-        <option selected="selected" value="">请选择</option>
+        <option selected="selected" value="">全部</option>
     </select>
 
 
@@ -442,6 +442,18 @@
     <button style="font-size:40px;width:400px; height:100px;" onclick="setRunner()">
         设置定时器
     </button>
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="playLuckyWheel" id="playLuckyWheel">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="playLuckyWheel()">
+        幸运夺宝
+    </button>
+
+    <br>
 
 
     <br>
@@ -833,6 +845,19 @@
                 });
             }
 
+        }
+
+        playLuckyWheel = function (){
+            var r = confirm("playLuckyWheel")
+            if (r == true) {
+                var id = $("#playLuckyWheel option:selected").val();
+
+                $.get(APIURL + "/playLuckyWheel?id=" + id, function (data) {
+                    console.log("playLuckyWheel:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
         }
 
         familyReward = function () {
@@ -1279,6 +1304,15 @@
                     document.getElementById("searchFamily").options.add(tOption);
                 }
 
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("playLuckyWheel").options.add(tOption);
+                }
+
+                
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
