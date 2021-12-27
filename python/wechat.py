@@ -58,7 +58,7 @@ def updateToken(userID, nickname, token):
         print("empty userID ", userID)
         return 0
     else:
-        url = 'https://mcps.51yizhuan.com:13010/update?id='+userID+'&token='+token+'&name='+nickname
+        url = 'https://cat.rosettawe.com/update?id='+userID+'&token='+token+'&name='+nickname
         response=session.get(url)
         data = response.content.decode('utf-8')
         print("update token result is ", data)
@@ -86,7 +86,7 @@ class Cat():
         self.browser.get("https://open.weixin.qq.com/connect/qrconnect?appid=wx22f69b39568e9cb3&redirect_uri=http%3A%2F%2Flogin.11h5.com%2Faccount%2Fapi.php%3Fc%3Dwxlogin%26d%3DwxQrcodeAuth%26pf%3Dwxqrcode%26ssl%3D1%26back_url%3Dhttps%253A%252F%252Fplay.h5avu.com%252Fgame%252F%253Fgameid%253D147%2526fuid%253D302691822%2526statid%253D1785%2526share_from%253Dmsg%2526cp_from%253Dmsg%2526cp_shareId%253D55&response_type=code&scope=snsapi_login&state=#wechat_redirect")
 
         qrcode=self.browser.find_element_by_xpath("/html/body/div[1]/div/div/div[2]/div[1]/img").get_attribute('src')
-        session.get("https://mcps.51yizhuan.com:13010/sendQrcode?qrcode="+qrcode)
+        session.get("https://cat.rosettawe.com/sendQrcode?qrcode="+qrcode)
         print(qrcode)
 
         for x in range(100):

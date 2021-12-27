@@ -80,7 +80,7 @@ func main() {
 	}
 
 	run_dir = "/mnt/app/cat/"
-	api_url = "https://mcps.51yizhuan.com:13010/"
+	api_url = "https://cat.rosettawe.com/"
 
 	run_dir = cfg.Str("run_dir")
 	api_url = cfg.Str("api_url")
@@ -91,6 +91,8 @@ func main() {
 
 	Pool = db
 	catdb.Pool = db
+
+	Pool.Exec("update tokens set beach_runner = 0")
 
 	http.HandleFunc("/login", LoginH)
 	http.HandleFunc("/update", UpdateH)
@@ -169,8 +171,11 @@ func main() {
 		go runner.NamedRunnerWithSeconds("RunnerPullAnimal", 1800, &running, RunnerPullAnimal)
 		go runner.NamedRunnerWithSeconds("RunnerDraw", 3700, &running, RunnerDraw)
 		go runner.NamedRunnerWithSeconds("RunnerSteamBox", 1900, &running, RunnerSteamBox)
+		go runner.NamedRunnerWithSeconds("RunnerBeach", 21600, &running, RunnerBeach)
 
 		go runner.NamedRunnerWithHMS("RunnerInitTodayAnimal", 6, 30, 0, &running, InitTodayAnimal)
+		go runner.NamedRunnerWithHMS("RunnerFamilySignGo", 0, 1, 0, &running, RunnerFamilySignGo)
+
 	}
 
 	RunnerEveryOneSteamBox()
@@ -1032,27 +1037,41 @@ func ThrowDiceH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	amount := req.URL.Query().Get("amount")
 	intAmount, _ := strconv.Atoi(amount)
-	SQL := "select token from tokens where id = ?"
+	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
 
-	var token string
-	Pool.QueryRow(SQL, id).Scan(&token)
+	if id == "" {
+		SQL = "select id, name, token from tokens"
+	}
 
-	serverURL, zoneToken := getSeverURLAndZoneToken(token)
+	rows, err := Pool.Query(SQL)
+	if err != nil {
+		return
+	}
 
-	go func() {
-		log.Println("start throwDice")
+	defer rows.Close()
 
-		for i := 1; i <= intAmount; i++ {
-			throwDice(serverURL, zoneToken)
+	for rows.Next() {
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
+		serverURL, zoneToken := getSeverURLAndZoneToken(token)
 
-			if i == intAmount {
-				break
+		go func() {
+			log.Printf("[%v]start throwDice", name)
+
+			for i := 1; i <= intAmount; i++ {
+				if !throwDice(serverURL, zoneToken) {
+					break
+				}
+				log.Printf("[%v]throwDice[%v]", name, i)
+				if i == intAmount {
+					break
+				}
+				time.Sleep(time.Second * 1)
 			}
-			time.Sleep(time.Second * 1)
-		}
-		log.Println("end throwDice")
+			log.Printf("[%v]end throwDice", name)
 
-	}()
+		}()
+	}
 
 	io.WriteString(w, "SUCCESS")
 }
@@ -1065,52 +1084,63 @@ func UseShovelH(w http.ResponseWriter, req *http.Request) {
 		toid = ""
 	}
 
-	SQL := "select id, name, token from tokens where id = ?"
+	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
+	if id == "" {
+		SQL = "select id, name, token from tokens"
+	}
 
-	var uid, name, token string
-	Pool.QueryRow(SQL, id).Scan(&uid, &name, &token)
+	rows, err := Pool.Query(SQL)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
 
-	serverURL, zoneToken := getSeverURLAndZoneToken(token)
+	for rows.Next() {
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
+		serverURL, zoneToken := getSeverURLAndZoneToken(token)
 
-	if toid == "all" {
-		SQL = "select id, name from tokens where find_in_set(id, (select conf_value from config where conf_key = 'beachUidList'))"
-		rows, err := Pool.Query(SQL)
-		if err != nil {
+		if toid == "all" {
+			SQL = "select id, name from tokens where find_in_set(id, (select conf_value from config where conf_key = 'beachUidList'))"
+			rows, err := Pool.Query(SQL)
+			if err != nil {
+				return
+			}
+			defer rows.Close()
+
+			for rows.Next() {
+				var uuid, uname string
+				rows.Scan(&uuid, &uname)
+				for i := 1; i <= 5; i++ {
+					log.Printf("[%v]为[%v]使用铲子x%v", name, uname, i)
+					useShovel(serverURL, zoneToken, uuid)
+					time.Sleep(time.Millisecond * 100)
+				}
+			}
+			io.WriteString(w, "SUCCESS")
 			return
-		}
-		defer rows.Close()
 
-		for rows.Next() {
-			var uuid, uname string
-			rows.Scan(&uuid, &uname)
+		}
+
+		if toid == "" {
+			for i := 1; i <= 20; i++ {
+				log.Printf("[%v]使用铲子x%v", name, i)
+				useShovel(serverURL, zoneToken, "")
+				time.Sleep(time.Millisecond * 100)
+			}
+		} else {
+
+			var toname string
+			Pool.QueryRow("select name from tokens where id = ?", toid).Scan(&toname)
+
 			for i := 1; i <= 5; i++ {
-				log.Printf("[%v]为[%v]使用铲子x%v", name, uname, i)
-				useShovel(serverURL, zoneToken, uuid)
+				log.Printf("[%v]为[%v]使用铲子x%v", name, toname, i)
+				useShovel(serverURL, zoneToken, toid)
 				time.Sleep(time.Millisecond * 100)
 			}
 		}
-		io.WriteString(w, "SUCCESS")
-		return
-
 	}
 
-	if toid == "" {
-		for i := 1; i <= 20; i++ {
-			log.Printf("[%v]使用铲子x%v", name, i)
-			useShovel(serverURL, zoneToken, "")
-			time.Sleep(time.Millisecond * 100)
-		}
-	} else {
-
-		var toname string
-		Pool.QueryRow("select name from tokens where id = ?", toid).Scan(&toname)
-
-		for i := 1; i <= 5; i++ {
-			log.Printf("[%v]为[%v]使用铲子x%v", name, toname, i)
-			useShovel(serverURL, zoneToken, toid)
-			time.Sleep(time.Millisecond * 100)
-		}
-	}
 	io.WriteString(w, "SUCCESS")
 }
 
@@ -1374,6 +1404,13 @@ func UnlockWorkerH(w http.ResponseWriter, req *http.Request) {
 
 func SetRunnerH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
+
+	beachRunner(id)
+
+	io.WriteString(w, "SUCCESS")
+}
+
+func beachRunner(id string) {
 	SQL := fmt.Sprintf("select id, name, token from tokens where id = %s", id)
 
 	if id == "" {
@@ -1425,28 +1462,47 @@ func SetRunnerH(w http.ResponseWriter, req *http.Request) {
 							}
 						}
 					}
-					log.Printf("[%v] gridsnum is :%v", name, gridsnum)
+					log.Printf("[%v][%v] gridsnum is :%v", name, uid, gridsnum)
 
 					if gridsnum == 25 {
 						if seconds > 0 {
 							seconds += 2000
-							fmt.Println("set runner after ", seconds)
+							var beachRunner int64
+							Pool.QueryRow("select beach_runner from tokens where id = ?", uid).Scan(&beachRunner)
+							if beachRunner == 0 {
+								fmt.Printf("[%v]set runner after %v", name, seconds)
+								go func() {
+									Pool.Exec("update tokens set beach_runner = 1 where id = ?", uid)
+									time.Sleep(time.Millisecond * time.Duration(seconds))
+									Pool.Exec("update tokens set beach_runner = 0 where id = ?", uid)
+									// serverURL = getServerURL()
+									// zoneToken := getZoneToken(serverURL, token)
 
-							go func() {
-								time.Sleep(time.Millisecond * time.Duration(seconds))
-								// serverURL = getServerURL()
-								// zoneToken := getZoneToken(serverURL, token)
+									serverURL, zoneToken = getSeverURLAndZoneToken(token)
 
-								serverURL, zoneToken = getSeverURLAndZoneToken(token)
+									refreshBeach(serverURL, zoneToken)
+									fmt.Printf("[%s] refreshBeach finish ", name)
+									for i := 1; i <= 20; i++ {
+										log.Printf("[%v]使用铲子x%v", name, i)
+										useShovel(serverURL, zoneToken, "")
+										time.Sleep(time.Millisecond * 100)
+									}
+									helpMeForBeach(uid, name)
 
-								refreshBeach(serverURL, zoneToken)
-								fmt.Printf("[%s] refreshBeach finish ", name)
-								for i := 1; i <= 20; i++ {
-									log.Printf("[%v]使用铲子x%v", name, i)
-									useShovel(serverURL, zoneToken, "")
-									time.Sleep(time.Millisecond * 100)
-								}
-							}()
+									for i := 0; i <= 4; i++ {
+										log.Printf("[%v]领取海滩奖励x%v", name, i)
+										getBeachLineRewards(serverURL, zoneToken, i, 0)
+										time.Sleep(time.Millisecond * 100)
+									}
+
+									for i := 0; i <= 4; i++ {
+										log.Printf("[%v]领取海滩奖励x%v", name, i)
+										getBeachLineRewards(serverURL, zoneToken, i, 1)
+										time.Sleep(time.Millisecond * 100)
+									}
+								}()
+							}
+
 						} else {
 							refreshBeach(serverURL, zoneToken)
 
@@ -1455,14 +1511,83 @@ func SetRunnerH(w http.ResponseWriter, req *http.Request) {
 								useShovel(serverURL, zoneToken, "")
 								time.Sleep(time.Millisecond * 100)
 							}
+							helpMeForBeach(uid, name)
+
+							for i := 0; i <= 4; i++ {
+								log.Printf("[%v]领取海滩奖励x%v", name, i)
+								getBeachLineRewards(serverURL, zoneToken, i, 0)
+								time.Sleep(time.Millisecond * 100)
+							}
+
+							for i := 0; i <= 4; i++ {
+								log.Printf("[%v]领取海滩奖励x%v", name, i)
+								getBeachLineRewards(serverURL, zoneToken, i, 1)
+								time.Sleep(time.Millisecond * 100)
+							}
+
+						}
+					}
+
+					if gridsnum == 20 {
+						helpMeForBeach(uid, name)
+
+						for i := 0; i <= 4; i++ {
+							log.Printf("[%v]领取海滩奖励x%v", name, i)
+							getBeachLineRewards(serverURL, zoneToken, i, 0)
+							time.Sleep(time.Millisecond * 100)
+						}
+
+						for i := 0; i <= 4; i++ {
+							log.Printf("[%v]领取海滩奖励x%v", name, i)
+							getBeachLineRewards(serverURL, zoneToken, i, 1)
+							time.Sleep(time.Millisecond * 100)
 						}
 					}
 				}
 			}
 		}
 	}
+}
 
-	io.WriteString(w, "SUCCESS")
+func helpMeForBeach(toid, toname string) {
+	var beachUidListString string
+	Pool.QueryRow("select conf_value from config where conf_key = 'beachUidList'").Scan(&beachUidListString)
+
+	if !strings.Contains(beachUidListString, toid) {
+		return
+	}
+
+	// beachItems
+	rows, err := Pool.Query("select id, name, token from tokens where find_in_set(id, (select conf_value from config where conf_key = 'beachHelpUids'))")
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
+		serverURL := getServerURL()
+		zoneToken, beachItems1 := getEnterInfo(uid, name, serverURL, token, "beachItems")
+		beachItems, ok := beachItems1.(map[string]interface{})
+		log.Println("beachItems:", beachItems)
+		if ok {
+			chanzi, ok := beachItems["182"].(float64)
+			if ok {
+				if chanzi >= 5 {
+					if toid != uid {
+						for i := 1; i <= 5; i++ {
+							log.Printf("[%v]为[%v]使用铲子x%v", name, toname, i)
+							useShovel(serverURL, zoneToken, toid)
+							time.Sleep(time.Millisecond * 100)
+						}
+						return
+					}
+				}
+			}
+
+		}
+
+	}
 }
 
 func DrawH(w http.ResponseWriter, req *http.Request) {
@@ -3277,12 +3402,19 @@ func UpdateH(w http.ResponseWriter, req *http.Request) {
 
 	log.Println("update token id is ", id, "name is ", name, "token is", token)
 
-	SQL := "replace into tokens (id, name, token, serverURL, zoneToken) values (?, ?, ?, ?, ?)"
-	_, err := Pool.Exec(SQL, id, name, token, serverURL, zoneToken)
-
-	if err != nil {
-		io.WriteString(w, err.Error())
-		return
+	SQL := fmt.Sprintf("select id from tokens where id = %v", id)
+	var uid string
+	Pool.QueryRow(SQL).Scan(&uid)
+	if uid == id {
+		SQL = "update tokens set token = ?, serverURL = ?, zoneToken = ? where id = ?"
+		Pool.Exec(SQL, token, serverURL, zoneToken, id)
+	} else {
+		SQL = "replace into tokens (id, name, token, serverURL, zoneToken) values (?, ?, ?, ?, ?)"
+		_, err := Pool.Exec(SQL, id, name, token, serverURL, zoneToken)
+		if err != nil {
+			io.WriteString(w, err.Error())
+			return
+		}
 	}
 
 	io.WriteString(w, "SUCCESS")
@@ -4805,14 +4937,18 @@ func giftPiece(serverURL, zoneToken, id, targetUid string) {
 }
 
 // 扔骰子
-func throwDice(serverURL, zoneToken string) {
+func throwDice(serverURL, zoneToken string) bool {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := fmt.Sprintf("%v/game?cmd=throwDice&token=%v&now=%v", serverURL, zoneToken, now)
 	formData := httpGetReturnJson(url)
+	if _, ok := formData["error"]; ok {
+		return false
+	}
 	getItem, ok := formData["getItem"]
 	if ok {
 		log.Println(getItem)
 	}
+	return true
 
 }
 
@@ -5038,6 +5174,7 @@ func draw(uid, userName, serverURL, zoneToken string, drawMulti interface{}) flo
 			SQL := fmt.Sprintf("select conf_value, (select name from tokens where id = conf_value) as name from config where conf_key = '%s'", confKey)
 			Pool.QueryRow(SQL).Scan(&attackIslandUid, &attackIslandName)
 			log.Printf("[%v]【摇一摇】攻击好友【%v】", userName, attackIslandName)
+			rebuild(attackIslandUid, 1)
 			attuid, builds := attackIsland(serverURL, zoneToken, 1, attackIslandUid, 1)
 			rebuild(attackIslandUid, 1)
 
@@ -5217,8 +5354,9 @@ func rebuild(uid, building int64) {
 	var token string
 	Pool.QueryRow(SQL, uid).Scan(&token)
 	serverURL, zoneToken := getSeverURLAndZoneToken(token)
-	buildFix(serverURL, zoneToken, building)
-	// buildUp(serverURL, zoneToken, building)
+	if !buildFix(serverURL, zoneToken, building) {
+		buildUp(serverURL, zoneToken, building)
+	}
 }
 
 func buildUp(serverURL, zoneToken string, id int64) (islandid float64) {
@@ -5251,11 +5389,20 @@ func getIslandEnergy(serverURL, zoneToken string) {
 }
 
 // 修复岛
-func buildFix(serverURL, zoneToken string, id int64) {
+func buildFix(serverURL, zoneToken string, id int64) bool {
 
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := fmt.Sprintf("%v/game?cmd=buildFix&token=%v&id=%v&now=%v", serverURL, zoneToken, id, now)
-	httpGetReturnJson(url)
+	formData := httpGetReturnJson(url)
+	if _, ok := formData["error"]; ok {
+		return false
+	}
+
+	if formData["building"].(map[string]interface{})["lv"].(float64) == 0 {
+		return false
+	}
+
+	return true
 }
 
 // 1=大队长 2=偷钱 4=打建筑 3=防偷钱
@@ -5959,6 +6106,15 @@ func RunnerEveryOneSteamBox() {
 
 // runner
 
+func RunnerBeach() (err error) {
+	if runnerStatus("beachStatus") == "0" {
+		return
+	}
+
+	beachRunner("")
+	return
+}
+
 func RunnerSteamBox() (err error) {
 	if runnerStatus("steamBoxStatus") == "0" {
 		return
@@ -6338,6 +6494,11 @@ type Animal struct {
 // var TodayAnimalData, YesterDayAnimalData, EnemyAnimalData, EnemyYesterdayAnimalData AnimalData
 
 var TodayAlreadyCalculateAnimals []string
+
+func RunnerFamilySignGo() (err error) {
+	familySignGo()
+	return
+}
 
 func InitTodayAnimal() (err error) {
 	sql := `select id, name, token from tokens where id = (select conf_value from config where conf_key = 'animalUid')`

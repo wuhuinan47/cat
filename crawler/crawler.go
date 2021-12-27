@@ -175,6 +175,7 @@ func QQScan() (ygToken, userID interface{}, err error) {
 		log.Println("get url:", err)
 		return
 	}
+	time.Sleep(time.Second * 1)
 
 	imgBytes, err := wd.Screenshot()
 	if err != nil {
@@ -185,11 +186,6 @@ func QQScan() (ygToken, userID interface{}, err error) {
 	if err = ioutil.WriteFile("./static/qqQrCode.png", imgBytes, 0644); err != nil {
 		log.Println("WriteFile:", err)
 		return
-	}
-
-	if err = ioutil.WriteFile("./static/qqQrCode.png", imgBytes, 0644); err != nil {
-		log.Println("WriteFile:", err)
-		// return
 	}
 
 	for i := 0; i < 100; i++ {
@@ -208,7 +204,7 @@ func QQScan() (ygToken, userID interface{}, err error) {
 		time.Sleep(time.Second * 1)
 	}
 
-	// http.Get(fmt.Sprintf("https://mcps.51yizhuan.com:13010/update?id=%v&token=%v", userID, ygToken))
+	// http.Get(fmt.Sprintf("https://cat.rosettawe.com/update?id=%v&token=%v", userID, ygToken))
 
 	time.Sleep(time.Second * 1)
 
@@ -313,7 +309,7 @@ func QQScan1() (ygToken, userID interface{}, err error) {
 		time.Sleep(time.Second * 1)
 	}
 
-	// http.Get(fmt.Sprintf("https://mcps.51yizhuan.com:13010/update?id=%v&token=%v", userID, ygToken))
+	// http.Get(fmt.Sprintf("https://cat.rosettawe.com/update?id=%v&token=%v", userID, ygToken))
 
 	time.Sleep(time.Second * 1)
 
@@ -434,7 +430,7 @@ func WechatScan() (ygToken, userID interface{}, err error) {
 		time.Sleep(time.Second * 1)
 	}
 
-	// http.Get(fmt.Sprintf("https://mcps.51yizhuan.com:13010/update?id=%v&token=%v", userID, ygToken))
+	// http.Get(fmt.Sprintf("https://cat.rosettawe.com/update?id=%v&token=%v", userID, ygToken))
 
 	time.Sleep(time.Second * 1)
 
@@ -493,7 +489,7 @@ func DemoChromedp(URL string) {
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.DisableGPU,
 		chromedp.NoDefaultBrowserCheck,
-		chromedp.Flag("headless", true),
+		chromedp.Flag("headless", false),
 		chromedp.Flag("ignore-certificate-errors", true),
 		// chromedp.Flag("window-size", "50,400"),
 		chromedp.UserDataDir(dir),

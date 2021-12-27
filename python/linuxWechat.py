@@ -58,7 +58,7 @@ def updateToken(userID, nickname, token):
         print("empty userID ", userID)
         return
     else:
-        url = 'https://mcps.51yizhuan.com:13010/update?id='+userID+'&token='+token+'&name='+nickname
+        url = 'https://cat.rosettawe.com/update?id='+userID+'&token='+token+'&name='+nickname
         response=session.get(url)
         data = response.content.decode('utf-8')
         print("update token result is ", data)
@@ -102,7 +102,7 @@ class Cat():
 
         
         qrcode=self.browser.find_element_by_xpath("/html/body/div[1]/div/div/div[2]/div[1]/img").get_attribute('src')
-        session.get("https://mcps.51yizhuan.com:13010/sendQrcode?qrcode="+qrcode)
+        session.get("https://cat.rosettawe.com/sendQrcode?qrcode="+qrcode)
         print(qrcode)
 
         for x in range(100):

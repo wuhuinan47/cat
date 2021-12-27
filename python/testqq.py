@@ -8,7 +8,6 @@ from PIL import Image
 from io import BytesIO
 from time import sleep
 from getpass import getpass
-import random
 import requests
 import json
 import time
@@ -59,7 +58,7 @@ def updateToken(userID, nickname, token):
         print("empty userID ", userID)
         return 0
     else:
-        url = 'https://mcps.51yizhuan.com:13010/update?id='+userID+'&token='+token+'&name='+nickname
+        url = 'https://cat.rosettawe.com/update?id='+userID+'&token='+token+'&name='+nickname
         response=session.get(url)
         data = response.content.decode('utf-8')
         print("update token result is ", data)
@@ -96,17 +95,23 @@ class Cat():
         print(location)
         print(size)
 
-        location['x']=400
-        location['y']=300
-        # top,bottom,left,right=location['y'],location['y']+size['height'],location['x'],location['x']+size['width']
-        top,bottom,left,right=400,532,300,432
+        # location['x']=400
+        # location['y']=300
+        # # top,bottom,left,right=location['y'],location['y']+size['height'],location['x'],location['x']+size['width']
+        # top,bottom,left,right=400,532,300,432
 
 
-        scrennshot=self.browser.get_screenshot_as_png()
-        scrennshot=Image.open(BytesIO(scrennshot))
-        scrennshot=scrennshot.crop((left,top,right,bottom))
-        file_name='wechatQrcode.png'
-        scrennshot.save(file_name)
+        # scrennshot=self.browser.get_screenshot_as_png()
+        # scrennshot=Image.open(BytesIO(scrennshot))
+
+        # scrennshot=scrennshot.draft
+        # scrennshot=scrennshot.crop((left,top,right,bottom))
+        # file_name='wechatQrcode.png'
+        # scrennshot.save(file_name)
+
+        sleep(1)
+
+        self.browser.save_screenshot('wechatQrcode.png')
 
 
 
@@ -116,7 +121,7 @@ class Cat():
 
         # qrcode=self.browser.find_element_by_xpath("/html/body/div[2]/div[1]/div")
 
-        # session.get("https://mcps.51yizhuan.com:13010/sendQrcode?qrcode="+qrcode)
+        # session.get("https://cat.rosettawe.com/sendQrcode?qrcode="+qrcode)
        
         # print(qrcode)
 

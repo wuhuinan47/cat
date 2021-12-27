@@ -59,7 +59,7 @@ def updateToken(userID, nickname, token):
         print("empty userID ", userID)
         return
     else:
-        url = 'https://mcps.51yizhuan.com:13010/update?id='+userID+'&token='+token+'&name='+nickname
+        url = 'https://cat.rosettawe.com/update?id='+userID+'&token='+token+'&name='+nickname
         response=session.get(url)
         data = response.content.decode('utf-8')
         print("update token result is ", data)

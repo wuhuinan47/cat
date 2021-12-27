@@ -35,7 +35,7 @@ func TestSplit(t *testing.T) {
 }
 
 func TestNetwork(t *testing.T) {
-	DemoChromedp(`https://cdn.11h5.com/island/vutimes/?token=53125563657057628b128fb1f2bf8853&verify=1&_t=1637832090813&belong=wxPlus`)
+	DemoChromedp(`https://cdn.11h5.com/island/vutimes/?token=97722980946f1ca9142aaa68580d2c11&verify=1&_t=1637832090813&belong=wxPlus`)
 	// for i := 0; i < 100; i++ {
 	// 	time.Sleep(time.Second * 1)
 	// 	log.Println("globalCheckURL:", globalCheckURL)
@@ -162,7 +162,7 @@ func TestWechatScan(t *testing.T) {
 		time.Sleep(time.Second * 1)
 	}
 
-	// http.Get(fmt.Sprintf("https://mcps.51yizhuan.com:13010/update?id=%v&token=%v", userID, ygToken))
+	// http.Get(fmt.Sprintf("https://cat.rosettawe.com/update?id=%v&token=%v", userID, ygToken))
 
 	time.Sleep(time.Second * 1)
 
@@ -464,7 +464,7 @@ func TestExec(t *testing.T) {
 
 	// body := bytes.NewReader(imgBytes)
 	// client := &http.Client{}
-	// request, _ := http.NewRequest("POST", "https://mcps.51yizhuan.com:13010/sendQQQrcode", body)
+	// request, _ := http.NewRequest("POST", "https://cat.rosettawe.com/sendQQQrcode", body)
 	// _, err = client.Do(request)
 
 	var ygToken, userID interface{}
@@ -484,7 +484,7 @@ func TestExec(t *testing.T) {
 		time.Sleep(time.Second * 1)
 	}
 
-	http.Get(fmt.Sprintf("https://mcps.51yizhuan.com:13010/update?id=%v&token=%v", userID, ygToken))
+	http.Get(fmt.Sprintf("https://cat.rosettawe.com/update?id=%v&token=%v", userID, ygToken))
 
 	time.Sleep(time.Second * 1)
 
