@@ -1246,6 +1246,16 @@ func ExchangeRiceCakeH(w http.ResponseWriter, req *http.Request) {
 				log.Printf("[%s]领取海滩奖励[%v]成功", name, v)
 
 			}
+
+			for {
+				flag := goldMineExchange(serverURL, zoneToken, v)
+				if !flag {
+					break
+				}
+				log.Printf("[%s]领取小岛寻宝奖励[%v]成功", name, v)
+
+			}
+
 		}
 	}
 	io.WriteString(w, "SUCCESS")
@@ -5929,6 +5939,44 @@ func getFamilyDayTaskPrize(serverURL, zoneToken, id string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=getFamilyDayTaskPrize&token=%v&id=%v&now=%v", serverURL, zoneToken, id, now)
 	httpGetReturnJson(URL)
+}
+
+// https://s147.11h5.com//game?cmd=&token=ildNRetcP-yn6tT_nhcJTwH0lbz9egMJT4N&id=1&now=1641132936485
+
+func goldMineExchangeAll() {
+	SQL := `select id, name, token from tokens`
+	rows, err := Pool.Query(SQL)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
+		serverURL := getServerURL()
+		zoneToken := getZoneToken(serverURL, token)
+
+		var list = []int64{5, 4, 3, 2, 1}
+		for _, v := range list {
+			for {
+				if !goldMineExchange(serverURL, zoneToken, v) {
+					break
+				}
+			}
+		}
+
+	}
+}
+
+func goldMineExchange(serverURL, zoneToken string, id int64) bool {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=goldMineExchange&token=%v&id=%v&now=%v", serverURL, zoneToken, id, now)
+	formData := httpGetReturnJson(URL)
+	if _, ok := formData["error"]; ok {
+		return false
+	}
+	return true
 }
 
 // // 统一下单接口
