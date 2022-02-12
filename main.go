@@ -633,6 +633,12 @@ func AttackBossH(w http.ResponseWriter, req *http.Request) {
 	}
 
 	count := math.Floor(bossCannonFloat / 3)
+	if bossCannonFloat == 2 {
+		count = 2
+	}
+	if bossCannonFloat == 1 {
+		count = 1
+	}
 
 	bossList := getBossHelpList(serverURL, zoneToken)
 	log.Printf("---------------------------[%v]开始打龙---------------------------", name)
@@ -654,6 +660,12 @@ func AttackBossH(w http.ResponseWriter, req *http.Request) {
 		} else if leftHp <= 1000 && leftHp >= 500 {
 			attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200)
 			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400)
+			countI++
+		} else if leftHp == 400 {
+			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200)
+			countI++
+		} else if leftHp == 200 {
+			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 200, 200)
 			countI++
 		} else {
 			flag = false
@@ -702,8 +714,11 @@ func AttackBossH1(s *web.Session) web.Result {
 	if !ok {
 		return s.SendString("FAIL", "")
 	}
-
 	count := bossCannonFloat / 3
+
+	if bossCannonFloat == 2 {
+		count = 2
+	}
 
 	bossList := getBossHelpList(serverURL, zoneToken)
 	log.Printf("---------------------------[%v]开始打龙---------------------------", name)
@@ -725,6 +740,9 @@ func AttackBossH1(s *web.Session) web.Result {
 		} else if leftHp <= 1000 && leftHp >= 500 {
 			attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200)
 			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400)
+			countI++
+		} else if leftHp == 400 {
+			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200)
 			countI++
 		} else {
 			flag = false
@@ -2905,7 +2923,7 @@ func GetZoneTokenH(w http.ResponseWriter, req *http.Request) {
 
 func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 	// go func() {
-	SQL := "select id, token, name from tokens"
+	SQL := "select id, token, name, password from tokens"
 
 	rows, err := Pool.Query(SQL)
 
@@ -2918,14 +2936,21 @@ func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 	var groupconcat1, groupconcat2 string
 
 	for rows.Next() {
-		var id, token, name string
-		rows.Scan(&id, &token, &name)
+		var id, token, name, password string
+		rows.Scan(&id, &token, &name, &password)
 
 		serverURL := getServerURL()
 		zoneToken, flag := getZoneToken_1(serverURL, token)
 
 		if zoneToken == "" {
-			Pool.Exec("update tokens set token = '' where id = ?", id)
+
+			if password != "" {
+				newToken := loginByPassword(id, password)
+				Pool.Exec("update tokens set token = ? where id = ?", newToken, id)
+			} else {
+				Pool.Exec("update tokens set token = '' where id = ?", id)
+			}
+
 			groupconcat1 += "["
 			groupconcat1 += name
 			groupconcat1 += "]"
@@ -2948,14 +2973,14 @@ func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	// SQL = "select group_concat(name) as groupname from tokens where token = ''"
-	// var reply string
-	// Pool.QueryRow(SQL).Scan(&reply)
-	if groupconcat1 == "" {
-		if runnerStatus("checkPiece") == "1" {
-			go checkPiece()
-		}
+	if runnerStatus("checkPiece") == "1" {
+		go checkPiece()
 	}
+	// if groupconcat1 == "" {
+	// 	if runnerStatus("checkPiece") == "1" {
+	// 		go checkPiece()
+	// 	}
+	// }
 
 	io.WriteString(w, groupconcat1+"||||"+groupconcat2)
 
@@ -3807,6 +3832,15 @@ func familySignGo() {
 		collectMineGold(user["serverURL"], user["zoneToken"])
 	}
 
+	for _, user := range tokenList {
+		if j >= 8 {
+			time.Sleep(time.Second * 1)
+			j = 1
+		}
+		log.Printf("[%v] familyShop", user["name"])
+		familyShop(user["serverURL"], user["zoneToken"])
+	}
+
 	getAwardForCowBoy()
 
 	log.Println("familySignGo finish")
@@ -3893,6 +3927,9 @@ func othersSign() {
 
 		log.Printf("[%v] collectMineGold", name)
 		collectMineGold(serverURL, zoneToken)
+
+		log.Printf("[%v] familyShop", name)
+		familyShop(serverURL, zoneToken)
 
 	}
 
@@ -4087,8 +4124,9 @@ func getEnterInfo(uid, name, serverURL, token, key string) (zoneToken string, in
 
 func getSeverURLAndZoneToken(token string) (serverURL, zoneToken string) {
 
-	SQL := "select serverURL, zoneToken from tokens where token = ?"
-	Pool.QueryRow(SQL, token).Scan(&serverURL, &zoneToken)
+	var uid, password string
+	SQL := "select serverURL, zoneToken, id, password from tokens where token = ?"
+	Pool.QueryRow(SQL, token).Scan(&serverURL, &zoneToken, &uid, &password)
 	if catdb.CheckZoneToken(serverURL, zoneToken) {
 		return
 	}
@@ -4099,6 +4137,23 @@ func getSeverURLAndZoneToken(token string) (serverURL, zoneToken string) {
 		Pool.Exec(SQL, serverURL, zoneToken, token)
 		return
 	}
+
+	if password != "" {
+		newToken := loginByPassword(uid, password)
+		if newToken != "" {
+			serverURL = getServerURL()
+			zoneToken = getZoneToken(serverURL, newToken)
+			if zoneToken != "" {
+				SQL = "update tokens set token = ?, serverURL = ?, zoneToken = ? where id = ?"
+				Pool.Exec(SQL, newToken, serverURL, zoneToken, uid)
+				return
+			}
+		} else {
+			Pool.Exec("update tokens set password = '' where id = ?", uid)
+		}
+
+	}
+
 	return
 }
 
@@ -5844,6 +5899,23 @@ func collectMineGold(serverURL, zoneToken string) {
 	httpGetReturnJson(URL)
 }
 
+//
+func loginByPassword(uid, password string) (token string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("https://login.11h5.com/account/api.php?c=login&d=auth&uid=%v&password=%v&v=%v", uid, password, now)
+	formData := httpGetReturnJson(URL)
+	log.Println("uid ->", uid)
+	log.Println("password ->", password)
+	log.Println("loginByPassword ->", formData)
+	errorID, ok := formData["error"].(float64)
+	if ok {
+		if errorID == 0 {
+			token = formData["token"].(string)
+		}
+	}
+	return
+}
+
 func getSteamBoxHelpList(serverURL, zoneToken string, quality float64) (uids []float64) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=getSteamBoxHelpList&token=%v&now=%v", serverURL, zoneToken, now)
@@ -6289,7 +6361,7 @@ func RunnerDraw() (err error) {
 
 	}
 
-	if hour == 2 || hour == 5 || hour == 8 || hour == 11 || hour == 14 || hour == 17 || hour == 20 || hour == 23 {
+	if hour == 1 || hour == 3 || hour == 8 || hour == 11 || hour == 14 || hour == 17 || hour == 20 || hour == 22 {
 		log.Println("start draw")
 		SQL := "select id, name, token from tokens where find_in_set(id, (select conf_value from config where conf_key = 'drawIds'))"
 
@@ -6879,6 +6951,8 @@ func confirmFriend(serverURL, zoneToken, fuid string) {
 
 }
 
-// https://s147.11h5.com//game?cmd=confirmFriend&token=ild35Sj8Cs_mhXxVZHxaupf-mkAJej7j0Kj&fuid=697625165&now=1637823538627
-
-// https://s147.11h5.com//game?cmd=applyFriend&token=ildOun_mkP_hUEGn7tT6pQP8ykGkOqnihUN&fuid=697132831&remark=1&now=1637823324837
+func familyShop(serverURL, zoneToken string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=familyShop&token=%v&id=1&now=%v", serverURL, zoneToken, now)
+	httpGetReturnJson(URL)
+}
