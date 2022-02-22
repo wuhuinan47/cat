@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"crypto/rand"
 	"database/sql"
 	"encoding/json"
@@ -176,6 +175,8 @@ func main() {
 		go runner.NamedRunnerWithHMS("RunnerInitTodayAnimal", 6, 30, 0, &running, InitTodayAnimal)
 		go runner.NamedRunnerWithHMS("RunnerFamilySignGo", 0, 1, 0, &running, RunnerFamilySignGo)
 
+		go runner.NamedRunnerWithSeconds("RunnerCheckTokenGo", 14759, &running, RunnerCheckTokenGo)
+
 	}
 
 	RunnerEveryOneSteamBox()
@@ -338,7 +339,7 @@ func AdminLoginH(s *web.Session) web.Result {
 
 	var tid int64
 
-	Pool.QueryRow("select uid from user where account = ? and password = ?", username, password).Scan(&tid)
+	Pool.QueryRow("select id from user where account = ? and password = ?", username, password).Scan(&tid)
 
 	if tid == 0 {
 		return s.SendJSON(xmap.M{
@@ -614,9 +615,9 @@ func AttackBossH(w http.ResponseWriter, req *http.Request) {
 
 	var SQL, uid, name, token string
 	if id == "" {
-		SQL = "select uid, name, token from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
+		SQL = "select id, name, token from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
 	} else {
-		SQL = fmt.Sprintf("select uid, name, token from tokens where id = %v", id)
+		SQL = fmt.Sprintf("select id, name, token from tokens where id = %v", id)
 	}
 
 	Pool.QueryRow(SQL).Scan(&uid, &name, &token)
@@ -698,9 +699,9 @@ func AttackBossH1(s *web.Session) web.Result {
 
 	var SQL, uid, name, token string
 	if id == "" {
-		SQL = "select uid, name, token from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
+		SQL = "select id, name, token from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
 	} else {
-		SQL = fmt.Sprintf("select uid, name, token from tokens where id = %v", id)
+		SQL = fmt.Sprintf("select id, name, token from tokens where id = %v", id)
 	}
 
 	Pool.QueryRow(SQL).Scan(&uid, &name, &token)
@@ -1403,30 +1404,45 @@ func UnlockWorkerH(w http.ResponseWriter, req *http.Request) {
 	// mineList
 	id := req.URL.Query().Get("id")
 	SQL := "select id, name, token from tokens where id = ?"
-	var uid, name, token string
-	Pool.QueryRow(SQL, id).Scan(&uid, &name, &token)
-	serverURL := getServerURL()
+	if id == "" {
+		SQL = "select id, name, token from tokens"
+	}
 
-	zoneToken, mineList := getEnterInfo(uid, name, serverURL, token, "mineList")
-	l1, ok := mineList.(map[string]interface{})
-	if ok {
-		for k, v := range l1 {
-			v1, ok := v.(map[string]interface{})
-			if ok {
-				unlockNum, ok := v1["unlockNum"].(float64)
+	rows, err := Pool.Query(SQL)
+
+	if err != nil {
+		io.WriteString(w, "FAIL")
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
+		serverURL := getServerURL()
+
+		zoneToken, mineList := getEnterInfo(uid, name, serverURL, token, "mineList")
+		l1, ok := mineList.(map[string]interface{})
+		if ok {
+			for k, v := range l1 {
+				v1, ok := v.(map[string]interface{})
 				if ok {
-					if unlockNum != 5 {
-						var i float64
-						for i = 1; i <= 5-unlockNum; i++ {
-							log.Printf("---------------------------[%v]解锁[%v]---------------------------", name, k)
-							time.Sleep(time.Millisecond * 200)
-							unlockWorker(serverURL, zoneToken, k)
+					unlockNum, ok := v1["unlockNum"].(float64)
+					if ok {
+						if unlockNum != 5 {
+							var i float64
+							for i = 1; i <= 5-unlockNum; i++ {
+								log.Printf("---------------------------[%v]解锁[%v]---------------------------", name, k)
+								time.Sleep(time.Millisecond * 200)
+								unlockWorker(serverURL, zoneToken, k)
+							}
 						}
 					}
 				}
 			}
 		}
 	}
+
 	io.WriteString(w, "SUCCESS")
 }
 
@@ -1629,7 +1645,7 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 
 	if id == "" {
 
-		drawAll(intDrawMulti)
+		drawAll(intDrawMulti, intAmount)
 		io.WriteString(w, "SUCCESS")
 
 		return
@@ -1716,7 +1732,7 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func drawAll(intDrawMulti int) {
+func drawAll(intDrawMulti, intAmount int) {
 	log.Println("start draw")
 	SQL := "select id, name, token from tokens where find_in_set(id, (select conf_value from config where conf_key = 'drawIds'))"
 
@@ -1739,7 +1755,7 @@ func drawAll(intDrawMulti int) {
 
 		user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, "familyDayTask")
 		// user.ZoneToken = getZoneToken(user.ServerURL, user.Token)
-
+		log.Println("append users by ", user.Name)
 		users = append(users, user)
 
 	}
@@ -1754,10 +1770,16 @@ func drawAll(intDrawMulti int) {
 		if goUid == "302691822" {
 			log.Printf("---------------------------[%v]开始转盘---------------------------", goName)
 			followCompanion_1(goServerURL, goZoneToken, 2)
-			amount := draw(goUid, goName, goServerURL, goZoneToken, intDrawMulti)
+			energy := draw(goUid, goName, goServerURL, goZoneToken, intDrawMulti)
+
+			targetEnergy := intDrawMulti * intAmount
+
+			if targetEnergy > int(energy) {
+				intAmount = int(energy) / intDrawMulti
+			}
 
 			time.Sleep(time.Millisecond * 2100)
-			for i := 0; i <= int(amount); i++ {
+			for i := 0; i <= int(intAmount); i++ {
 				count := draw(goUid, goName, goServerURL, goZoneToken, intDrawMulti)
 				if count == -1 {
 					break
@@ -1801,9 +1823,15 @@ func drawAll(intDrawMulti int) {
 			go func() {
 				log.Printf("---------------------------[%v]开始转盘---------------------------", goName)
 				followCompanion_1(goServerURL, goZoneToken, 2)
-				amount := draw(goUid, goName, goServerURL, goZoneToken, intDrawMulti)
+				energy := draw(goUid, goName, goServerURL, goZoneToken, intDrawMulti)
+
+				targetEnergy := intDrawMulti * intAmount
+
+				if targetEnergy > int(energy) {
+					intAmount = int(energy) / intDrawMulti
+				}
 				time.Sleep(time.Millisecond * 2100)
-				for i := 0; i <= int(amount); i++ {
+				for i := 0; i <= int(intAmount); i++ {
 					count := draw(goUid, goName, goServerURL, goZoneToken, intDrawMulti)
 					if count == -1 {
 						break
@@ -2940,16 +2968,16 @@ func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 		rows.Scan(&id, &token, &name, &password)
 
 		serverURL := getServerURL()
+
+		if password != "" {
+			token = loginByPassword(id, password)
+			Pool.Exec("update tokens set token = ? where id = ?", token, id)
+		}
+
 		zoneToken, flag := getZoneToken_1(serverURL, token)
 
 		if zoneToken == "" {
-
-			if password != "" {
-				newToken := loginByPassword(id, password)
-				Pool.Exec("update tokens set token = ? where id = ?", newToken, id)
-			} else {
-				Pool.Exec("update tokens set token = '' where id = ?", id)
-			}
+			Pool.Exec("update tokens set token = '' where id = ?", id)
 
 			groupconcat1 += "["
 			groupconcat1 += name
@@ -2960,6 +2988,10 @@ func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 
 			sendMsg(id + ":" + name)
 		} else {
+
+			log.Printf("[%v]助力能量箱子", name)
+			helpEraseGift(serverURL, zoneToken)
+
 			if flag {
 				groupconcat2 += name
 				groupconcat2 += ":"
@@ -5403,11 +5435,14 @@ func draw(uid, userName, serverURL, zoneToken string, drawMulti interface{}) flo
 			getDayTaskAward(serverURL, zoneToken, taskID)
 		}
 
-		log.Printf("[%v]领取超值返利", userName)
+		log.Printf("[%v]领取超值返利1", userName)
 		getElevenEnergyPrize(serverURL, zoneToken, 1)
 		getElevenEnergyPrize(serverURL, zoneToken, 2)
 		getElevenEnergyPrize(serverURL, zoneToken, 3)
 		getElevenEnergyPrize(serverURL, zoneToken, 4)
+
+		log.Printf("[%v]助力能量箱子", userName)
+		helpEraseGift(serverURL, zoneToken)
 	}
 
 	log.Printf("[%v]转盘行为:%v, 剩余能量:%v, 当前金币:%vM, 增加金币:%vM", userName, id, energy, gold, count)
@@ -6101,72 +6136,77 @@ func RangeRand(min, max int64) int64 {
 }
 
 func sendMsg(msg string) {
-	url := "https://rocket.chat.rosettawe.com/api/v1/login"
-
-	client := &http.Client{}
-
-	sendMsg, err := json.Marshal(map[string]interface{}{"user": "whn", "password": "Aa112211"})
-
-	if err != nil {
-		return
-	}
-
-	request, err := http.NewRequest("POST", url, bytes.NewBuffer(sendMsg))
-	if err != nil {
-		log.Printf("httpGet err is %v, url is %v", err, url)
-		return
-	}
-	request.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36")
-	request.Header.Add("Content-type", "application/json")
-	response, err := client.Do(request)
-
-	if err != nil {
-		log.Printf("httpGet err is %v, url is %v", err, url)
-		return
-	}
-	defer response.Body.Close()
-	formData := make(map[string]interface{})
-	json.NewDecoder(response.Body).Decode(&formData)
-
-	data, ok := formData["data"].(map[string]interface{})
-
-	if !ok {
-		return
-	}
-
-	authToken := data["authToken"].(string)
-
-	me, ok := data["me"].(map[string]interface{})
-
-	if !ok {
-		return
-	}
-
-	id := me["_id"].(string)
-
-	url = "https://rocket.chat.rosettawe.com/api/v1/chat.sendMessage"
-
-	var message = map[string]interface{}{"message": map[string]interface{}{"rid": "48AM8JoiSdRYgCB9W", "msg": msg}}
-
-	sendMsg, err = json.Marshal(message)
-
-	if err != nil {
-		return
-	}
-
-	client = &http.Client{}
-
-	request, err = http.NewRequest("POST", url, bytes.NewBuffer(sendMsg))
-	if err != nil {
-		return
-	}
-
-	request.Header.Add("X-Auth-Token", authToken)
-	request.Header.Add("X-User-Id", id)
-	request.Header.Add("Content-type", "application/json")
-	client.Do(request)
-
+	url := "https://api.day.app/hTASnegVyjnL963QV5YMhA/" + msg
+	http.Get(url)
 }
+
+// func sendMsg(msg string) {
+// 	url := "https://rocket.chat.rosettawe.com/api/v1/login"
+
+// 	client := &http.Client{}
+
+// 	sendMsg, err := json.Marshal(map[string]interface{}{"user": "whn", "password": "Aa112211"})
+
+// 	if err != nil {
+// 		return
+// 	}
+
+// 	request, err := http.NewRequest("POST", url, bytes.NewBuffer(sendMsg))
+// 	if err != nil {
+// 		log.Printf("httpGet err is %v, url is %v", err, url)
+// 		return
+// 	}
+// 	request.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36")
+// 	request.Header.Add("Content-type", "application/json")
+// 	response, err := client.Do(request)
+
+// 	if err != nil {
+// 		log.Printf("httpGet err is %v, url is %v", err, url)
+// 		return
+// 	}
+// 	defer response.Body.Close()
+// 	formData := make(map[string]interface{})
+// 	json.NewDecoder(response.Body).Decode(&formData)
+
+// 	data, ok := formData["data"].(map[string]interface{})
+
+// 	if !ok {
+// 		return
+// 	}
+
+// 	authToken := data["authToken"].(string)
+
+// 	me, ok := data["me"].(map[string]interface{})
+
+// 	if !ok {
+// 		return
+// 	}
+
+// 	id := me["_id"].(string)
+
+// 	url = "https://rocket.chat.rosettawe.com/api/v1/chat.sendMessage"
+
+// 	var message = map[string]interface{}{"message": map[string]interface{}{"rid": "48AM8JoiSdRYgCB9W", "msg": msg}}
+
+// 	sendMsg, err = json.Marshal(message)
+
+// 	if err != nil {
+// 		return
+// 	}
+
+// 	client = &http.Client{}
+
+// 	request, err = http.NewRequest("POST", url, bytes.NewBuffer(sendMsg))
+// 	if err != nil {
+// 		return
+// 	}
+
+// 	request.Header.Add("X-Auth-Token", authToken)
+// 	request.Header.Add("X-User-Id", id)
+// 	request.Header.Add("Content-type", "application/json")
+// 	client.Do(request)
+
+// }
 
 func RunnerEveryOneSteamBox() {
 	if runnerStatus("steamBoxStatus") == "0" {
@@ -6385,6 +6425,7 @@ func RunnerDraw() (err error) {
 			user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, "familyDayTask")
 			// user.ZoneToken = getZoneToken(user.ServerURL, user.Token)
 
+			log.Println("append users by ", user.Name)
 			users = append(users, user)
 
 		}
@@ -6539,13 +6580,11 @@ func RunnerPullAnimal() (err error) {
 
 		foods := enterFamilyRob(serverURL, zoneToken)
 
-		var nextFlag bool
 		for _, v := range foods {
 			// myTeam := v["myTeam"].(int)
 			// if myTeam != 4 {
 			if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
 				robFamilyFood(serverURL, zoneToken, v["id"].(string))
-				nextFlag = true
 				break
 			}
 			// }
@@ -6560,29 +6599,28 @@ func RunnerPullAnimal() (err error) {
 
 		time.Sleep(900 * time.Second)
 
-		if nextFlag {
-			serverURL, zoneToken = getSeverURLAndZoneToken(token)
+		err = Pool.QueryRow(SQL).Scan(&uid, &token, &name, &pullRows)
+		serverURL, zoneToken = getSeverURLAndZoneToken(token)
 
-			if zoneToken == "" {
-				sendMsg(uid + ":" + name)
-				log.Printf("[name: %v] token is invalid\n", name)
-			}
-
-			foods = enterFamilyRob(serverURL, zoneToken)
-
-			for _, v := range foods {
-				// myTeam := v["myTeam"].(int)
-				// if myTeam != 4 {
-				if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
-					robFamilyFood(serverURL, zoneToken, v["id"].(string))
-					break
-				}
-				// }
-
-			}
-			insertAllAnimals(uid, foods)
-			log.Printf("[%v]拉动物完成", name)
+		if zoneToken == "" {
+			sendMsg(uid + ":" + name)
+			log.Printf("[name: %v] token is invalid\n", name)
 		}
+
+		foods = enterFamilyRob(serverURL, zoneToken)
+
+		for _, v := range foods {
+			// myTeam := v["myTeam"].(int)
+			// if myTeam != 4 {
+			if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
+				robFamilyFood(serverURL, zoneToken, v["id"].(string))
+				break
+			}
+			// }
+
+		}
+		insertAllAnimals(uid, foods)
+		log.Printf("[%v]拉动物完成", name)
 
 		return
 	}
@@ -6617,6 +6655,59 @@ var TodayAlreadyCalculateAnimals []string
 
 func RunnerFamilySignGo() (err error) {
 	familySignGo()
+	return
+}
+
+func RunnerCheckTokenGo() (err error) {
+	SQL := "select id, token, name, password from tokens"
+
+	rows, err := Pool.Query(SQL)
+
+	if err != nil {
+		return
+	}
+
+	defer rows.Close()
+
+	var groupconcat1, groupconcat2 string
+
+	for rows.Next() {
+		var id, token, name, password string
+		rows.Scan(&id, &token, &name, &password)
+
+		serverURL := getServerURL()
+		zoneToken, flag := getZoneToken_1(serverURL, token)
+
+		if zoneToken == "" {
+
+			if password != "" {
+				newToken := loginByPassword(id, password)
+				Pool.Exec("update tokens set token = ? where id = ?", newToken, id)
+			} else {
+				Pool.Exec("update tokens set token = '' where id = ?", id)
+			}
+
+			groupconcat1 += "["
+			groupconcat1 += name
+			groupconcat1 += "]"
+			groupconcat1 += ":"
+			groupconcat1 += "失效"
+			groupconcat1 += "/"
+
+			sendMsg(id + ":" + name)
+		} else {
+			if flag {
+				groupconcat2 += name
+				groupconcat2 += ":"
+				groupconcat2 += fmt.Sprintf("%v", flag)
+				groupconcat2 += "/"
+			}
+
+		}
+
+		// time.Sleep(time.Millisecond * 100)
+
+	}
 	return
 }
 
@@ -6954,5 +7045,37 @@ func confirmFriend(serverURL, zoneToken, fuid string) {
 func familyShop(serverURL, zoneToken string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=familyShop&token=%v&id=1&now=%v", serverURL, zoneToken, now)
+	httpGetReturnJson(URL)
+}
+
+func helpEraseGift(serverURL, zoneToken string) {
+	uids := friendsRank(serverURL, zoneToken)
+	for _, uid := range uids {
+		helpEraseGiftBoxTime(serverURL, zoneToken, uid)
+	}
+}
+
+func friendsRank(serverURL, zoneToken string) (uids []string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=friendsRank&token=%v&now=%v", serverURL, zoneToken, now)
+	formData := httpGetReturnJson(URL)
+	friends, ok := formData["friends"].([]interface{})
+	if ok {
+		for _, v := range friends {
+			vv, ok := v.(map[string]interface{})
+			if ok {
+				if vv["hasHelp"].(float64) == 0 {
+					uid := fmt.Sprintf("%s", vv["uid"])
+					uids = append(uids, uid)
+				}
+			}
+		}
+	}
+	return
+}
+
+func helpEraseGiftBoxTime(serverURL, zoneToken, uid string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=helpEraseGiftBoxTime&token=%v&fuid=%v&now=%v", serverURL, zoneToken, uid, now)
 	httpGetReturnJson(URL)
 }
