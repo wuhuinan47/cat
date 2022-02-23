@@ -656,17 +656,17 @@ func AttackBossH(w http.ResponseWriter, req *http.Request) {
 		log.Printf("[%v]leftHp:%v", v["id"], leftHp)
 		var flag bool
 		if leftHp <= 600 && leftHp >= 500 {
-			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200)
+			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
 			countI++
 		} else if leftHp <= 1000 && leftHp >= 500 {
-			attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200)
-			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400)
+			attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
+			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400, 0)
 			countI++
 		} else if leftHp == 400 {
-			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200)
+			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
 			countI++
 		} else if leftHp == 200 {
-			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 200, 200)
+			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 200, 200, 0)
 			countI++
 		} else {
 			flag = false
@@ -736,14 +736,14 @@ func AttackBossH1(s *web.Session) web.Result {
 		log.Printf("[%v]leftHp:%v", v["id"], leftHp)
 		var flag bool
 		if leftHp <= 600 && leftHp >= 500 {
-			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200)
+			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
 			countI++
 		} else if leftHp <= 1000 && leftHp >= 500 {
-			attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200)
-			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400)
+			attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
+			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400, 0)
 			countI++
 		} else if leftHp == 400 {
-			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200)
+			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
 			countI++
 		} else {
 			flag = false
@@ -2224,10 +2224,10 @@ func BeachHelpH(w http.ResponseWriter, req *http.Request) {
 func AttackMyBossH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	mode := req.URL.Query().Get("mode")
-	SQL := fmt.Sprintf("select name, token from tokens where id = %s", id)
+	SQL := fmt.Sprintf("select id, name, token from tokens where id = %s", id)
 
 	if id == "" {
-		SQL = "select name, token from tokens where id <> 302691822 and id <> 309392050 "
+		SQL = "select id, name, token from tokens where id <> 302691822 and id <> 309392050 "
 	}
 
 	rows, err := Pool.Query(SQL)
@@ -2238,21 +2238,31 @@ func AttackMyBossH(w http.ResponseWriter, req *http.Request) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var name, token string
-		rows.Scan(&name, &token)
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
 		go func() {
 
 			serverURL, zoneToken := getSeverURLAndZoneToken(token)
+			getFreeBossCannon(serverURL, zoneToken)
+
+			zoneToken, bossCannon := getEnterInfo(uid, name, serverURL, token, "bossCannon")
+
+			bossCannonFloat, ok := bossCannon.(float64)
+
+			if !ok {
+				log.Printf("---------------------------[%v]bossCannon无法打龙---------------------------", name)
+				return
+			}
+
 			if zoneToken != "" {
-				bossID := summonBoss(serverURL, zoneToken)
+				bossID := summonBoss(serverURL, zoneToken, bossCannonFloat)
 				if bossID == "" {
-					log.Printf("---------------------------[%v]无法打龙---------------------------", name)
+					log.Printf("---------------------------[%v]bossID无法打龙---------------------------", name)
 					return
 				}
 				inviteBoss(serverURL, zoneToken, bossID)
 				time.Sleep(time.Second * 1)
 				shareAPI(serverURL, zoneToken)
-				getFreeBossCannon(serverURL, zoneToken)
 				log.Printf("---------------------------[%v]开始打龙---------------------------", name)
 				attackMyBoss(serverURL, zoneToken, bossID, mode)
 				log.Printf("---------------------------[%v]结束打龙---------------------------", name)
@@ -2271,7 +2281,7 @@ func AttackMyBossH1(s *web.Session) web.Result {
 	SQL := fmt.Sprintf("select name, token from tokens where id = %s", id)
 
 	if id == "" {
-		SQL = "select name, token from tokens where id <> 302691822 and id <> 309392050 "
+		SQL = "select id, name, token from tokens where id <> 302691822 and id <> 309392050 "
 	}
 
 	rows, err := Pool.Query(SQL)
@@ -2281,13 +2291,23 @@ func AttackMyBossH1(s *web.Session) web.Result {
 	defer rows.Close()
 
 	for rows.Next() {
-		var name, token string
-		rows.Scan(&name, &token)
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
 		go func() {
 
 			serverURL, zoneToken := getSeverURLAndZoneToken(token)
 			if zoneToken != "" {
-				bossID := summonBoss(serverURL, zoneToken)
+				zoneToken, bossCannon := getEnterInfo(uid, name, serverURL, token, "bossCannon")
+				getFreeBossCannon(serverURL, zoneToken)
+
+				bossCannonFloat, ok := bossCannon.(float64)
+
+				if !ok {
+					log.Printf("---------------------------[%v]bossCannon无法打龙---------------------------", name)
+					return
+				}
+
+				bossID := summonBoss(serverURL, zoneToken, bossCannonFloat)
 				if bossID == "" {
 					log.Printf("---------------------------[%v]无法打龙---------------------------", name)
 					return
@@ -2332,7 +2352,7 @@ func OneSonAttackBossH(w http.ResponseWriter, req *http.Request) {
 		confKey = "boss3"
 	}
 
-	SQL := fmt.Sprintf("select id, token from tokens where find_in_set(id, (select conf_value from config where conf_key='%s'))", confKey)
+	SQL := fmt.Sprintf("select id, token, name from tokens where find_in_set(id, (select conf_value from config where conf_key='%s'))", confKey)
 
 	rows, err := Pool.Query(SQL)
 	if err != nil {
@@ -2345,16 +2365,24 @@ func OneSonAttackBossH(w http.ResponseWriter, req *http.Request) {
 	var mmBossList []string
 	var j = 1
 	for rows.Next() {
-		var token string
+		var token, name string
 		var uid float64
-		rows.Scan(&uid, &token)
+		rows.Scan(&uid, &token, &name)
 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
 		if zoneToken != "" {
-			bossID := summonBoss(serverURL, zoneToken)
+			zoneToken, bossCannon := getEnterInfo(fmt.Sprintf("%v", uid), name, serverURL, token, "bossCannon")
+			getFreeBossCannon(serverURL, zoneToken)
+
+			bossCannonFloat, ok := bossCannon.(float64)
+
+			if !ok {
+				log.Printf("---------------------------[%v]bossCannon无法打龙---------------------------", name)
+				return
+			}
+			bossID := summonBoss(serverURL, zoneToken, bossCannonFloat)
 			inviteBoss(serverURL, zoneToken, bossID)
 			time.Sleep(time.Second * 1)
 			shareAPI(serverURL, zoneToken)
-			getFreeBossCannon(serverURL, zoneToken)
 			if j >= 5 {
 				mmList2 = append(mmList2, map[string]interface{}{"uid": uid, "serverURL": serverURL, "zoneToken": zoneToken})
 			} else {
@@ -2399,7 +2427,7 @@ func OneSonAttackBossH(w http.ResponseWriter, req *http.Request) {
 }
 
 func SonAttackBossH(w http.ResponseWriter, req *http.Request) {
-	SQL := "select id, token from tokens where find_in_set(id, (select conf_value from config where conf_key='mmBoss1'))"
+	SQL := "select id, token, name from tokens where find_in_set(id, (select conf_value from config where conf_key='mmBoss1'))"
 	rows, err := Pool.Query(SQL)
 	if err != nil {
 		io.WriteString(w, err.Error())
@@ -2409,13 +2437,21 @@ func SonAttackBossH(w http.ResponseWriter, req *http.Request) {
 	var mmList []map[string]interface{}
 	var mmBossList []string
 	for rows.Next() {
-		var token string
+		var token, name string
 		var uid float64
-		rows.Scan(&uid, &token)
+		rows.Scan(&uid, &token, &name)
 
 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
 		if zoneToken != "" {
-			bossID := summonBoss(serverURL, zoneToken)
+			zoneToken, bossCannon := getEnterInfo(fmt.Sprintf("%v", uid), name, serverURL, token, "bossCannon")
+
+			bossCannonFloat, ok := bossCannon.(float64)
+
+			if !ok {
+				log.Printf("---------------------------[%v]bossCannon无法打龙---------------------------", name)
+				return
+			}
+			bossID := summonBoss(serverURL, zoneToken, bossCannonFloat)
 			inviteBoss(serverURL, zoneToken, bossID)
 			mmList = append(mmList, map[string]interface{}{"uid": uid, "serverURL": serverURL, "zoneToken": zoneToken})
 			mmBossList = append(mmBossList, bossID)
@@ -2429,7 +2465,7 @@ func SonAttackBossH(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 	}
-	SQL = "select id, token from tokens where find_in_set(id, (select conf_value from config where conf_key='cowBoss1'))"
+	SQL = "select id, token, name from tokens where find_in_set(id, (select conf_value from config where conf_key='cowBoss1'))"
 	rows, err = Pool.Query(SQL)
 	if err != nil {
 		io.WriteString(w, err.Error())
@@ -2438,13 +2474,21 @@ func SonAttackBossH(w http.ResponseWriter, req *http.Request) {
 	var nnList []map[string]interface{}
 	var nnBossList []string
 	for rows.Next() {
-		var token string
+		var token, name string
 		var uid float64
-		rows.Scan(&uid, &token)
+		rows.Scan(&uid, &token, &name)
 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
 
 		if zoneToken != "" {
-			bossID := summonBoss(serverURL, zoneToken)
+			zoneToken, bossCannon := getEnterInfo(fmt.Sprintf("%v", uid), name, serverURL, token, "bossCannon")
+
+			bossCannonFloat, ok := bossCannon.(float64)
+
+			if !ok {
+				log.Printf("---------------------------[%v]bossCannon无法打龙---------------------------", name)
+				return
+			}
+			bossID := summonBoss(serverURL, zoneToken, bossCannonFloat)
 			inviteBoss(serverURL, zoneToken, bossID)
 			nnList = append(nnList, map[string]interface{}{"uid": uid, "serverURL": serverURL, "zoneToken": zoneToken})
 			nnBossList = append(nnBossList, bossID)
@@ -2461,7 +2505,7 @@ func SonAttackBossH(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	SQL = "select id, token from tokens where find_in_set(id, (select conf_value from config where conf_key='boss3'))"
+	SQL = "select id, token, name from tokens where find_in_set(id, (select conf_value from config where conf_key='boss3'))"
 	rows, err = Pool.Query(SQL)
 	if err != nil {
 		io.WriteString(w, err.Error())
@@ -2470,12 +2514,22 @@ func SonAttackBossH(w http.ResponseWriter, req *http.Request) {
 	var boss3List []map[string]interface{}
 	var boss3BossList []string
 	for rows.Next() {
-		var token string
+		var token, name string
 		var uid float64
-		rows.Scan(&uid, &token)
+		rows.Scan(&uid, &token, &name)
 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
 		if zoneToken != "" {
-			bossID := summonBoss(serverURL, zoneToken)
+
+			zoneToken, bossCannon := getEnterInfo(fmt.Sprintf("%v", uid), name, serverURL, token, "bossCannon")
+
+			bossCannonFloat, ok := bossCannon.(float64)
+
+			if !ok {
+				log.Printf("---------------------------[%v]bossCannon无法打龙---------------------------", name)
+				return
+			}
+
+			bossID := summonBoss(serverURL, zoneToken, bossCannonFloat)
 			inviteBoss(serverURL, zoneToken, bossID)
 			boss3List = append(boss3List, map[string]interface{}{"uid": uid, "serverURL": serverURL, "zoneToken": zoneToken})
 			boss3BossList = append(boss3BossList, bossID)
@@ -2963,6 +3017,8 @@ func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 
 	var groupconcat1, groupconcat2 string
 
+	Pool.Exec("update config set conf_value = 0 where conf_key = 'isRunDone'")
+
 	for rows.Next() {
 		var id, token, name, password string
 		rows.Scan(&id, &token, &name, &password)
@@ -3005,7 +3061,9 @@ func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	if runnerStatus("checkPiece") == "1" {
+	Pool.Exec("update config set conf_value = 1 where conf_key = 'isRunDone'")
+
+	if runnerStatus("checkPiece") == "1" && runnerStatus("isRunDone") == "1" {
 		go checkPiece()
 	}
 	// if groupconcat1 == "" {
@@ -4601,9 +4659,25 @@ func enterBoss(serverURL, zoneToken, bossID string, uid float64) bool {
 }
 
 // 开启Boss
-func summonBoss(serverURL, zoneToken string) string {
+func summonBoss(serverURL, zoneToken string, bossCannonFloat float64) string {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+
+	if bossCannonFloat < 26 {
+		url := fmt.Sprintf("%v/game?cmd=getMyBoss&token=%v&now=%v", serverURL, zoneToken, now)
+		formData := httpGetReturnJson(url)
+		myBoss, ok := formData["boss"].(map[string]interface{})
+		if !ok {
+			return ""
+		}
+		bossID, ok := myBoss["id"].(string)
+		if !ok {
+			return ""
+		}
+		return bossID
+	}
+	now = fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := fmt.Sprintf("%v/game?cmd=summonBoss&token=%v&now=%v", serverURL, zoneToken, now)
+
 	formData := httpGetReturnJson(url)
 	boss, ok := formData["boss"].(map[string]interface{})
 	if !ok {
@@ -4683,53 +4757,75 @@ func attackMyBoss(serverURL, zoneToken, bossID, mode string) {
 	if mode == "4400" {
 		// 300
 
-		attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100)
+		flag := attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+
+		if !flag {
+			return
+		}
 
 		// 1500
 
-		attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200)
+		flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+		if !flag {
+			return
+		}
 
 		// 1800
 
-		attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100)
+		flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+		if !flag {
+			return
+		}
 
 		// 3000
-		attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200)
+		flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+		if !flag {
+			return
+		}
 
 		// 3300
-		attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100)
+		flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+		if !flag {
+			return
+		}
 
 		// 4100
 
-		attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200)
+		flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+		if !flag {
+			return
+		}
 
 		// 4400
-		attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300)
+		flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+		if !flag {
+			return
+		}
 
 		return
 	}
 
 	// 300
 
-	attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 95, 100)
+	attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 95, 100, 4400)
 
 	// 1500
 
-	attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 195, 200)
+	attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 195, 200, 4400)
 
 	// 1800
 
-	attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 95, 100)
+	attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 95, 100, 4400)
 
 	// 3000
-	attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 195, 200)
+	attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 195, 200, 4400)
 
 	// 3300
-	attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 95, 100)
+	attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 95, 100, 4400)
 
 	// 4100
 
-	attackBossAPI(serverURL, zoneToken, bossID, 5, 0, 1, 195, 200)
+	attackBossAPI(serverURL, zoneToken, bossID, 5, 0, 1, 195, 200, 4400)
 
 	// 4400
 	// attackBossAPI(serverURL, zoneToken, bossID, 1, 400, 1, 1)
@@ -4738,9 +4834,12 @@ func attackMyBoss(serverURL, zoneToken, bossID, mode string) {
 
 // RangeRand(390, 400)
 
-func attackBossAPI(serverURL, zoneToken, bossID string, amount, isPerfect, isDouble int, min, max int64) (flag bool) {
+func attackBossAPI(serverURL, zoneToken, bossID string, amount, isPerfect, isDouble int, min, max int64, targetLeftHp float64) (flag bool) {
+
+	var leftHp float64
 	for i := 1; i <= amount; i++ {
 		now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+
 		damage := RangeRand(min, max)
 		url := fmt.Sprintf("%v/game?cmd=attackBoss&token=%v&bossID=%v&damage=%v&isPerfect=%v&isDouble=%v&now=%v", serverURL, zoneToken, bossID, damage, isPerfect, isDouble, now)
 		formData := httpGetReturnJson(url)
@@ -4750,13 +4849,24 @@ func attackBossAPI(serverURL, zoneToken, bossID string, amount, isPerfect, isDou
 			httpGetReturnJson(url)
 			time.Sleep(time.Second * 3)
 		} else {
-			leftHp, ok := boss["leftHp"]
+			leftHp, ok = boss["leftHp"].(float64)
+			log.Println("leftHp:", leftHp)
+
 			if !ok {
 				flag = false
 				return
 			}
+			// if int64(leftHp) <= targetLeftHp && targetLeftHp != 0 {
+			// 	flag = false
+			// 	return
+			// }
+
+			if leftHp <= 800 && targetLeftHp != 0 {
+				flag = false
+				return
+			}
+
 			flag = true
-			log.Println("leftHp:", leftHp)
 			time.Sleep(time.Second * 3)
 		}
 	}
@@ -4766,11 +4876,11 @@ func attackBossAPI(serverURL, zoneToken, bossID string, amount, isPerfect, isDou
 // 小号打Boss
 func attackBoss(serverURL, zoneToken, bossID string) {
 	// 1次 50
-	attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 0, 50, 50)
+	attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 0, 50, 50, 0)
 	// 3 次 100
-	attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100)
+	attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 0)
 	// 1 次 200
-	attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200)
+	attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 0)
 }
 
 //
@@ -6334,6 +6444,22 @@ func RunnerDraw() (err error) {
 	if drawStatus == "0" {
 		return
 	}
+
+	isRunDone := runnerStatus("isRunDone")
+
+	if isRunDone == "0" {
+		for i := 0; i < 10; i++ {
+			time.Sleep(3 * time.Second)
+			if runnerStatus("isRunDone") == "1" {
+				break
+			}
+		}
+	}
+
+	if runnerStatus("isRunDone") == "0" {
+		return
+	}
+
 	hour := time.Now().Hour()
 
 	if hour == 4 {
@@ -6659,6 +6785,10 @@ func RunnerFamilySignGo() (err error) {
 }
 
 func RunnerCheckTokenGo() (err error) {
+	if runnerStatus("isRunDone") == "0" {
+		return
+	}
+
 	SQL := "select id, token, name, password from tokens"
 
 	rows, err := Pool.Query(SQL)
@@ -7051,7 +7181,9 @@ func familyShop(serverURL, zoneToken string) {
 func helpEraseGift(serverURL, zoneToken string) {
 	uids := friendsRank(serverURL, zoneToken)
 	for _, uid := range uids {
-		helpEraseGiftBoxTime(serverURL, zoneToken, uid)
+		if helpEraseGiftBoxTime(serverURL, zoneToken, uid) {
+			return
+		}
 	}
 }
 
@@ -7074,8 +7206,12 @@ func friendsRank(serverURL, zoneToken string) (uids []string) {
 	return
 }
 
-func helpEraseGiftBoxTime(serverURL, zoneToken, uid string) {
+func helpEraseGiftBoxTime(serverURL, zoneToken, uid string) bool {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=helpEraseGiftBoxTime&token=%v&fuid=%v&now=%v", serverURL, zoneToken, uid, now)
-	httpGetReturnJson(URL)
+	formData := httpGetReturnJson(URL)
+	if _, ok := formData["error"]; ok {
+		return false
+	}
+	return true
 }
