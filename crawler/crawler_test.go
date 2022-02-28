@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"strings"
 	"testing"
@@ -13,6 +14,10 @@ import (
 	"github.com/tebeka/selenium/chrome"
 	"github.com/wuhuinan47/cat/catdb"
 )
+
+func TestMath(t *testing.T) {
+	fmt.Println("count:", math.Floor(35/3)*3)
+}
 
 func TestSplit(t *testing.T) {
 	URL := "https://s147.11h5.com//game?cmd=stat&token=ildqsMCkAEdSjwFZR0FRasH89QP31cDlQBS&item=%E6%B8%B8%E6%88%8F%E5%88%9D%E5%A7%8B%E5%8C%96&subitem=Enter%E8%BF%94%E5%9B%9E%EF%BC%8C%E5%BC%80%E5%A7%8B%E9%A2%84%E5%8A%A0%E8%BD%BD%E8%B5%84%E6%BA%90&now=1637890836352"
