@@ -73,10 +73,14 @@
         <option value="2">稀有</option>
         <option selected="selected" value="3">传奇</option>
     </select>
-    <input id="boxAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="目标数量" value="3" />
+    <input id="boxAmount" style="font-size:40px;width:100px; height:100px;" type="text" placeholder="目标数量" value="3" />
 
-    <button style="font-size:40px;width:400px; height:100px;" onclick="getBox()">
-        抓宝箱
+    <button style="font-size:40px;width:250px; height:100px;" onclick="getBox(2)">
+        抓别人宝箱
+    </button>
+
+    <button style="font-size:40px;width:280px; height:100px;" onclick="getBox(1)">
+        抓自己宝箱(未开发)
     </button>
 
     <br>
@@ -258,7 +262,7 @@
     <br>
 
     <select style="font-size:40px;width:400px; height:100px;" name="Oper_Boss" id="Oper_Boss">
-        <option selected="selected" value="">请选择</option>
+        <option selected="selected" value="">全部</option>
     </select>
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="getFreeBossCannon()">
@@ -296,6 +300,7 @@
         <option value="煮汤圆成功开启(紫薯)">煮汤圆成功开启(紫薯)</option>
         <option selected="selected" value="煮汤圆成功开启(草莓)">煮汤圆成功开启(草莓)</option>
         <option value="福利礼包">福利礼包</option>
+        <option value="邮件能量">邮件能量</option>
     </select>
     <input id="mailAmount" style="font-size:40px;width:100px; height:100px;" type="text" placeholder="次数"
         value="20" />
@@ -547,7 +552,7 @@
             });
         }
 
-        getBox = function () {
+        getBox = function (flag) {
 
             var r = confirm("是否继续")
             if (r == true) {
@@ -560,8 +565,8 @@
                 console.log("boxQuality:", boxQuality);
                 console.log("boxAmount:", boxAmount.value);
 
-                $.get(APIURL + "/diamond?id=" + boxUID + "&quality=" + boxQuality + "&amount=" + boxAmount.value, function (data) {
-                    console.log("getSignPrize:", data)
+                $.get(APIURL + "/diamond?id=" + boxUID + "&quality=" + boxQuality + "&amount=" + boxAmount.value + "&flag="+flag, function (data) {
+                    console.log("getBox:", data)
                     alert(data)
                     window.status = "1";
                 });
