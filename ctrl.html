@@ -401,41 +401,6 @@
     </button>
     <br>
 
-    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="sonAttackBoss()">
-        一键小号打龙
-    </button>
-
-
-
-    <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(4)">
-        牛组
-    </button>
-
-
-    <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(5)">
-        蜜组
-    </button>
-
-    <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(6)">
-        BOSS组
-    </button>
-
-
-    <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(1)">
-        笨蛋小峰组
-    </button>
-
-    <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(2)">
-        云颜辛巴组
-    </button>
-
-    <button style="font-size:40px;width:400px; height:100px;" onclick="oneSonAttackBoss(3)">
-        其他组
-    </button>
-
-
-    <br> -->
-
     <select style="font-size:40px;width:200px; height:100px;" name="RunnerUsers" id="RunnerUsers">
         <option selected="selected" value="">全部</option>
     </select>
@@ -502,6 +467,28 @@
     <button style="font-size:40px;width:400px; height:100px;" onclick="buildUp()">
         过岛(25下)
     </button>
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="searchRiceCake" id="searchRiceCake">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="searchRiceCake()">
+        整理汤圆数量
+    </button>
+
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="makeRiceCake" id="makeRiceCake">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="makeRiceCake()">
+        领取汤圆数量
+    </button>
+
 
 
     <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
@@ -696,7 +683,10 @@
             if (r == true) {
                 $.get(APIURL + "/checkToken", function (data) {
                     console.log("checkToken:", data)
-                    alert(data)
+                    var jsarr = JSON.parse(data);
+                    alert(jsarr.data1)
+                    alert(jsarr.data2)
+                    alert(jsarr.data3)
                     window.status = "1";
                 });
             }
@@ -899,6 +889,35 @@
             }
 
         }
+
+        searchRiceCake = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var id = $("#searchRiceCake option:selected").val();
+
+                $.get(APIURL + "/searchRiceCake?id=" + id, function (data) {
+                    console.log("searchRiceCake:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        makeRiceCake = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var id = $("#makeRiceCake option:selected").val();
+
+                $.get(APIURL + "/makeRiceCake?id=" + id, function (data) {
+                    console.log("makeRiceCake:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
 
 
         addFirewood = function () {
@@ -1252,6 +1271,24 @@
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("buildUpUsers").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("searchRiceCake").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("makeRiceCake").options.add(tOption);
                 }
 
 

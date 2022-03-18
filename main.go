@@ -131,6 +131,9 @@ func main() {
 	http.HandleFunc("/setPullRows", SetPullRowsH)
 	http.HandleFunc("/addFirewood", AddFirewoodH)
 	http.HandleFunc("/exchangeRiceCake", ExchangeRiceCakeH)
+	http.HandleFunc("/searchRiceCake", SearchRiceCakeH)
+	http.HandleFunc("/makeRiceCake", MakeRiceCakeH)
+	//
 	http.HandleFunc("/unlockWorker", UnlockWorkerH)
 	http.HandleFunc("/searchFamily", SearchFamilyH)
 	http.HandleFunc("/getTodayAnimal", GetTodayAnimalsH)
@@ -615,13 +618,14 @@ func AttackBossH(w http.ResponseWriter, req *http.Request) {
 	log.Println("AttackBossH id :", id)
 
 	var SQL, uid, name, token string
+	var hitBossNums float64
 	if id == "" {
-		SQL = "select id, name, token from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
+		SQL = "select id, name, token, hit_boss_nums from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
 	} else {
-		SQL = fmt.Sprintf("select id, name, token from tokens where id = %v", id)
+		SQL = fmt.Sprintf("select id, name, token, hit_boss_nums from tokens where id = %v", id)
 	}
 
-	Pool.QueryRow(SQL).Scan(&uid, &name, &token)
+	Pool.QueryRow(SQL).Scan(&uid, &name, &token, &hitBossNums)
 
 	serverURL := getServerURL()
 
@@ -634,7 +638,12 @@ func AttackBossH(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	count := math.Floor(bossCannonFloat/3) * 3
+	var count float64
+	if uid == "302691822" || uid == "309392050" || uid == "403573789" {
+		count = math.Floor(bossCannonFloat/hitBossNums) * hitBossNums
+	} else {
+		count = math.Floor(bossCannonFloat/hitBossNums) * hitBossNums
+	}
 	if bossCannonFloat == 2 {
 		count = 2
 	}
@@ -643,52 +652,187 @@ func AttackBossH(w http.ResponseWriter, req *http.Request) {
 	}
 
 	bossList := getBossHelpList(serverURL, zoneToken)
+
+	// var myBossIds []string
+
+	// for _, v := range bossList {
+	// 	bossListID := v["id"].(string)
+	// 	bossLeftHp := v["leftHp"].(float64)
+	// 	if bossLeftHp <= 600 {
+	// 		myBossIds = append(myBossIds, "'"+bossListID+"'")
+	// 	}
+	// }
+	// fmt.Println("myBossIds:", myBossIds)
+
+	// var whereIn = strings.Join(myBossIds, ",")
+	// fmt.Println("whereIn:", whereIn)
+	// Pool.Exec(fmt.Sprintf("update boss_list set state = 3 where state = 1 and hp <= 800 and boss_id in (%v)", whereIn))
+	// rows, err := Pool.Query(fmt.Sprintf("select boss_id, hp from boss_list where state = 3 and hp <= 800 and boss_id in (%v)", whereIn))
+
+	// if err != nil {
+	// 	return
+	// }
+	// defer rows.Close()
+
 	log.Printf("---------------------------[%v]开始打龙---------------------------", name)
 
 	var countI float64 = 0
 
 	for _, v := range bossList {
-
 		if countI >= count {
-			break
+			continue
 		}
 
+		bossID := v["id"].(string)
+		var boss_list_id int64
+		Pool.QueryRow("select id from boss_list where boss_id = ?", bossID).Scan(&boss_list_id)
+
+		if boss_list_id > 0 {
+			continue
+		}
 		leftHp := v["leftHp"].(float64)
-		log.Printf("[%v]leftHp:%v", v["id"], leftHp)
-		var flag bool
-		if leftHp <= 600 && leftHp >= 500 {
-			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
-			countI += 3
-		} else if leftHp == 601 {
-			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 1, 1, 0)
-			countI += 1
-		} else if leftHp <= 1000 && leftHp >= 500 {
-			attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
-			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400, 0)
-			countI += 4
-		} else if leftHp == 400 {
-			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
-			countI += 2
-		} else if leftHp == 200 {
-			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 200, 200, 0)
-			countI += 1
-		} else {
-			flag = false
-			log.Println("ignore")
-		}
 
+		Pool.Exec("insert into boss_list (boss_id, hp) values (?, ?)", bossID, leftHp)
+
+		log.Printf("getBossHelpList[%v]leftHp:%v", v["id"], leftHp)
+		var flag bool
+
+		if hitBossNums == 3 {
+			if leftHp <= 600 && leftHp >= 500 {
+				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
+				countI += 3
+			} else if leftHp == 601 {
+				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 1, 1, 0)
+				countI += 1
+			} else if leftHp <= 1000 && leftHp >= 500 {
+				attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
+				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400, 0)
+				countI += 4
+			} else if leftHp == 400 {
+				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
+				countI += 2
+			} else if leftHp == 200 {
+				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 200, 200, 0)
+				countI += 1
+			} else {
+				flag = false
+				log.Println("ignore")
+			}
+		} else {
+			if leftHp <= 600 && leftHp >= 500 {
+				attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 0, 100, 100, 0)
+				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
+				countI += 5
+			} else if leftHp == 601 {
+				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 1, 1, 0)
+				countI += 1
+			} else if leftHp <= 1000 && leftHp >= 500 {
+				attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
+				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400, 0)
+				countI += 4
+			} else if leftHp == 400 {
+				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
+				countI += 2
+			} else if leftHp == 200 {
+				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 200, 200, 0)
+				countI += 1
+			} else {
+				flag = false
+				log.Println("ignore")
+			}
+		}
+		Pool.Exec("delete from boss_list where boss_id = ?", bossID)
 		if flag {
 			go func() {
+				fmt.Printf("[%v]start getBossPrize \n", name)
 				time.Sleep(time.Second * 82800)
 				serverURL, zoneToken = getSeverURLAndZoneToken(token)
 				getBossPrize(serverURL, zoneToken, v["id"].(string))
+				fmt.Printf("[%v]end getBossPrize \n", name)
 			}()
 		}
 
-		// if leftHp < 1000 && leftHp >= 500 {
-		// 	attackBossByAdmin(serverURL, zoneToken, v["id"].(string))
-		// }
 	}
+
+	// if countI < count {
+	// 	bossList := getBossHelpList(serverURL, zoneToken)
+	// 	for _, v := range bossList {
+	// 		if countI >= count {
+	// 			Pool.Exec("update boss_list set state = 1 where boss_id = ? and state = 3", v["id"].(string))
+	// 			continue
+	// 		}
+
+	// 		leftHp := v["leftHp"].(float64)
+	// 		log.Printf("getBossHelpList[%v]leftHp:%v", v["id"], leftHp)
+	// 		var flag bool
+
+	// 		if uid == "302691822" || uid == "309392050" || uid == "403573789" {
+	// 			if leftHp <= 600 && leftHp >= 500 {
+	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
+	// 				countI += 3
+	// 			} else if leftHp == 601 {
+	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 1, 1, 0)
+	// 				countI += 1
+	// 			} else if leftHp <= 1000 && leftHp >= 500 {
+	// 				attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
+	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400, 0)
+	// 				countI += 4
+	// 			} else if leftHp == 400 {
+	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
+	// 				countI += 2
+	// 			} else if leftHp == 200 {
+	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 200, 200, 0)
+	// 				countI += 1
+	// 			} else {
+	// 				flag = false
+	// 				log.Println("ignore")
+	// 			}
+	// 		} else {
+	// 			if leftHp <= 600 && leftHp >= 500 {
+	// 				attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 0, 100, 100, 0)
+	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
+	// 				countI += 5
+	// 			} else if leftHp == 601 {
+	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 1, 1, 0)
+	// 				countI += 1
+	// 			} else if leftHp <= 1000 && leftHp >= 500 {
+	// 				attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
+	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400, 0)
+	// 				countI += 4
+	// 			} else if leftHp == 400 {
+	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
+	// 				countI += 2
+	// 			} else if leftHp == 200 {
+	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 200, 200, 0)
+	// 				countI += 1
+	// 			} else {
+	// 				flag = false
+	// 				log.Println("ignore")
+	// 			}
+	// 		}
+
+	// 		if flag {
+
+	// 			Pool.Exec("update boss_list set state = 2 where boss_id = ?", v["id"].(string))
+
+	// 			go func() {
+	// 				fmt.Printf("[%v]start getBossPrize \n", name)
+	// 				time.Sleep(time.Second * 82800)
+	// 				serverURL, zoneToken = getSeverURLAndZoneToken(token)
+	// 				getBossPrize(serverURL, zoneToken, v["id"].(string))
+	// 				fmt.Printf("[%v]end getBossPrize \n", name)
+	// 			}()
+	// 		}
+
+	// 		// if leftHp < 1000 && leftHp >= 500 {
+	// 		// 	attackBossByAdmin(serverURL, zoneToken, v["id"].(string))
+	// 		// }
+	// 	}
+	// } else {
+	// 	for _, v := range otherBossList {
+	// 		Pool.Exec("update set state = 1 where boss_id = ? and state = 3", v)
+	// 	}
+	// }
 
 	log.Printf("---------------------------[%v]结束打龙---------------------------", name)
 
@@ -1293,6 +1437,229 @@ func ExchangeRiceCakeH(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, "SUCCESS")
 }
 
+func SearchRiceCakeH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	SQL := fmt.Sprintf("select id, name, token from tokens where id = %s", id)
+	if id == "" {
+		SQL = "select id, name, token from tokens"
+	}
+	rows, err := Pool.Query(SQL)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	var contentStr string
+	for rows.Next() {
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
+		serverURL := getServerURL()
+		zoneToken, _, _, riceCake := getZoneToken_1(serverURL, token)
+
+		a, b, c, d, e, old, new, needs := getRiceNums(riceCake, serverURL, zoneToken)
+
+		fmt.Printf("a:%v,b:%v,c:%v,d:%v,e:%v\n", a, b, c, d, e)
+		contentStr += name + "\n" + old + "\n" + new + "\n" + needs + "\n"
+
+	}
+	io.WriteString(w, contentStr)
+}
+
+func getRiceNums(riceCake map[string]float64, serverURL, zoneToken string) (a, b, c, d, e float64, old, new, needs string) {
+	var a1, b1, c1, d1, e1 float64
+	var a2, b2, c2, d2, e2 float64
+
+	for k, v := range riceCake {
+		if k == "98" {
+			a1 = v
+			a2 = float64(len(getMailList(serverURL, zoneToken, "煮汤圆成功开启", k)))
+		}
+		if k == "99" {
+			b1 = v
+			b2 = float64(len(getMailList(serverURL, zoneToken, "煮汤圆成功开启", k)))
+		}
+		if k == "100" {
+			c1 = v
+			c2 = float64(len(getMailList(serverURL, zoneToken, "煮汤圆成功开启", k)))
+		}
+		if k == "101" {
+			d1 = v
+			d2 = float64(len(getMailList(serverURL, zoneToken, "煮汤圆成功开启", k)))
+		}
+		if k == "102" {
+			e1 = v
+			e2 = float64(len(getMailList(serverURL, zoneToken, "煮汤圆成功开启", k)))
+		}
+	}
+
+	limitV := e1 + e2
+	e = e2
+	d = getRiceCakeInterval(d1, d2, limitV)
+	c = getRiceCakeInterval(c1, c2, limitV)
+	b = getRiceCakeInterval(b1, b2, limitV*2)
+	a = getRiceCakeInterval(a1, a2, limitV*2)
+
+	old += formatItemName("98") + ":" + fmt.Sprintf("%v", a1) + "|"
+	new += formatItemName("98") + ":" + fmt.Sprintf("%v", a2) + "|"
+	old += formatItemName("99") + ":" + fmt.Sprintf("%v", b1) + "|"
+	new += formatItemName("99") + ":" + fmt.Sprintf("%v", b2) + "|"
+	old += formatItemName("100") + ":" + fmt.Sprintf("%v", c1) + "|"
+	new += formatItemName("100") + ":" + fmt.Sprintf("%v", c2) + "|"
+	old += formatItemName("101") + ":" + fmt.Sprintf("%v", d1) + "|"
+	new += formatItemName("101") + ":" + fmt.Sprintf("%v", d2) + "|"
+	old += formatItemName("102") + ":" + fmt.Sprintf("%v", e1)
+	new += formatItemName("102") + ":" + fmt.Sprintf("%v", e2)
+
+	needs += formatItemName("98") + ":" + fmt.Sprintf("%v", a) + "|"
+	needs += formatItemName("99") + ":" + fmt.Sprintf("%v", b) + "|"
+	needs += formatItemName("100") + ":" + fmt.Sprintf("%v", c) + "|"
+	needs += formatItemName("101") + ":" + fmt.Sprintf("%v", d) + "|"
+	needs += formatItemName("102") + ":" + fmt.Sprintf("%v", e)
+
+	return
+}
+
+func getRiceCakeInterval(d1, d2, e float64) (d float64) {
+	if d1 > e {
+		d = 0
+	} else {
+		if (d1 + d2) <= e {
+			d = d2
+		} else {
+			d = e - d1
+		}
+	}
+	return
+}
+
+func MakeRiceCakeH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	SQL := fmt.Sprintf("select id, name, token from tokens where id = %s", id)
+	if id == "" {
+		SQL = "select id, name, token from tokens"
+	}
+	rows, err := Pool.Query(SQL)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+	var ss string
+	for rows.Next() {
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
+		serverURL := getServerURL()
+		zoneToken, _, _, riceCake := getZoneToken_1(serverURL, token)
+
+		a, b, c, d, e, _, _, _ := getRiceNums(riceCake, serverURL, zoneToken)
+
+		if a > 0 {
+			mailids := getMailList(serverURL, zoneToken, "煮汤圆成功开启", "98")
+			log.Printf("[%v] 开始领取邮件奖励[title:%v][mailids:%v]", name, "煮汤圆成功开启"+formatItemName("98"), len(mailids))
+			var i float64 = 0
+
+			for _, mailid := range mailids {
+				if i == a {
+					break
+				}
+				if getMailAttachments(serverURL, zoneToken, mailid) {
+					i++
+					log.Printf("[%v] 领取邮件完毕[%v]", name, mailid)
+					readMail(serverURL, zoneToken, mailid)
+					log.Printf("[%v] 删除邮件完毕[%v]", name, mailid)
+				}
+			}
+			if len(mailids) > 0 {
+				ss += fmt.Sprintf("[%v] [%v]总共:%v 已领取:%v|||", name, formatItemName("98"), len(mailids), i)
+			}
+		}
+
+		if b > 0 {
+			mailids := getMailList(serverURL, zoneToken, "煮汤圆成功开启", "99")
+			log.Printf("[%v] 开始领取邮件奖励[title:%v][mailids:%v]", name, "煮汤圆成功开启"+formatItemName("99"), len(mailids))
+			var i float64 = 0
+
+			for _, mailid := range mailids {
+				if i == b {
+					break
+				}
+				if getMailAttachments(serverURL, zoneToken, mailid) {
+					i++
+					log.Printf("[%v] 领取邮件完毕[%v]", name, mailid)
+					readMail(serverURL, zoneToken, mailid)
+					log.Printf("[%v] 删除邮件完毕[%v]", name, mailid)
+				}
+			}
+			if len(mailids) > 0 {
+				ss += fmt.Sprintf("[%v] [%v]总共:%v 已领取:%v|||", name, formatItemName("99"), len(mailids), i)
+			}
+		}
+
+		if c > 0 {
+			mailids := getMailList(serverURL, zoneToken, "煮汤圆成功开启", "100")
+			log.Printf("[%v] 开始领取邮件奖励[title:%v][mailids:%v]", name, "煮汤圆成功开启"+formatItemName("100"), len(mailids))
+			var i float64 = 0
+			for _, mailid := range mailids {
+				if i == c {
+					break
+				}
+				if getMailAttachments(serverURL, zoneToken, mailid) {
+					i++
+					log.Printf("[%v] 领取邮件完毕[%v]", name, mailid)
+					readMail(serverURL, zoneToken, mailid)
+					log.Printf("[%v] 删除邮件完毕[%v]", name, mailid)
+				}
+			}
+			if len(mailids) > 0 {
+				ss += fmt.Sprintf("[%v] [%v]总共:%v 已领取:%v|||", name, formatItemName("100"), len(mailids), i)
+			}
+		}
+
+		if d > 0 {
+			mailids := getMailList(serverURL, zoneToken, "煮汤圆成功开启", "101")
+			log.Printf("[%v] 开始领取邮件奖励[title:%v][mailids:%v]", name, "煮汤圆成功开启"+formatItemName("101"), len(mailids))
+			var i float64 = 0
+
+			for _, mailid := range mailids {
+				if i == d {
+					break
+				}
+				if getMailAttachments(serverURL, zoneToken, mailid) {
+					i++
+					log.Printf("[%v] 领取邮件完毕[%v]", name, mailid)
+					readMail(serverURL, zoneToken, mailid)
+					log.Printf("[%v] 删除邮件完毕[%v]", name, mailid)
+				}
+			}
+			if len(mailids) > 0 {
+				ss += fmt.Sprintf("[%v] [%v]总共:%v 已领取:%v|||", name, formatItemName("101"), len(mailids), i)
+			}
+		}
+
+		if e > 0 {
+			mailids := getMailList(serverURL, zoneToken, "煮汤圆成功开启", "102")
+			log.Printf("[%v] 开始领取邮件奖励[title:%v][mailids:%v]", name, "煮汤圆成功开启"+formatItemName("102"), len(mailids))
+			var i float64 = 0
+			for _, mailid := range mailids {
+				if i == e {
+					break
+				}
+				if getMailAttachments(serverURL, zoneToken, mailid) {
+					i++
+					log.Printf("[%v] 领取邮件完毕[%v]", name, mailid)
+					readMail(serverURL, zoneToken, mailid)
+					log.Printf("[%v] 删除邮件完毕[%v]", name, mailid)
+				}
+			}
+			if len(mailids) > 0 {
+				ss += fmt.Sprintf("[%v] [%v]总共:%v 已领取:%v|||", name, formatItemName("102"), len(mailids), i)
+			}
+		}
+		fmt.Printf("a:%v,b:%v,c:%v,d:%v,e:%v\n", a, b, c, d, e)
+
+	}
+	io.WriteString(w, ss)
+}
+
 func AddFirewoodH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	qualityS := req.URL.Query().Get("quality")
@@ -1317,14 +1684,23 @@ func AddFirewoodH(w http.ResponseWriter, req *http.Request) {
 		var uid, name, token string
 		rows.Scan(&uid, &name, &token)
 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
-		uids := getSteamBoxHelpList(serverURL, zoneToken, quality)
+		uids, helpUids := getSteamBoxHelpList(serverURL, zoneToken, quality)
 		for _, v := range uids {
 			fuid := fmt.Sprintf("%v", v)
 			if !addFirewood(serverURL, zoneToken, fuid) {
 				break
 			}
-			log.Printf("[%v]给[%v]添加柴火", name, fuid)
+			log.Printf("[%v]给[%v]添加柴火", name, v)
 		}
+
+		for _, v := range helpUids {
+			fuid := fmt.Sprintf("%v", v)
+			openSteamBox(serverURL, zoneToken, fuid)
+			log.Printf("[%v]给[%v]打开汤圆", name, v)
+
+		}
+		//
+
 	}
 
 	io.WriteString(w, "SUCCESS")
@@ -2285,6 +2661,8 @@ func AttackMyBossH(w http.ResponseWriter, req *http.Request) {
 					log.Printf("---------------------------[%v]bossID无法打龙---------------------------", name)
 					return
 				}
+
+				// Pool.Exec("insert into boss_list (boss_id) values (?)", bossID)
 				Pool.Exec("update config set conf_value = 0 where conf_key = 'checkTokenStatus'")
 				inviteBoss(serverURL, zoneToken, bossID)
 				time.Sleep(time.Second * 1)
@@ -3042,7 +3420,7 @@ func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 
 	defer rows.Close()
 
-	var groupconcat1, groupconcat2 string
+	var groupconcat1, groupconcat2, groupconcat3 string
 
 	Pool.Exec("update config set conf_value = 0 where conf_key = 'isRunDone'")
 
@@ -3057,7 +3435,14 @@ func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 			Pool.Exec("update tokens set token = ? where id = ?", token, id)
 		}
 
-		zoneToken, firewood, flag := getZoneToken_1(serverURL, token)
+		zoneToken, firewood, flag, riceCake := getZoneToken_1(serverURL, token)
+
+		var riceCakeStr string
+		for k, v := range riceCake {
+			riceCakeStr += fmt.Sprintf("[%v:%v]", formatItemName(k), v)
+		}
+
+		fmt.Println("riceCake is ", riceCakeStr)
 
 		if zoneToken == "" {
 			Pool.Exec("update tokens set token = '' where id = ?", id)
@@ -3076,10 +3461,22 @@ func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 			helpEraseGift(serverURL, zoneToken)
 			_, mailEnergyCount := getMailListByCakeID(serverURL, zoneToken, "", "2")
 
-			groupconcat2 += name
-			groupconcat2 += ":"
-			groupconcat2 += fmt.Sprintf("%v->mailEnergyCount->%v;firewood->%v", flag, mailEnergyCount, firewood)
-			groupconcat2 += "/"
+			// groupconcat2 += name
+			// groupconcat2 += ":"
+			// groupconcat2 += fmt.Sprintf("%v->mail->%v;firewood->%v", flag, mailEnergyCount, firewood)
+			// groupconcat2 += "/"
+
+			if flag {
+				groupconcat2 += name
+				groupconcat2 += ":"
+				groupconcat2 += fmt.Sprintf("[%v]-mail-[%v]firewood-[%v]", flag, mailEnergyCount, firewood)
+				groupconcat2 += "/"
+			} else {
+				groupconcat3 += name
+				groupconcat3 += ":"
+				groupconcat3 += fmt.Sprintf("[%v]-mail-[%v]firewood-[%v]", flag, mailEnergyCount, firewood)
+				groupconcat3 += "/"
+			}
 
 		}
 
@@ -3098,7 +3495,14 @@ func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 	// 	}
 	// }
 
-	io.WriteString(w, groupconcat1+"||||"+groupconcat2)
+	mapList := map[string]interface{}{"data1": groupconcat1, "data2": groupconcat2, "data3": groupconcat3}
+	jsonBytes, err := json.Marshal(mapList)
+	if err != nil {
+		io.WriteString(w, "FAIL")
+		return
+	}
+
+	io.WriteString(w, string(jsonBytes))
 
 }
 
@@ -3841,6 +4245,7 @@ func familySignGo() {
 
 		for _, v := range gameList {
 			getAward(user["token"], v)
+			log.Printf("[%v] getAward[%v]", user["name"], v)
 		}
 		j++
 	}
@@ -3852,6 +4257,7 @@ func familySignGo() {
 		}
 		for i := 1; i <= 3; i++ {
 			getFamilySignPrize(user["serverURL"], user["zoneToken"], i)
+			log.Printf("[%v] getFamilySignPrize[%v]", user["name"], i)
 		}
 		j++
 	}
@@ -4350,7 +4756,7 @@ func getZoneToken(serverURL, token string) (zoneToken string) {
 	return
 }
 
-func getZoneToken_1(serverURL, token string) (zoneToken string, firewood float64, flag bool) {
+func getZoneToken_1(serverURL, token string) (zoneToken string, firewood float64, flag bool, riceCake map[string]float64) {
 
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := serverURL + "/zone?cmd=enter&token=" + token + "&yyb=0&inviteId=null&share_from=null&cp_shareId=null&now=" + now
@@ -4362,6 +4768,17 @@ func getZoneToken_1(serverURL, token string) (zoneToken string, firewood float64
 		return
 	}
 	firewood = formData["firewood"].(float64)
+
+	riceCakeInterface, ok := formData["riceCake"].(map[string]interface{})
+	if ok {
+		riceCake = make(map[string]float64)
+		for k, v := range riceCakeInterface {
+			vfloat, ok := v.(float64)
+			if ok {
+				riceCake[k] = vfloat
+			}
+		}
+	}
 
 	buildPrice, ok := formData["buildPrice"].(map[string]interface{})
 
@@ -4676,7 +5093,10 @@ func getBossHelpList(serverURL, zoneToken string) (bossList []map[string]interfa
 		boss := v.(map[string]interface{})["boss"].(map[string]interface{})
 		leftHp := boss["leftHp"].(float64)
 
-		if leftHp > 0 {
+		timeFloat := boss["time"].(float64)
+		tt := float64(time.Now().UnixNano() / 1e6)
+
+		if leftHp > 0 && tt < (timeFloat+4*60*60*1000) {
 			bossList = append(bossList, boss)
 		}
 	}
@@ -4922,6 +5342,7 @@ func attackBossAPI(serverURL, zoneToken, bossID string, amount, isPerfect, isDou
 
 			if leftHp <= 800 && targetLeftHp != 0 {
 				flag = false
+				// Pool.Exec("update boss_list set hp = ? where boss_id = ?", leftHp, bossID)
 				return
 			}
 
@@ -6257,7 +6678,7 @@ func loginByPassword(uid, password string) (token string) {
 	return
 }
 
-func getSteamBoxHelpList(serverURL, zoneToken string, quality float64) (uids []float64) {
+func getSteamBoxHelpList(serverURL, zoneToken string, quality float64) (uids []float64, helpUids []float64) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=getSteamBoxHelpList&token=%v&now=%v", serverURL, zoneToken, now)
 	formData := httpGetReturnJson(URL)
@@ -6268,24 +6689,48 @@ func getSteamBoxHelpList(serverURL, zoneToken string, quality float64) (uids []f
 			if ok {
 				uid, ok := vv["uid"].(float64)
 				if ok {
-					if quality == 0 {
-						uids = append(uids, uid)
-					} else {
-						steamBox, ok := vv["steamBox"].(map[string]interface{})
+					steamBox, ok := vv["steamBox"].(map[string]interface{})
+					if ok {
+						startTime, ok := steamBox["startTime"].(float64)
 						if ok {
-							uidList, ok := steamBox["uidList"].([]interface{})
+							firewood, ok := steamBox["firewood"].(float64)
 							if ok {
-								if len(uidList) != 3 {
-									quality1, ok := steamBox["quality"].(float64)
-									if ok {
-										if quality1 == quality {
+
+								if firewood != 3 {
+									endTime := startTime/1000 + (2*(3-firewood)+1)*3600
+									if time.Now().Unix() < int64(endTime) {
+
+										if quality == 0 {
 											uids = append(uids, uid)
+										} else {
+											quality1, ok := steamBox["quality"].(float64)
+											if ok {
+												if quality1 == quality {
+													uids = append(uids, uid)
+												}
+											}
 										}
+
+									} else {
+										helpUids = append(helpUids, uid)
 									}
 								}
-							}
 
+							}
 						}
+
+						// uidList, ok := steamBox["uidList"].([]interface{})
+						// if ok {
+						// 	if len(uidList) != 3 {
+						// 		quality1, ok := steamBox["quality"].(float64)
+						// 		if ok {
+						// 			if quality1 == quality {
+						// 				uids = append(uids, uid)
+						// 			}
+						// 		}
+						// 	}
+						// }
+
 					}
 
 				}
@@ -6562,7 +7007,7 @@ func RunnerEveryOneSteamBox() {
 						serverURL, zoneToken = getSeverURLAndZoneToken(token)
 						startTime = openSteamBox(serverURL, zoneToken, uid)
 						log.Printf("[%v]领取汤圆[start_time:%v]", name, strconv.FormatFloat(startTime, 'f', 0, 64))
-						time.Sleep(time.Second * 3601)
+						time.Sleep(time.Second * 3602)
 					}
 				}
 			}()
@@ -6604,7 +7049,7 @@ func RunnerSteamBox() (err error) {
 		addFirewood(serverURL, zoneToken, "309392050")
 	}
 
-	SQL = "select name, token from tokens where id in (302691822,309392050)"
+	SQL = "select id, name, token from tokens where id in (302691822,309392050)"
 
 	rows, err = Pool.Query(SQL)
 
@@ -6613,17 +7058,17 @@ func RunnerSteamBox() (err error) {
 	}
 
 	for rows.Next() {
-		var uname, utoken string
-		rows.Scan(&uname, &utoken)
+		var uid, uname, utoken string
+		rows.Scan(&uid, &uname, &utoken)
 		serverURL, zoneToken := getSeverURLAndZoneToken(utoken)
-		uids := getSteamBoxHelpList(serverURL, zoneToken, 2)
+		uids, _ := getSteamBoxHelpList(serverURL, zoneToken, 2)
 		for _, v := range uids {
 			fuid := fmt.Sprintf("%v", v)
 			addFirewood(serverURL, zoneToken, fuid)
 			log.Printf("[%v]给[%v]添加柴火", uname, fuid)
 		}
 
-		uids = getSteamBoxHelpList(serverURL, zoneToken, 3)
+		uids, _ = getSteamBoxHelpList(serverURL, zoneToken, 3)
 		for _, v := range uids {
 			fuid := fmt.Sprintf("%v", v)
 			addFirewood(serverURL, zoneToken, fuid)
@@ -6661,14 +7106,14 @@ func RunnerDraw() (err error) {
 			iMax := int((maxDraw - dayDrawFloat) / 5)
 			if iMax == 0 {
 				log.Printf("[%v]不用摇", cowBoyName)
-				return
-			}
-			for i := 0; i < iMax; i++ {
-				count := draw(cowBoyUid, cowBoyName, serverURL, zoneToken, 5)
-				if count == -1 {
-					return
+			} else {
+				for i := 0; i < iMax; i++ {
+					count := draw(cowBoyUid, cowBoyName, serverURL, zoneToken, 5)
+					if count == -1 {
+						break
+					}
+					time.Sleep(time.Millisecond * 2500)
 				}
-				time.Sleep(time.Millisecond * 2500)
 			}
 			followCompanion_1(serverURL, zoneToken, 3)
 			log.Printf("---------------------------[%v]结束转盘---------------------------", cowBoyName)
@@ -6689,18 +7134,17 @@ func RunnerDraw() (err error) {
 
 		go func() {
 			log.Printf("---------------------------[%v]开始转盘---------------------------", cowBoyName)
-			followCompanion_1(serverURL, zoneToken, 2)
 			iMax := int((maxDraw - dayDrawFloat) / 5)
 
 			if iMax == 0 {
 				log.Printf("[%v]不用摇", cowBoyName)
 				return
 			}
-
+			followCompanion_1(serverURL, zoneToken, 2)
 			for i := 0; i < iMax; i++ {
 				count := draw(cowBoyUid, cowBoyName, serverURL, zoneToken, 5)
 				if count == -1 {
-					return
+					break
 				}
 				time.Sleep(time.Millisecond * 2500)
 			}
@@ -6773,55 +7217,58 @@ func RunnerDraw() (err error) {
 
 			if goUid == "302691822" {
 				log.Printf("---------------------------[%v]开始转盘---------------------------", goName)
-				followCompanion_1(goServerURL, goZoneToken, 2)
 
 				iMax := int((maxDraw - goDayDraw) / 5)
 				if iMax == 0 {
 					log.Printf("[%v]不用摇", goName)
-					break
-				}
-				// amount := draw(goUid, goName, goServerURL, goZoneToken, 1)
-				// time.Sleep(time.Millisecond * 2100)
-				for i := 0; i <= iMax; i++ {
-					count := draw(goUid, goName, goServerURL, goZoneToken, 5)
-					if count == -1 {
-						continue
-					}
-					time.Sleep(time.Millisecond * 2100)
-				}
-				if goUid == "302691822" || goUid == "309392050" {
-					followCompanion_1(goServerURL, goZoneToken, 3)
+
 				} else {
-					followCompanion_1(goServerURL, goZoneToken, 1)
+					followCompanion_1(goServerURL, goZoneToken, 2)
+					// amount := draw(goUid, goName, goServerURL, goZoneToken, 1)
+					// time.Sleep(time.Millisecond * 2100)
+					for i := 0; i <= iMax; i++ {
+						count := draw(goUid, goName, goServerURL, goZoneToken, 5)
+						if count == -1 {
+							break
+						}
+						time.Sleep(time.Millisecond * 2100)
+					}
+					if goUid == "302691822" || goUid == "309392050" {
+						followCompanion_1(goServerURL, goZoneToken, 3)
+					} else {
+						followCompanion_1(goServerURL, goZoneToken, 1)
+					}
+					log.Printf("---------------------------[%v]结束转盘---------------------------", goName)
+
+					taskIDs := getDayTasksInfo(goServerURL, goZoneToken)
+					log.Printf("[%v]领取日常任务奖励:%v", goName, taskIDs)
+					for _, taskID := range taskIDs {
+						// time.Sleep(time.Millisecond * 100)
+						getDayTaskAward(goServerURL, goZoneToken, taskID)
+					}
+
+					log.Printf("[%v]领取超值返利", goName)
+					getElevenEnergyPrize(goServerURL, goZoneToken, 1)
+					getElevenEnergyPrize(goServerURL, goZoneToken, 2)
+					getElevenEnergyPrize(goServerURL, goZoneToken, 3)
+					getElevenEnergyPrize(goServerURL, goZoneToken, 4)
+
+					log.Printf("[%v]collectMineGold", goName)
+					collectMineGold(goServerURL, goZoneToken)
+					dayGetGiftBoxAward(goServerURL, goZoneToken)
+					activateDayTaskGift(goServerURL, goZoneToken)
+
+					if goFamilyDayTask == nil {
+						return err
+					}
+
+					for k := range goFamilyDayTask.(map[string]interface{}) {
+						getFamilyDayTaskPrize(goServerURL, goZoneToken, k)
+						log.Printf("[%v]领取公会任务奖励[%v]", goName, k)
+					}
+
 				}
-				log.Printf("---------------------------[%v]结束转盘---------------------------", goName)
 
-				taskIDs := getDayTasksInfo(goServerURL, goZoneToken)
-				log.Printf("[%v]领取日常任务奖励:%v", goName, taskIDs)
-				for _, taskID := range taskIDs {
-					// time.Sleep(time.Millisecond * 100)
-					getDayTaskAward(goServerURL, goZoneToken, taskID)
-				}
-
-				log.Printf("[%v]领取超值返利", goName)
-				getElevenEnergyPrize(goServerURL, goZoneToken, 1)
-				getElevenEnergyPrize(goServerURL, goZoneToken, 2)
-				getElevenEnergyPrize(goServerURL, goZoneToken, 3)
-				getElevenEnergyPrize(goServerURL, goZoneToken, 4)
-
-				log.Printf("[%v]collectMineGold", goName)
-				collectMineGold(goServerURL, goZoneToken)
-				dayGetGiftBoxAward(goServerURL, goZoneToken)
-				activateDayTaskGift(goServerURL, goZoneToken)
-
-				if goFamilyDayTask == nil {
-					return err
-				}
-
-				for k := range goFamilyDayTask.(map[string]interface{}) {
-					getFamilyDayTaskPrize(goServerURL, goZoneToken, k)
-					log.Printf("[%v]领取公会任务奖励[%v]", goName, k)
-				}
 			} else {
 				go func() {
 					log.Printf("---------------------------[%v]开始转盘---------------------------", goName)
@@ -6836,7 +7283,7 @@ func RunnerDraw() (err error) {
 					for i := 0; i <= iMax; i++ {
 						count := draw(goUid, goName, goServerURL, goZoneToken, 5)
 						if count == -1 {
-							continue
+							break
 						}
 						time.Sleep(time.Millisecond * 2100)
 					}
@@ -7038,7 +7485,7 @@ func RunnerCheckTokenGo() (err error) {
 			Pool.Exec("update tokens set token = ? where id = ?", token, id)
 		}
 
-		zoneToken, _, flag := getZoneToken_1(serverURL, token)
+		zoneToken, _, flag, _ := getZoneToken_1(serverURL, token)
 
 		if zoneToken == "" {
 
@@ -7468,4 +7915,97 @@ func getMiningRankList(serverURL, zoneToken string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=getMiningRankList&token=%v&isAllRankList=0&now=%v", serverURL, zoneToken, now)
 	httpGetReturnJson(URL)
+}
+
+func formatItemName(key string) (name string) {
+	if key == "98" {
+		name = "芝麻"
+	}
+
+	if key == "99" {
+		name = "花生"
+	}
+
+	if key == "100" {
+		name = "抹茶"
+	}
+
+	if key == "101" {
+		name = "紫薯"
+	}
+
+	if key == "102" {
+		name = "草莓"
+	}
+
+	if key == "17" {
+		name = "水果糖"
+	}
+	if key == "18" {
+		name = "拐棍糖"
+	}
+	if key == "19" {
+		name = "棒棒糖"
+	}
+	if key == "20" {
+		name = "蛋糕"
+	}
+	if key == "21" {
+		name = "姜饼男孩"
+	}
+	if key == "22" {
+		name = "姜饼女孩"
+	}
+
+	if key == "184" {
+		name = "鱼叉"
+	}
+	if key == "185" {
+		name = "火箭鱼雷"
+	}
+	if key == "186" {
+		name = "球状水雷"
+	}
+	if key == "187" {
+		name = "挖矿层数"
+	}
+
+	if key == "157" {
+		name = "苹果"
+	}
+	if key == "158" {
+		name = "香蕉"
+	}
+	if key == "159" {
+		name = "西瓜"
+	}
+	if key == "160" {
+		name = "草莓"
+	}
+	if key == "161" {
+		name = "樱桃"
+	}
+
+	if key == "76" {
+		name = "浣熊"
+	}
+	if key == "77" {
+		name = "企鹅"
+	}
+	if key == "78" {
+		name = "野猪"
+
+	}
+	if key == "79" {
+		name = "羊驼"
+	}
+	if key == "80" {
+		name = "熊猫"
+	}
+	if key == "81" {
+		name = "大象"
+
+	}
+
+	return
 }

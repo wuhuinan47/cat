@@ -1,17 +1,13 @@
-CREATE TABLE `tokens` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `uid` bigint(20) NOT NULL DEFAULT '0',
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `token` varchar(80) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `serverURL` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `zoneToken` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `pull_rows` varchar(80) COLLATE utf8mb4_unicode_ci DEFAULT '1,2,3,4,5,6',
-  `init_animals` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `all_animals` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `beach_runner` tinyint(4) DEFAULT '0',
-  `password` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'Aa112211',
+CREATE TABLE `boss_list` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `boss_id` varchar(40) DEFAULT NULL,
+  `hp` int(11) DEFAULT '5000' COMMENT '血量',
+  `state` tinyint(2) DEFAULT '1' COMMENT '1=正常 2=删除 3=执行中',
+  `create_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=697625166 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 CREATE TABLE `config` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -20,8 +16,23 @@ CREATE TABLE `config` (
   `conf_value` varchar(800) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   UNIQUE KEY `conf_key` (`conf_key`)
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8;
 
+CREATE TABLE `tokens` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `token` varchar(80) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `serverURL` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `zoneToken` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `pull_rows` varchar(80) COLLATE utf8mb4_unicode_ci DEFAULT '1,2,3,4,5,6',
+  `init_animals` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `all_animals` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `password` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'Aa112211',
+  `beach_runner` int(11) DEFAULT '0',
+  `add_firewood_types` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT '2,3',
+  `hit_boss_nums` int(11) DEFAULT '5' COMMENT '打龙的炮弹',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=697625166 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`)
 VALUES
@@ -42,7 +53,7 @@ VALUES
 	(15, '挨打小号2', 'attackIslandUid2', '447729427'),
 	(17, '牛OPENID', 'openid', 'o9od753rqL522SlZkuIEc3NVHBKA'),
 	(18, '摇一摇备份', 'drawidsbakup', '302691822,309392050,695923850,692326562,690980615,381909995,690423894,694981971,382292124,439943689,309433834,695923850,694571893,696453763,697132831,697058069,696360023,696280163,694316841,374289806,406378614,690364007,375912362,445291795,696636309,696528833,696100351,694068717,693419844,690708340,380576240,381034522,38190,693437767,695021679,697625165,692732133,690840661'),
-	(19, '汤圆领取定时器', 'steamBoxStatus', '0'),
+	(19, '汤圆领取定时器', 'steamBoxStatus', '1'),
 	(20, '海滩助力铲子uid列表', 'beachUidList', '301807377,302691822,309392050,309433834,374289806,375912362,380576240,381034522,381909995,382292124,385498006,439943689,445291795,690364007,690423894,690708340,690840661,690980615,692326562,692732133,693419844,693437767,694068717,694316841,694571893,694981971,695021679,695923850,696100351,696280163,696360023,696453763,696528833,696636309,697058069,697068758,697132831,697625165'),
 	(21, '摇一摇切宠物', 'drawChangePet', '1'),
 	(22, '今日动物统计', 'todayAnimalsData', ''),
@@ -52,11 +63,70 @@ VALUES
 	(26, '昨日敌方动物统计', 'enemyYesterdayAnimalsData', ''),
 	(27, '动物待计算列表', 'animalList', ''),
 	(28, 'animalUid', 'animalUid', '690364007'),
-	(29, 'todayInitAnimal', 'todayInitAnimal', '{\"76\":4,\"77\":10,\"78\":3,\"79\":4,\"80\":4,\"81\":1}'),
+	(29, 'todayInitAnimal', 'todayInitAnimal', '{\"76\":9,\"77\":2,\"78\":2,\"79\":0,\"80\":2,\"81\":0}'),
 	(30, 'crawlerStatus', 'crawlerStatus', '1'),
-	(31, '检测账号时是否互送拼图', 'checkPiece', '1'),
+	(31, '检测账号时是否互送拼图', 'checkPiece', '0'),
 	(32, '海滩助力uids', 'beachHelpUids', '403573789,406378614,406961861,407720336,408385382,408871361,410572648,412305015,412670685,425190502,440204933,441013912,444729748,446231345,446399085,447729427,690423894,690840661,690980615,692326562,693437767,694571893,695021679,696453763,697058069,697132831,697625165'),
-	(33, 'beachStatus', 'beachStatus', '1'),
+	(33, 'beachStatus', 'beachStatus', '0'),
 	(34, '是否可以运行下一个Runner', 'isRunDone', '1'),
-	(35, '检测token定时器开关', 'checkTokenStatus', '1');
+	(35, '检测token定时器开关', 'checkTokenStatus', '1'),
+	(36, 'MaxDraw', 'maxDraw', '2000');
+
+INSERT INTO `tokens` (`id`, `name`, `token`, `serverURL`, `zoneToken`, `pull_rows`, `init_animals`, `all_animals`, `password`, `beach_runner`, `add_firewood_types`, `hit_boss_nums`)
+VALUES
+	(301807377, 'A', '97722980946f1ca99539520c17c50252', 'https://s147.11h5.com/', 'ildZf0D0IKaiir6j1qnwH6lW76hb8GgqgP6', '1,2,3,4,5,6', '{\"76\":9,\"77\":11,\"78\":6,\"79\":8,\"80\":7,\"81\":3}', NULL, 'Aa112211', 0, '2,3', 5),
+	(302691822, '🐮🐮🐮🐮🐮', 'd90fcb8f1d278efeac9728b6564c9f84', 'https://s147.11h5.com/', 'ildan1T2ugJQNSumgMKr_n_lzyv2hZfpcOk', '1,2,3,4,5,6', '{\"76\":0,\"77\":1,\"78\":1,\"79\":1,\"80\":0,\"81\":0}', NULL, 'Aa112211', 0, '2,3', 5),
+	(309392050, '蜜不亦云', 'eaa5ab17528647ccca844c2458ef35b1', 'https://s147.11h5.com/', 'ildavz9eqqChf5QD3dVShUJdCkAJWkLSuuk', '1,2,3,4,5,6', '{\"76\":1,\"77\":1,\"78\":1,\"79\":2,\"80\":2,\"81\":3}', NULL, 'Aa112211', 0, '2,3', 5),
+	(309433834, 'sky小锋', '545d6fcd878422b019aefd7fd7bd2817', 'https://s147.11h5.com/', 'ildVdcD1ZUQCjyoMN0GsNZQNNfxcGte6ugN', '1,2,3,4,5,6', '{\"76\":9,\"77\":11,\"78\":6,\"79\":8,\"80\":7,\"81\":3}', NULL, '123123=', 0, '2,3', 5),
+	(374289806, '一朵漂云 💤', '00b119c78cae8d6e29035e890d585143', 'https://s147.11h5.com/', 'ildYBdX0Pyhf-2umgBVUBdYMJdekOqt_n0O', '1,2,3,4,5,6', '{\"76\":0,\"77\":1,\"78\":0,\"79\":2,\"80\":2,\"81\":1}', NULL, 'Aa112211', 0, '2,3', 5),
+	(375912362, '弯弯 ', 'a70f07815f24801a4b088a1e7984fe21', 'https://s147.11h5.com/', 'ildZQKqoDwL35cD7z_oGn9ZXNdesCuuOj-x', '1,2,3,4,5,6', '{\"76\":2,\"77\":4,\"78\":1,\"79\":3,\"80\":5,\"81\":2}', NULL, '123123=', 0, '2,3', 5),
+	(380576240, '冷月', '5c5911dfb7bf34a5a4d1b678a273e0a3', 'https://s147.11h5.com/', 'ildbxcBSmmJagP1StzxQAKv4Ver5QFY9etV', '1,2,3,4,5,6', '{\"76\":9,\"77\":11,\"78\":6,\"79\":8,\"80\":7,\"81\":3}', NULL, 'Aa112211', 0, '2,3', 5),
+	(381034522, ' 蜜不可云', '8a7bf25056f784ee50f60789542d9596', 'https://s147.11h5.com/', 'ild9T2jxYHYDypUMFz8OuqvyX4Cr3-4_tWo', '1,2,3,4,5,6', '{\"76\":9,\"77\":11,\"78\":6,\"79\":8,\"80\":7,\"81\":3}', NULL, 'Aa112211', 0, '2,3', 5),
+	(381909995, '云颜', '3ee7c17a3d8a3e48101133a748fce0e9', 'https://s147.11h5.com/', 'ildTxUEEJZClYJdSnxdSvzwEYKr9b1Wr33z', '1,2,3,4,5,6', '{\"76\":6,\"77\":8,\"78\":4,\"79\":6,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(382292124, '漂漂', 'dd3da2d452dc87a5f857c87d6f9e4dda', 'https://s147.11h5.com/', 'ildYFZeulUuoIOujzRWrytXygMAKpUE-6j-', '1,2,3,4,5,6', '{\"76\":9,\"77\":11,\"78\":6,\"79\":8,\"80\":7,\"81\":3}', NULL, '123123=', 0, '2,3', 5),
+	(385498006, '笨笨', '01a11a05aee4c089c9f2f706b0dd1e27', 'https://s147.11h5.com/', 'ildhSn-30E4MJRX1ckH0D8GlBSoKgDxf6qh', '1,2,3,4,5,6', '{\"76\":9,\"77\":11,\"78\":6,\"79\":8,\"80\":7,\"81\":3}', NULL, '123123=', 0, '2,3', 5),
+	(403573789, '牛牛牛牛牛', '2719f8aa88f70869a915a7d4c9354b1f', 'https://s147.11h5.com/', 'ilder_kEEIRT_n0ECUIOhYD6cCpX1RRYAKo', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(406378614, '醉酒青虫', 'a18a6d905810e262434355f6095d34e0', 'https://s147.11h5.com/', 'ildBcID2kNpQHz3xeOlZar8O4IFcCmgJYNW', '1,2,3,4,5,6', '{\"76\":25,\"77\":20,\"78\":13,\"79\":12,\"80\":10,\"81\":5}', NULL, 'aA112211', 0, '2,3', 5),
+	(406961861, 'Timeless＇', 'ea68bc1f7416310e4437d13b26a3cada', 'https://s147.11h5.com/', 'ildVcACiv5j2lZT0GAD6oP9cz5T4GlQAAMK', '1,2,3,4,5,6', '{\"76\":25,\"77\":20,\"78\":13,\"79\":12,\"80\":10,\"81\":5}', NULL, 'Aa112211', 0, '2,3', 5),
+	(407720336, '醉酒青虫2', '63c576a2ed88ec6e850ca008372c1665', 'https://s147.11h5.com/', 'ildSlYJRYOEP-yj4Mv9epVQH-6r-wFXZVWg', '1,2,3,4,5,6', '{}', NULL, 'Aa112211', 0, '2,3', 5),
+	(408385382, '童話裏翅膀', 'b21313065032dc38b2e10e9a0ca99e48', 'https://s147.11h5.com/', 'ildEBSpVYJkNb5b0KsGquhRXcGkBQEJn5UJ', '1,2,3,4,5,6', '{\"76\":25,\"77\":20,\"78\":13,\"79\":12,\"80\":10,\"81\":5}', NULL, 'Aa112211', 0, '2,3', 5),
+	(408871361, 'qzuser', '26c9013fa1dc652d6ca8c6c4adaedca3', 'https://s147.11h5.com/', 'ildUCgEKtXEMOmkKsv6laugBOr8ICr3kFX8', '1,2,3,4,5,6', '{\"76\":25,\"77\":20,\"78\":13,\"79\":12,\"80\":10,\"81\":5}', NULL, 'Aa112211', 0, '2,3', 5),
+	(410572648, '红绯。', '987aa9903e101413e2f6de1cd52c5277', 'https://s147.11h5.com/', 'ildtVcAChVsHz2mv32r9b79RmkGsCr1cKuj', '1,2,3,4,5,6', '{\"76\":25,\"77\":20,\"78\":13,\"79\":12,\"80\":10,\"81\":5}', NULL, 'Aa112211', 0, '2,3', 5),
+	(412305015, '蜜蜜', '5b23f1ff465782bb9a8e098bef380304', 'https://s147.11h5.com/', 'ild-6lUBf3_j0Jf76kMMPyr6KrxVSkGL-z6', '1,2,3,4,5,6', '{\"76\":25,\"77\":20,\"78\":13,\"79\":12,\"80\":10,\"81\":5}', NULL, 'Aa112211', 0, '2,3', 5),
+	(412670685, '绿宝石般瞳孔', '5d893c108050e8af4b0b1aba3661879e', 'https://s147.11h5.com/', 'ildSioEILxGrwIGinYBZeir97wIAIEPn0MK', '1,2,3,4,5,6', '{\"76\":25,\"77\":20,\"78\":13,\"79\":12,\"80\":10,\"81\":5}', NULL, 'Aa112211', 0, '2,3', 5),
+	(425190502, '轻狂负了谁', 'f88a8532d333bdbb5b6461bfeb71411e', 'https://s147.11h5.com/', 'ildoGuv-ypGr5f-xTxSmiur24OgH2igVWqm', '1,2,3,4,5,6', '{\"76\":25,\"77\":20,\"78\":13,\"79\":12,\"80\":10,\"81\":5}', NULL, 'Aa112211', 0, '2,3', 5),
+	(439943689, '梦里不知道她', '037a715141bd7e805ab38f2f4f11c691', 'https://s147.11h5.com/', 'ildr1atauthUAP772oLxasBZr4LyitXb1ZQ', '1,2,3,4,5,6', '{\"76\":9,\"77\":11,\"78\":6,\"79\":8,\"80\":7,\"81\":3}', NULL, '123123=', 0, '2,3', 5),
+	(440204933, '猫来了', '1fa6ef76014a45d592792c0ece1e79ea', 'https://s147.11h5.com/', 'ildAAP5QMMH4Bdb5RakCkD5c5Zfz9YPoKiv', '1,2,3,4,5,6', '{\"76\":25,\"77\":20,\"78\":13,\"79\":12,\"80\":10,\"81\":5}', NULL, 'Aa112211', 0, '2,3', 5),
+	(441013912, '﹎ゞ輕描淡寫', '678dab6d2927ff75f09931665180d7d5', 'https://s147.11h5.com/', 'ildVer2mtfRZf73z-RcEEHxalWhXwL3GilW', '1,2,3,4,5,6', '{\"76\":25,\"77\":20,\"78\":13,\"79\":12,\"80\":10,\"81\":5}', NULL, 'Aa112211', 0, '2,3', 5),
+	(444729748, '明媚若', 'e24e6b36602bee56c135a17ca8296b7a', 'https://s147.11h5.com/', 'ildmr9UFWiv2qgD34wMAJRSvb34Gury8Oj-', '1,2,3,4,5,6', '{\"76\":25,\"77\":20,\"78\":13,\"79\":12,\"80\":10,\"81\":5}', NULL, 'Aa112211', 0, '2,3', 5),
+	(445291795, '大南南', 'f00de8d5707db4e1154469f30b0759f5', 'https://s147.11h5.com/', 'ildZUMJX1VSoMMIKlGsIH2peYFRRYL6v0JQ', '1,2,3,4,5,6', '{\"76\":6,\"77\":8,\"78\":3,\"79\":5,\"80\":5,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(446231345, '大蜜蜜', '10a9416ee6856ac0e5596626adf9d2e6', 'https://s147.11h5.com/', 'ild6utan-4sFf9Wn9Bf-wIJdz5VT8EIVSlX', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(446399085, '微安晴天', '29aed874b69c25ee4bc08f2099c95e97', 'https://s147.11h5.com/', 'ild74FVT3x5Wumn79X9b1Wr01f5Sv7wdXz2', '1,2,3,4,5,6', '{\"76\":25,\"77\":20,\"78\":13,\"79\":12,\"80\":10,\"81\":5}', NULL, 'Aa112211', 0, '2,3', 5),
+	(447729427, '大果果', 'cef86a5b62879710fd930364a91ff2a5', 'https://s147.11h5.com/', 'ildb2kKioO-wCupdeFcBcOjzpcOqn9Un8MH', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, '123123=', 0, '2,3', 5),
+	(690364007, '圆圆的小贪玩', '5e569d5f1c738c469227b64576d88159', 'https://s147.11h5.com/', 'ildOoEBb2jqhZZX0G-1ddYMIMMKhRZQ1YDw', '4,5,6', '{\"76\":9,\"77\":2,\"78\":2,\"79\":0,\"80\":2,\"81\":0}', NULL, 'Aa112211', 0, '2,3', 5),
+	(690423894, '小小心', '07c38903aee1be60dff16ebad1f041dc', 'https://s147.11h5.com/', 'ildj3wBUMNOtVUAANX-6j1b6mgJahUIGmgF', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(690708340, '辛巴二号', '5a7f12a1ccb6f6e272ac87c09286a6b7', 'https://s147.11h5.com/', 'ildgIH5ZRQZYEBekKNSir6r4uoP-z1ZJUFQ', '1,2,3,4,5,6', '{\"76\":9,\"77\":11,\"78\":6,\"79\":8,\"80\":7,\"81\":3}', NULL, 'Aa112211', 0, '2,3', 5),
+	(690840661, '辛巴h', '594f4cdcdcf017b909df4620ce803eea', 'https://s147.11h5.com/', 'ilduhdX2v5Jar39f0_vylZcEBf9ZX_kf1UB', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(690980615, '辛巴e', '3f479ca51418e4a54e06cf36aa36bc6a', 'https://s147.11h5.com/', 'ild2ququuoGvwFRegeuv9b5er2lRQNWRakM', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(692326562, '一意', '8f71e5088a752e03f9ecac22910a64a7', 'https://s147.11h5.com/', 'ildRZZT35eWtZWhSngJRegEHwGpRdatFYH9', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(692732133, '小小云', 'd255ed0e32ba1901fd7539d81895c3d4', 'https://s147.11h5.com/', 'ildD8H-72rBSlb30PCn3z3352iv-xRexWij', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(693419844, '辛巴3002', '5d59dcb9c4b2ba02a80fba04b76f6708', 'https://s147.11h5.com/', 'ildYFcJSmkBdZYFdc9fyihVbr4Kqldf4JRX', '1,2,3,4,5,6', '{\"76\":9,\"77\":11,\"78\":6,\"79\":8,\"80\":7,\"81\":3}', NULL, 'Aa112211', 0, '2,3', 5),
+	(693437767, '辛巴f', '3e50f279cc84163484b2539529e16213', 'https://s147.11h5.com/', 'ildz_r5dcPlelUP_tT2nwCsDRWhVf_luoGq', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(694068717, '猫走了', '7b1f75efd945c753ce8f6f25017e25d1', 'https://s147.11h5.com/', 'ild_lelQAL2hZcNSoX9QALz-BemtVb-isML', '1,2,3,4,5,6', '{\"76\":9,\"77\":11,\"78\":6,\"79\":8,\"80\":7,\"81\":3}', NULL, 'Aa112211', 0, '2,3', 5),
+	(694316841, '大花花', '86aaffe3251f57da45e4fe30c3839af4', 'https://s147.11h5.com/', 'ild5UD5RfwlagKtX8hUFT8KpOgJddWiahT9', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(694571893, '辛巴c', '073b0d2f4572a532ed5eaeb58ef05b2c', 'https://s147.11h5.com/', 'ildUNYED-1esCoNeuwP2kOiudUNSqry_jwE', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(694981971, 'momo', 'ca8bcbb2d9e93dbf6695721befa8d0ce', 'https://s147.11h5.com/', 'ild6jwNWmv33-9dTxOoKvxb6AHwKkGqH9YA', '1,2,3,4,5,6', '{\"76\":9,\"77\":11,\"78\":6,\"79\":8,\"80\":7,\"81\":3}', NULL, 'Aa112211', 0, '2,3', 5),
+	(695021679, '辛巴g', '61e1e6a11a7cd5ecc1fbea6bdbdf2730', 'https://s147.11h5.com/', 'ild8D2n35YaupX--54P_v5VU2usPxXw4Gpb', '1,2,3,4,5,6', '{\"76\":8,\"77\":3,\"78\":3,\"79\":1,\"80\":1,\"81\":1}', NULL, 'Aa112211', 0, '2,3', 5),
+	(695923850, '大南是逗比', 'dd84fab9b6caa625f9a70e45dbdd62c0', 'https://s147.11h5.com/', 'ildir6hemsan_tcMJelShUNZOteuoPzpUEP', '1,2,3,4,5,6', '{\"76\":9,\"77\":11,\"78\":6,\"79\":8,\"80\":7,\"81\":3}', NULL, 'Aa112211', 0, '2,3', 5),
+	(696100351, '9527', 'a34b4cc94a4171b2e23069b8bc3d45a5', 'https://s147.11h5.com/', 'ildWkCn2sBH0CumoHcHxT1WnYIOmioIoH9e', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(696280163, '一一', '238ee917de0135eb6ca7cddbcd03f483', 'https://s147.11h5.com/', 'ilddaoGhbykBcP33yJVWj1QMhRb8PwIIEBV', '1,2,3,4,5,6', '{\"76\":7,\"77\":2,\"78\":1,\"79\":0,\"80\":0,\"81\":0}', NULL, 'Aa112211', 0, '2,3', 5),
+	(696360023, '小可爱', 'e9eeb76b85488626e891c57a6592adbc', 'https://s147.11h5.com/', 'ildAJepdUGBZRetauUOj7_lV6nz0CujP9UF', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(696453763, '辛巴d', 'a7e2c3ee9c5cc01e0da45ef5a190cafe', 'https://s147.11h5.com/', 'ildUEL0P76eoCpdT9yjwDxavkOlQJRVCqlS', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(696528833, '大懒懒', '02e9702a5081222c1080256b701a3395', 'https://s147.11h5.com/', 'ildev2pcMM6ugIChaZatVen14EIIL6mQCld', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(696636309, '小笨蛋', 'a40b62a8d4e65f28644ede0965c6e654', 'https://s147.11h5.com/', 'ild9SsPzypzxb1VSspT5QKuoUED6ij9b8Oi', '1,2,3,4,5,6', '{\"76\":9,\"77\":11,\"78\":6,\"79\":8,\"80\":7,\"81\":3}', NULL, 'Aa112211', 0, '2,3', 5),
+	(697058069, '辛巴b', '88c4c6420642430c68676e32e491f130', 'https://s147.11h5.com/', 'ildKhRRWqnKj5T1ascH6pVepOr9WunzpVb5', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(697068758, '辛巴', 'ef8418de1d6da02f414b1713a2e95fc5', 'https://s147.11h5.com/', 'ildH-xX1Smb9Zb1TxT6leoIB5b9Tyn_uj_t', '1,2,3,4,5,6', '{\"76\":6,\"77\":8,\"78\":5,\"79\":6,\"80\":5,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(697132831, '旧梦', '84c4d112273a5972e0872629cbc49f6f', 'https://s147.11h5.com/', 'ildeoAJUMLH4NammsahavwJc0MCj2jyValS', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5),
+	(697625165, '我来自地球', '12ab337d4a5d794edaf7e347c471ec86', 'https://s147.11h5.com/', 'ild_tasGsCj_qr8JfAL_iqlYumpRdWgQD5R', '1,2,3,4,5,6', '{\"76\":12,\"77\":7,\"78\":5,\"79\":4,\"80\":4,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5);
+
 

@@ -19,6 +19,133 @@ func TestMath(t *testing.T) {
 	fmt.Println("count:", math.Floor(35/3)*3)
 }
 
+func TestJx(t *testing.T) {
+	// seleniumPath := "/usr/bin/chromedriver"
+	seleniumPath := "/usr/local/bin/chromedriver"
+
+	port := 39515
+
+	var err error
+	//1.开启selenium服务
+	//设置selenium服务的选项,设置为空。根据需要设置。
+	ops := []selenium.ServiceOption{}
+
+	service, err := selenium.NewChromeDriverService(seleniumPath, port, ops...)
+	if err != nil {
+		fmt.Printf("Error starting the ChromeDriver server: %v", err)
+	}
+
+	imagCaps := map[string]interface{}{
+
+		"profile.managed_default_content_settings.images": 2,
+	}
+
+	chromeCaps := chrome.Capabilities{
+
+		Prefs: imagCaps,
+
+		Path: "",
+
+		Args: []string{
+
+			// "--headless", // 设置Chrome无头模式
+
+			// "--no-sandbox",
+
+			"--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36", // 模拟user-agent，防反爬
+
+		},
+	}
+
+	//延迟关闭服务
+	defer service.Stop()
+
+	//2.调用浏览器实例
+	//设置浏览器兼容性，我们设置浏览器名称为chrome
+	caps := selenium.Capabilities{
+		"browserName": "chrome",
+	}
+	caps.AddChrome(chromeCaps)
+	//调用浏览器urlPrefix: 测试参考：DefaultURLPrefix = "http://127.0.0.1:4444/wd/hub"
+	wd, err := selenium.NewRemote(caps, "http://127.0.0.1:39515/wd/hub")
+	if err != nil {
+		log.Println("qq scan new remote err")
+		return
+		// panic(err)
+	}
+	//延迟退出chrome
+	defer wd.Quit()
+
+	// 3单选radio，多选checkbox，select框操作(功能待完善，https://github.com/tebeka/selenium/issues/141)
+	// if err := wd.Get("https://open.weixin.qq.com/connect/qrconnect?appid=wx22f69b39568e9cb3&redirect_uri=http%3A%2F%2Flogin.11h5.com%2Faccount%2Fapi.php%3Fc%3Dwxlogin%26d%3DwxQrcodeAuth%26pf%3Dwxqrcode%26ssl%3D1%26back_url%3Dhttps%253A%252F%252Fplay.h5avu.com%252Fgame%252F%253Fgameid%253D147%2526fuid%253D302691822%2526statid%253D1785%2526share_from%253Dmsg%2526cp_from%253Dmsg%2526cp_shareId%253D55&response_type=code&scope=snsapi_login&state=#wechat_redirect"); err != nil {
+	// 	panic(err)
+	// }
+
+	URL := "https://jxlotterys.com/web/lottery/index?type=4"
+
+	if err = wd.Get(URL); err != nil {
+		log.Println("get url:", err)
+		return
+	}
+
+	webElement, err := wd.FindElement(selenium.ByCSSSelector, "#detail_jiben > td:nth-child(1)")
+
+	if err != nil {
+		log.Println("FindElement err:", err)
+		return
+	}
+
+	log.Println("webElement:", webElement)
+	preIssue, err := webElement.Text()
+	if err != nil {
+		return
+	}
+	log.Println("preIssue is ", preIssue)
+
+	webElement, err = wd.FindElement(selenium.ByCSSSelector, "#detail_jiben > td:nth-child(2)")
+
+	if err != nil {
+		log.Println("FindElement err:", err)
+		return
+	}
+
+	log.Println("webElement:", webElement)
+	preDrawTime, err := webElement.Text()
+	if err != nil {
+		return
+	}
+	log.Println("preDrawTime is ", preDrawTime)
+
+	webElement, err = wd.FindElement(selenium.ByCSSSelector, "#detail_jiben")
+	if err != nil {
+		log.Println("_codeNum_kj err is  ", err)
+		return
+	}
+
+	var result []string
+
+	for i := 1; i <= 5; i++ {
+		result1, err := webElement.FindElement(selenium.ByCSSSelector, fmt.Sprintf("#_codeNum_kj > span:nth-child(%v)", i))
+		if err != nil {
+			log.Println("result1 text err is  ", err)
+			return
+		}
+		result2, err := result1.Text()
+
+		if err != nil {
+			log.Println("_codeNum_kj text err is  ", err)
+			return
+		}
+		result = append(result, result2)
+	}
+	log.Println("result is ", result)
+
+	strings.Join(result, ",")
+
+	time.Sleep(time.Second * 10)
+
+}
+
 func TestSplit(t *testing.T) {
 	URL := "https://s147.11h5.com//game?cmd=stat&token=ildqsMCkAEdSjwFZR0FRasH89QP31cDlQBS&item=%E6%B8%B8%E6%88%8F%E5%88%9D%E5%A7%8B%E5%8C%96&subitem=Enter%E8%BF%94%E5%9B%9E%EF%BC%8C%E5%BC%80%E5%A7%8B%E9%A2%84%E5%8A%A0%E8%BD%BD%E8%B5%84%E6%BA%90&now=1637890836352"
 	sL := strings.Split(URL, "?")
