@@ -489,6 +489,16 @@
         领取汤圆数量
     </button>
 
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="getLabaPrize" id="getLabaPrize">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getLabaPrize()">
+        领取水果奖励
+    </button>
+
 
 
     <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
@@ -918,6 +928,20 @@
 
         }
 
+        getLabaPrize = function () {
+            var r = confirm("getLabaPrize是否继续")
+            if (r == true) {
+                var id = $("#getLabaPrize option:selected").val();
+
+                $.get(APIURL + "/getLabaPrize?id=" + id, function (data) {
+                    console.log("getLabaPrize:", data)
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
 
 
         addFirewood = function () {
@@ -1290,6 +1314,16 @@
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("makeRiceCake").options.add(tOption);
                 }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("getLabaPrize").options.add(tOption);
+                }
+
+                
 
 
 
