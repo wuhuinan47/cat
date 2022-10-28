@@ -1,11 +1,13 @@
 package crawler
 
 import (
+	"encoding/csv"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -14,6 +16,33 @@ import (
 	"github.com/tebeka/selenium/chrome"
 	"github.com/wuhuinan47/cat/catdb"
 )
+
+//go test -v -run ^TestCsv$ ./crawler --count=1
+func TestCsv(t *testing.T) {
+
+	path := "/Users/wuhuinan/Downloads/HistoricalPrices.csv"
+	csvFile, err := os.Open(path)
+	if err != nil {
+		panic(err)
+	}
+	defer csvFile.Close()
+
+	csvReader := csv.NewReader(csvFile)
+
+	row, err := csvReader.Read()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(row[0], row[len(row)-1])
+	row, err = csvReader.Read()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(time.Now().Add(-86400*time.Second).Format("01/02/06") == row[0], row[len(row)-1])
+
+}
 
 func TestMath(t *testing.T) {
 	fmt.Println("count:", math.Floor(35/3)*3)

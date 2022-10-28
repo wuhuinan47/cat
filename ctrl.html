@@ -495,9 +495,29 @@
         <option selected="selected" value="">全部</option>
     </select>
 
-    <button style="font-size:40px;width:400px; height:100px;" onclick="getLabaPrize()">
-        领取水果奖励
+    <select style="font-size:40px;width:300px; height:100px;" name="labaSelect" id="labaSelect">
+        <option value="1">能量助力</option>
+        <option value="2">刷新水果</option>
+        <option value="3">领光水果奖励</option>
+        <option selected="selected" value="0">领取水果奖励</option>
+    </select>
+
+    <button style="font-size:40px;width:200px; height:100px;" onclick="getLabaPrize()">
+        点击确认
     </button>
+
+
+    <br>
+    
+
+    <select style="font-size:40px;width:200px; height:100px;" name="cancelFamilyRob" id="cancelFamilyRob">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="cancelFamilyRob()">
+        取消拉动物
+    </button>
+    
 
 
 
@@ -508,7 +528,6 @@
 
         pullAnimal = function () {
             $.get(APIURL + "/pullAnimal", function (data) {
-                console.log("pullAnimal:", data)
                 alert(data)
                 window.status = "1";
             });
@@ -543,7 +562,6 @@
 
         getSignPrize = function () {
             $.get(APIURL + "/getSignPrize", function (data) {
-                console.log("getSignPrize:", data)
                 alert(data)
                 window.status = "1";
             });
@@ -551,19 +569,12 @@
 
         getBox = function (flag) {
 
-            var r = confirm("是否继续")
+            var r = confirm("getBox是否继续")
             if (r == true) {
                 var boxUID = $("#boxUidsSelect option:selected").val();
-
                 var boxQuality = $("#BCSelect2 option:selected").val();
-
                 var boxAmount = document.getElementById("boxAmount");
-                console.log("boxUID:", boxUID);
-                console.log("boxQuality:", boxQuality);
-                console.log("boxAmount:", boxAmount.value);
-
                 $.get(APIURL + "/diamond?id=" + boxUID + "&quality=" + boxQuality + "&amount=" + boxAmount.value + "&flag="+flag, function (data) {
-                    console.log("getBox:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -573,18 +584,13 @@
         }
 
         hitCandy = function () {
-            var r = confirm("是否继续")
+            var r = confirm("hitCandy是否继续")
             if (r == true) {
                 var boxUID = $("#Oper_Candy option:selected").val();
                 var boxQuality = $("#BCSelect option:selected").val();
 
                 var boxAmount = document.getElementById("candyAmount");
-                console.log("candyUID:", boxUID);
-                console.log("candyQuality:", boxQuality);
-                console.log("candyAmount:", boxAmount.value);
-
                 $.get(APIURL + "/hitCandy?id=" + boxUID + "&quality=" + boxQuality + "&amount=" + boxAmount.value, function (data) {
-                    console.log("getSignPrize:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -595,13 +601,12 @@
 
 
         useShovel = function () {
-            var r = confirm("是否继续")
+            var r = confirm("useShovel是否继续")
             if (r == true) {
                 var UseShovelFrom = $("#UseShovelFrom option:selected").val();
                 var UseShovelTo = $("#UseShovelTo option:selected").val();
 
                 $.get(APIURL + "/useShovel?id=" + UseShovelFrom + "&toid=" + UseShovelTo, function (data) {
-                    console.log("useShovel:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -610,12 +615,11 @@
 
         getBeachLineRewards = function () {
 
-            var r = confirm("是否继续")
+            var r = confirm("getBeachLineRewards是否继续")
             if (r == true) {
                 var GetBeachLineRewardsH = $("#GetBeachLineRewardsH option:selected").val();
 
                 $.get(APIURL + "/getBeachLineRewards?id=" + GetBeachLineRewardsH, function (data) {
-                    console.log("getSignPrize:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -644,7 +648,6 @@
 
         startPullAnimal = function () {
             $.get(APIURL + "/setConfig?confKey=pullAnimalGoStatus&confValue=1", function (data) {
-                console.log("startPullAnimal:", data)
                 alert(data)
                 window.status = "1";
             });
@@ -655,7 +658,6 @@
 
             var value = document.getElementById("setPullRows").value
             $.get(APIURL + "/setPullRows?input="+value+"&id="+id, function (data) {
-                console.log("startPullAnimal:", data)
                 alert(data)
                 window.status = "1";
             });
@@ -663,7 +665,6 @@
 
         stopPullAnimal = function () {
             $.get(APIURL + "/setConfig?confKey=pullAnimalGoStatus&confValue=0", function (data) {
-                console.log("stopPullAnimal:", data)
                 alert(data)
                 window.status = "1";
             });
@@ -671,7 +672,6 @@
 
         startDrawStatus = function () {
             $.get(APIURL + "/setConfig?confKey=drawStatus&confValue=1", function (data) {
-                console.log("startPullAnimal:", data)
                 alert(data)
                 window.status = "1";
             });
@@ -679,7 +679,6 @@
 
         stopDrawStatus = function () {
             $.get(APIURL + "/setConfig?confKey=drawStatus&confValue=0", function (data) {
-                console.log("stopPullAnimal:", data)
                 alert(data)
                 window.status = "1";
             });
@@ -688,11 +687,9 @@
 
         checkToken = function () {
 
-
-            var r = confirm("是否继续")
+            var r = confirm("checkToken是否继续")
             if (r == true) {
                 $.get(APIURL + "/checkToken", function (data) {
-                    console.log("checkToken:", data)
                     var jsarr = JSON.parse(data);
                     alert(jsarr.data1)
                     alert(jsarr.data2)
@@ -709,7 +706,6 @@
             if (r == true) {
                 var id = $("#attackBossUsers option:selected").val();
                 $.get(APIURL + "/attackBoss?id="+id, function (data) {
-                    console.log("attackBoss:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -721,7 +717,6 @@
             var r = confirm("是否继续")
             if (r == true) {
                 $.get(APIURL + "/attackBoss?id=309392050", function (data) {
-                    console.log("attackBoss1:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -732,7 +727,6 @@
 
         sonAttackBoss = function () {
             $.get(APIURL + "/sonAttackBoss", function (data) {
-                console.log("sonAttackBoss:", data)
                 alert(data)
                 window.status = "1";
             });
@@ -743,7 +737,6 @@
             var r = confirm("是否继续")
             if (r == true) {
                 $.get(APIURL + "/oneSonAttackBoss?id=" + id, function (data) {
-                    console.log("oneSonAttackBoss:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -755,7 +748,6 @@
         login = function (id) {
             if (id == "") {
                 var str = $("#Oper_Type option:selected").val();
-                console.log("login uid is ", str)
                 id = str
             }
             // window.location.href = APIURL+"/login?id="+id;
@@ -787,7 +779,6 @@
 
 
                 $.get(APIURL + "/giftPiece?id=" + id + "&fromUid=" + fromUid + "&toUid=" + toUid + "&amount=" + amount, function (data) {
-                    console.log("giftPiece:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -803,13 +794,7 @@
                 var id = $("#Oper_Draw option:selected").val();
                 var drawMulti = $("#DrawSelect option:selected").val();
                 var drawAmount = document.getElementById("drawAmount");
-
-                console.log("draw id:", id)
-                console.log("draw drawMulti:", drawMulti)
-                console.log("draw drawAmount:", drawAmount.value)
-
                 $.get(APIURL + "/draw?id=" + id + "&drawMulti=" + drawMulti + "&amount=" + drawAmount.value, function (data) {
-                    console.log("draw:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -819,16 +804,24 @@
 
 
         
+        cancelFamilyRob = function () {
+            var r = confirm("cancelFamilyRob是否继续")
+            if (r == true) {
+                var id = $("#cancelFamilyRob option:selected").val();
+
+                $.get(APIURL + "/cancelFamilyRob?id=" + id, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
 
         unlockWorker = function () {
-            // unlockWorker
-
             var r = confirm("unlockWorker是否继续")
             if (r == true) {
                 var id = $("#unlockWorker option:selected").val();
-
                 $.get(APIURL + "/unlockWorker?id=" + id, function (data) {
-                    console.log("unlockWorker:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -844,7 +837,6 @@
                 var id = $("#searchFamily option:selected").val();
 
                 $.get(APIURL + "/searchFamily?id=" + id, function (data) {
-                    console.log("searchFamily:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -858,7 +850,6 @@
                 var id = $("#playLuckyWheel option:selected").val();
 
                 $.get(APIURL + "/playLuckyWheel?id=" + id, function (data) {
-                    console.log("playLuckyWheel:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -873,7 +864,6 @@
                 var id = $("#familyReward option:selected").val();
 
                 $.get(APIURL + "/familyReward?id=" + id, function (data) {
-                    console.log("familyReward:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -885,14 +875,11 @@
 
 
         buildUp = function () {
-            // buildUpUsers
-
-            var r = confirm("是否继续")
+            var r = confirm("buildUp是否继续")
             if (r == true) {
                 var id = $("#buildUpUsers option:selected").val();
 
                 $.get(APIURL + "/buildUp?id=" + id, function (data) {
-                    console.log("buildUp:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -901,12 +888,11 @@
         }
 
         searchRiceCake = function () {
-            var r = confirm("是否继续")
+            var r = confirm("searchRiceCake是否继续")
             if (r == true) {
                 var id = $("#searchRiceCake option:selected").val();
 
                 $.get(APIURL + "/searchRiceCake?id=" + id, function (data) {
-                    console.log("searchRiceCake:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -915,12 +901,11 @@
         }
 
         makeRiceCake = function () {
-            var r = confirm("是否继续")
+            var r = confirm("makeRiceCake是否继续")
             if (r == true) {
                 var id = $("#makeRiceCake option:selected").val();
 
                 $.get(APIURL + "/makeRiceCake?id=" + id, function (data) {
-                    console.log("makeRiceCake:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -932,9 +917,9 @@
             var r = confirm("getLabaPrize是否继续")
             if (r == true) {
                 var id = $("#getLabaPrize option:selected").val();
+                var flag = $("#labaSelect option:selected").val();
 
-                $.get(APIURL + "/getLabaPrize?id=" + id, function (data) {
-                    console.log("getLabaPrize:", data)
+                $.get(APIURL + "/getLabaPrize?id=" + id+"&flag="+flag, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -954,7 +939,6 @@
                 var quality = $("#FirewoodQuality option:selected").val();
 
                 $.get(APIURL + "/addFirewood?id=" + id+"&quality="+quality, function (data) {
-                    console.log("addFirewood:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -971,7 +955,6 @@
                 var id = $("#exchangeRiceCake option:selected").val();
 
                 $.get(APIURL + "/exchangeRiceCake?id=" + id, function (data) {
-                    console.log("exchangeRiceCake:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -981,13 +964,12 @@
 
 
         setRunner = function () {
-            var r = confirm("是否继续")
+            var r = confirm("setRunner是否继续")
             if (r == true) {
                 var id = $("#RunnerUsers option:selected").val();
                 var drawMulti = $("#RunnerSelect option:selected").val();
 
                 $.get(APIURL + "/setRunner?id=" + id + "&key=" + drawMulti, function (data) {
-                    console.log("setRunner:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -997,17 +979,12 @@
 
 
         attackMyBoss = function () {
-            var r = confirm("是否继续")
+            var r = confirm("attackMyBoss是否继续")
             if (r == true) {
                 var boxUID = $("#SelectMyBoss option:selected").val();
                 var mode = $("#attackMyBossMode option:selected").val();
 
-                // attackMyBossMode
-
-                console.log("SelectMyBoss:", boxUID);
-
                 $.get(APIURL + "/attackMyBoss?id=" + boxUID + "&mode=" + mode, function (data) {
-                    console.log("SelectMyBoss:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -1016,33 +993,23 @@
 
 
         throwDice = function () {
-
-
-            var r = confirm("是否继续")
+            var r = confirm("throwDice是否继续")
             if (r == true) {
                 var boxUID = $("#Oper_Dice option:selected").val();
-
                 var boxAmount = document.getElementById("diceAmount");
-                console.log("diceUID:", boxUID);
-                console.log("diceAmount:", boxAmount.value);
-
                 $.get(APIURL + "/throwDice?id=" + boxUID + "&amount=" + boxAmount.value, function (data) {
-                    console.log("throwDice:", data)
                     alert(data)
                     window.status = "1";
                 });
             }
-
-
         }
 
 
         singleBossAttack = function () {
-            var r = confirm("是否继续")
+            var r = confirm("singleBossAttack是否继续")
             if (r == true) {
                 var boxUID = $("#SingleBossSelect option:selected").val();
                 $.get(APIURL + "/singleBossAttack?id=" + boxUID, function (data) {
-                    console.log("singleBossAttack:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -1052,12 +1019,11 @@
         }
 
         setPiece = function () {
-            var r = confirm("是否继续")
+            var r = confirm("setPiece是否继续")
             if (r == true) {
                 var boxUID = $("#PiecePrizeSelect option:selected").val();
                 var amount = $("#SetPieceAmount option:selected").val();
                 $.get(APIURL + "/setPiece?id=" + boxUID+"&amount="+amount, function (data) {
-                    console.log("setPiece:", data)
                     if (data == "SUCCESS") {
                         alert(data)
                     } else {
@@ -1071,11 +1037,10 @@
 
 
         beachHelp = function () {
-            var r = confirm("是否继续")
+            var r = confirm("beachHelp是否继续")
             if (r == true) {
                 var boxUID = $("#BeachHelpSelect option:selected").val();
                 $.get(APIURL + "/beachHelp?id=" + boxUID, function (data) {
-                    console.log("setPiece:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -1084,13 +1049,12 @@
         }
 
         getMailPrize = function () {
-            var r = confirm("是否继续")
+            var r = confirm("getMailPrize是否继续")
             if (r == true) {
                 var boxUID = $("#Oper_Mail option:selected").val();
                 var title = $("#Oper_MailTitle option:selected").val();
                 var mailAmount = document.getElementById("mailAmount");
                 $.get(APIURL + "/getMailPrize?id=" + boxUID+"&title="+title+"&amount="+mailAmount.value, function (data) {
-                    console.log("getMailPrize:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -1101,11 +1065,10 @@
         }
 
         getBossPrize = function () {
-            var r = confirm("是否继续")
+            var r = confirm("getBossPrize是否继续")
             if (r == true) {
                 var boxUID = $("#Oper_BossPrize option:selected").val();
                 $.get(APIURL + "/getBossPrize?id=" + boxUID, function (data) {
-                    console.log("getMailPrize:", data)
                     alert(data)
                     window.status = "1";
                 });
@@ -1121,7 +1084,6 @@
 
         delServerLogs = function () {
             $.get(APIURL + "/delServerLogs", function (data) {
-                console.log("delServerLogs:", data)
                 alert(data)
                 window.status = "1";
             });
@@ -1227,7 +1189,6 @@
                     var tOption = document.createElement("Option");
                     tOption.text = jsarr[i]["name"];
 
-                    // console.log(tOption.text)
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("SelectMyBoss").options.add(tOption);
@@ -1237,7 +1198,6 @@
                     var tOption = document.createElement("Option");
                     tOption.text = jsarr[i]["name"];
 
-                    // console.log(tOption.text)
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("attackBossUsers").options.add(tOption);
@@ -1377,6 +1337,15 @@
                     tOption.text = jsarr[i]["name"];
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
+                    document.getElementById("cancelFamilyRob").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
                     document.getElementById("searchFamily").options.add(tOption);
                 }
 
@@ -1424,74 +1393,62 @@
 
         toubi = function () {
             $.get("http://192.168.1.13:21000/print?command=1", function () {
-                console.log("djkslfjalskjdkf2223")
                 window.status = "1";
             });
         }
 
         you = function () {
             $.get("http://192.168.1.13:21000/print?command=2", function () {
-                console.log("djkslfjalskjdkf2223")
                 window.status = "1";
             });
         }
 
         youstop = function () {
             $.get("http://192.168.1.13:21000/print?command=3", function () {
-                console.log("djkslfjalskjdkf2223")
                 window.status = "1";
             });
         }
 
         hou = function () {
             $.get("http://192.168.1.13:21000/print?command=4", function () {
-                console.log("djkslfjalskjdkf2223")
                 window.status = "1";
             });
         }
 
         houstop = function () {
             $.get("http://192.168.1.13:21000/print?command=5", function () {
-                console.log("djkslfjalskjdkf2223")
                 window.status = "1";
             });
         }
 
         third = function () {
             $.get("http://192.168.1.13:21000/print?command=6", function () {
-                console.log("djkslfjalskjdkf2223")
                 window.status = "1";
             });
         }
 
         thirdstop = function () {
             $.get("http://192.168.1.13:21000/print?command=7", function () {
-                console.log("djkslfjalskjdkf2223")
                 window.status = "1";
             });
         }
 
         gopen = function (i) {
-            console.log("gopen ", window.status != "1")
             if (window.status != "1") {
                 return;
             }
-            console.log("open ", i)
             window.status = "0";
             $.get("http://8.134.19.98:8888/open/" + i, function () {
-                console.log("djkslfjalskjdkf2223")
                 window.status = "1";
             });
         }
 
         gclose = function (i) {
-            console.log("close ", window.status != "1")
             if (window.status != "1") {
                 return;
             }
             window.status = "0";
             $.get("http://8.134.19.98:8888/close/" + i, function () {
-                console.log("djkslfjalskjdkf2223")
                 window.status = "1";
             });
         }
@@ -1500,18 +1457,7 @@
 
         var APIURL = url["protocol"] + "//" + url["host"]
 
-        console.log("APIURL:", APIURL)
-
         getAllTokens();
-    // var url = window.location.href;
-    // console.log("window.location.href:",url);
-    // var url = self.location.href;
-    // console.log("self.location.href:",url);
-    // var url = document.URL;
-    // console.log("document.URL:",url);
-    // var url = document.location;
-    // console.log("document.location:",url["protocol"]+"//"+url["host"]);
-
 
     </script>
 
