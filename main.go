@@ -95,6 +95,8 @@ func main() {
 	Pool.Exec("update tokens set beach_runner = 0")
 
 	http.HandleFunc("/login", LoginH)
+	http.HandleFunc("/addAccount", AddAccountH)
+
 	http.HandleFunc("/update", UpdateH)
 	http.HandleFunc("/test", TestH)
 	http.HandleFunc("/pullAnimal", PullAnimalH)
@@ -4165,6 +4167,27 @@ func LoginH(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func AddAccountH(w http.ResponseWriter, req *http.Request) {
+	account := req.URL.Query().Get("account")
+	password := req.URL.Query().Get("password")
+	uid, token := loginByPasswordReturnUidToken(account, password)
+	if token == "" {
+		io.WriteString(w, "账号或密码错误")
+		return
+	}
+	serverURL := getServerURL()
+	zoneToken, nickname := getNickName(serverURL, token)
+	var id string
+	Pool.QueryRow("select id from tokens where id = ?", uid).Scan(&id)
+	if id != "" {
+		SQL := "update tokens set serverURL = ?, zoneToken = ?, password=? where token = ?"
+		Pool.Exec(SQL, serverURL, zoneToken, token)
+	} else {
+		SQL := "insert into tokens (id, name, token, serverURL, zoneToken, password) values (?, ?, ?, ?, ?, ?)"
+		Pool.Exec(SQL, uid, nickname, token, serverURL, zoneToken, password)
+	}
+	io.WriteString(w, "SUCCESS")
+}
 func LoginH1(s *web.Session) web.Result {
 	id := s.R.URL.Query().Get("id")
 	var token string
@@ -6953,6 +6976,23 @@ func loginByPassword(uid, password string) (token string) {
 	if ok {
 		if errorID == 0 {
 			token = formData["token"].(string)
+		}
+	}
+	return
+}
+
+func loginByPasswordReturnUidToken(uid, password string) (userID float64, token string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("https://login.11h5.com/account/api.php?c=login&d=auth&uid=%v&password=%v&v=%v", uid, password, now)
+	formData := httpGetReturnJson(URL)
+	log.Println("uid ->", uid)
+	log.Println("password ->", password)
+	log.Println("loginByPassword ->", formData)
+	errorID, ok := formData["error"].(float64)
+	if ok {
+		if errorID == 0 {
+			token = formData["token"].(string)
+			userID = formData["uid"].(float64)
 		}
 	}
 	return

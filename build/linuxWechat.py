@@ -58,7 +58,7 @@ def updateToken(userID, nickname, token):
         print("empty userID ", userID)
         return 0
     else:
-        url = 'https://cat.rosettawe.com/update?id='+userID+'&token='+token+'&name='+nickname
+        url = 'https://avu.rosettawe.com/update?id='+userID+'&token='+token+'&name='+nickname
         response=session.get(url)
         data = response.content.decode('utf-8')
         print("update token result is ", data)
@@ -101,9 +101,9 @@ class Cat():
 
 
         
-        qrcode=self.browser.find_element_by_xpath("/html/body/div[1]/div/div/div[2]/div[1]/img").get_attribute('src')
-        session.get("https://cat.rosettawe.com/sendQrcode?qrcode="+qrcode)
-        # session.get("https://cat.rosettawe.com/wechatAPI/sendMsg?qrcode="+qrcode)
+        qrcode=self.browser.find_element_by_xpath("/html/body/div[1]/span[1]/div[1]/img").get_attribute('src')
+        session.get("https://avu.rosettawe.com/sendQrcode?qrcode="+qrcode)
+        # session.get("https://avu.rosettawe.com/wechatAPI/sendMsg?qrcode="+qrcode)
         print(qrcode)
 
         for x in range(100):

@@ -20,6 +20,14 @@
     </button>
 
     <br>
+
+    <input id="account" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="手机号或id" value="" />
+    <input id="password" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="密码" value="" />
+    <button style="font-size:40px;width:400px; height:100px;" onclick="addAccount()">
+        添加账号
+    </button>
+    <br>
+
     <button style="font-size:40px;width:400px; height:100px;" onclick="pullAnimal()">
         拉动物
     </button>
@@ -753,6 +761,29 @@
             // window.location.href = APIURL+"/login?id="+id;
             window.open(APIURL + "/login?id=" + id)
         }
+
+        addAccount = function (){
+            var account = document.getElementById("account").value;
+            var password = document.getElementById("password").value;
+            if (account==""){
+                alert("账号不能为空")
+                return
+            }
+            if (password==""){
+                alert("密码不能为空")
+                return
+            }
+
+            console.log("account is ",account)
+            console.log("password is ",password)
+
+            $.get(APIURL + "/addAccount?account=" + account+"&password="+password, function (data) {
+                    alert(data)
+                    window.location.href="";
+                    window.status = "1";
+                });
+        }
+
 
         getFreeBossCannon = function (id) {
             var r = confirm("是否继续")
