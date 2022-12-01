@@ -64,7 +64,7 @@ type User struct {
 
 func main() {
 
-	confPath := "/etc/cat-srv/cat.properties"
+	confPath := "./cat.properties"
 	if len(os.Args) > 1 {
 		confPath = os.Args[1]
 	}
@@ -2481,6 +2481,8 @@ func DrawH1(s *web.Session) web.Result {
 
 func PlayLuckyWheelH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
+	targetAmountS := req.URL.Query().Get("amount")
+	amount, _ := strconv.Atoi(targetAmountS)
 	sql := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
 
 	if id == "" || id == "0" {
@@ -2511,6 +2513,9 @@ func PlayLuckyWheelH(w http.ResponseWriter, req *http.Request) {
 
 		for {
 			if i >= luckCount {
+				break
+			}
+			if i >= float64(amount) {
 				break
 			}
 			log.Printf("[%v] start playLuckyWheel", name)
@@ -3565,6 +3570,9 @@ func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 
 		zoneToken, firewood, flag, riceCake := getZoneToken_1(serverURL, token)
 
+		upgradeWheel := upgradeWheel(serverURL, zoneToken)
+		fmt.Printf("[%v]upgradeWheel is %v\n", name, upgradeWheel)
+
 		var riceCakeStr string
 		for k, v := range riceCake {
 			riceCakeStr += fmt.Sprintf("[%v:%v]", formatItemName(k), v)
@@ -4449,6 +4457,16 @@ func familySignGo() {
 		j++
 	}
 
+	for _, user := range tokenList {
+		if j >= 2 {
+			time.Sleep(time.Second * 1)
+			j = 1
+		}
+		upgradeWheel := upgradeWheel(user["serverURL"], user["zoneToken"])
+		log.Printf("[%v] upgradeWheel[%v]", user["name"], upgradeWheel)
+		j++
+	}
+
 	// 为大佬海浪、铲子助力
 
 	var times int64 = 1
@@ -4659,6 +4677,9 @@ func othersSign() {
 
 		log.Printf("[%v] familyShop", name)
 		familyShop(serverURL, zoneToken)
+
+		upgradeWheel := upgradeWheel(serverURL, zoneToken)
+		log.Printf("[%v] upgradeWheel[%v]", name, upgradeWheel)
 
 	}
 
@@ -5928,6 +5949,19 @@ func throwDice(serverURL, zoneToken string) bool {
 	}
 	return true
 
+}
+
+func upgradeWheel(serverURL, zoneToken string) bool {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	url := fmt.Sprintf("%v/game?cmd=upgradeWheel&token=%v&now=%v", serverURL, zoneToken, now)
+	formData := httpGetReturnJson(url)
+	if _, ok := formData["wheelUpgradeItem"]; ok {
+		wheelUpgradeItem, ok := formData["wheelUpgradeItem"].(map[string]interface{})
+		if ok {
+			return wheelUpgradeItem["flag"].(bool)
+		}
+	}
+	return false
 }
 
 func exchangeXmas(serverURL, zoneToken string, id int64) bool {

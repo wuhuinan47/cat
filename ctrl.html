@@ -427,6 +427,9 @@
         <option selected="selected" value="">全部</option>
     </select>
 
+    <input id="playLuckyWheelAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="使用值" value="600" />
+
+
     <button style="font-size:40px;width:400px; height:100px;" onclick="playLuckyWheel()">
         幸运夺宝
     </button>
@@ -880,7 +883,11 @@
             if (r == true) {
                 var id = $("#playLuckyWheel option:selected").val();
 
-                $.get(APIURL + "/playLuckyWheel?id=" + id, function (data) {
+                // playLuckyWheelAmount
+                var playLuckyWheelAmount = document.getElementById("playLuckyWheelAmount").value;
+
+
+                $.get(APIURL + "/playLuckyWheel?id=" + id+"&amount="+playLuckyWheelAmount, function (data) {
                     alert(data)
                     window.status = "1";
                 });
