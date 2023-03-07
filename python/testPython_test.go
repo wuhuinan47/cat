@@ -15,7 +15,7 @@ func TestExec(t *testing.T) {
 }
 
 func CmdPythonSaveImageDpi() (err error) {
-	cmd := exec.Command("/usr/local/bin/python3", "/Users/wuhuinan/go/src/github.com/wuhuinan47/cat/tools/wechat.py")
+	cmd := exec.Command("python3", "/Users/wuhuinan/go/src/github.com/wuhuinan47/cat/tools/wechat.py")
 	err = cmd.Run()
 	if err != nil {
 		return

@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>喵喵管家</title>
+<meta charset="UTF-8" />
+<meta name="referrer" content="never">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<link rel="stylesheet" href="https://res.kubeibear.com/css/bootstrap.min.css?v=12" />
+<link rel="stylesheet" href="https://res.kubeibear.com/css/m-style.css?v=17" />
+<link rel="stylesheet" href="https://res.kubeibear.com/css/jquery.gritter.css" />
+<link rel="stylesheet" href="https://res.kubeibear.com/css/layui.css?v=20" media="all">
+<link rel="stylesheet" href="https://res.kubeibear.com/css/font-awesome/css/font-awesome.css?v=1" />
+</head>
+<body>
+<span id=login_tip></span>
+<div id="game">
+    <div class="row-fluid">
+      <div class="span12">
+        <div class="widget-box">
+          <div class="widget-title">
+            <h5>可用 <span class=badge id=day></span> 	     <a class="fa fa-question-circle" href="javascript:;" onclick="action('dayinfo', '')"></a> &nbsp; <a class="fa fa-list-ol" href="#msglist" data-toggle="modal" onclick='show_pay()'></a> &nbsp;
+[ <a href="javascript:;" onclick="open_game()" target="_blank">进游戏</a> ]
+[ <a href="javascript:;" onclick="open_game2()" target="_blank">进游戏2</a> ]
+</h5>
+          </div>
+	            <div class="alert alert-info"><span id=nickname></span> <span id=uid></span> <span id=level></span>星/<span id=island></span>岛/<span id=landname></span> <span class="label label-warning hide" id="reset1">当前离线中,点右边小圈圈马上重连 <a class="fa fa-refresh fa-lg" onclick='restart_game()'></a></span><a class="fa fa-refresh fa-lg" onclick='restart_game()' id="reset2"></a></div>
+          <div id='landinfo' class="alert"><span id=building_info class='badge badge-success'></span> <a class="fa fa-question-circle" data-content=" - 代表建筑被打残、(S)代表迷你盾" onclick='tips(this)'></a> 过岛还需：<span id=need_money></span><a class="fa fa-question-circle" href="#building_list" data-toggle="modal" onclick='show_building()'></a> <span id=can_next_building></span>　</div>
+          <div id='moneyinfo' class="alert alert-success">护盾<span class="badge badge-info" id=shield></span>、能量<span class="badge badge-info" id=tili></span><a class="fa fa-question-circle"  id="zhuanpan_maybe" data-content="转盘预计分钟" onclick='tips(this)'></a>、消耗<span class="badge badge-important" id=today_tili></span><a class="fa fa-question-circle" data-content="当天消耗的能量计数" onclick='tips(this)'></a>、恢复CD<span class="badge badge-info" id=last_tili></span>、邮件储备<span class="badge badge-important" id=mail_save></span> <a href='javascript:;' onclick="open_let()"><i class="fa fa-hand-o-left"></i></a>、金币<span class="badge badge-info" id=money></span>、迷你盾<span class="badge badge-info" id=minishield></span>、矿工采集<span class="badge badge-info" id=now_minegold></span> <a href='javascript:;' onclick='action("collect", "")'><i class="fa fa-hand-o-left"></i></a>、矿工等级<span class="badge badge-info" id=mineland></span>、矿工解锁个数<span class="badge badge-info" id=unlocknum></span>、矿工解锁所需<span class="badge badge-info" id=unlockgold></span>、幸运币<span class="badge badge-info" id=luckcoin></span>、夺宝币<span class="badge badge-info" id=wheelcoin></span> <a href='javascript:;' onclick="open_wheel()"><i class="fa fa-hand-o-left"></i></a>、双倍卡<span class="badge badge-info" id=card2></span>、公会任务<span class="badge badge-important" id='family_mission'></span><a class="fa fa-list-ol" href="javascript:;" onclick='show_missions("show_family_mission")'></a>、日常任务<span class="badge badge-info" id=daily></span><a class="fa fa-list-ol" href="javascript:;" onclick='show_missions("show_daily")'></a><!--、龙舟任务<span class="badge badge-info" id='boat_mission'></span><a class="fa fa-list-ol" href="javascript:;" onclick='show_missions("show_boat_mission")'></a-->、排行<span id=rank class='badge badge-info'></span><!--、 >>>联系优惠猫 <a href="javascript:;" class="fa fa-commenting fa-lg" style="color:#3A87AD" onclick="tip_mao(418136448)"></a--></div>
+        </div>
+      </div>
+    </div>
+
+      <div class="layui-collapse" id="manager" lay-filter="showcoll">
+        <div class="layui-colla-item">
+          <li class="layui-colla-title">【管家设置】(登陆时间<span id=online_time></span>)</li>
+          <div class="widget-box layui-colla-content layui-show">
+
+<div class="layui-tab layui-tab-card">
+  <ul class="layui-tab-title">
+    <li class="">简单</li>
+    <li class="layui-this">高级</li>
+    <li class="">转盘</li>
+    <li class="">其它</li>
+    <li class="" >管理</li>    <!--li class="">奖池</li-->
+  </ul>
+  <div class="layui-tab-content">
+    <div class="layui-tab-item">
+		<div class="alert alert-error">
+			<button class="layui-btn layui-btn-normal layui-btn-radius" onclick="setmode('stop')">清空设置</button>
+			<button class="layui-btn layui-btn-normal layui-btn-radius" onclick="setmode('normal')">标准设置</button><br>
+			<button class="layui-btn layui-btn-normal layui-btn-radius" onclick="setmode('upgrade')">升岛模式</button>
+			<button class="layui-btn layui-btn-normal layui-btn-radius" onclick="setmode('empty')">空岛模式</button><br>
+			<button class="layui-btn layui-btn-normal layui-btn-radius" onclick="setmode('def')">防御模式</button>
+					</div>
+		<div class="alert">仅供新手操作，注:【升岛模式】不要随便点哦</div>
+    </div>
+    <div class="layui-tab-item layui-show">
+		<form class="layui-form" action="">
+		<div class="layui-form-item">
+		<input type="checkbox" id="set_zhuanpan" title="自动转盘" lay-filter="set_zhuanpan">
+		<input type="checkbox" id="set_shield" title="持续满盾">
+		<input type="checkbox" id="set_passland" title="过岛就停"><br>
+
+		<input type="checkbox" id="set_petlong" title="持久伙伴">
+		<input type="checkbox" id="set_petauto" title="自动队长">
+		<input type="checkbox" id="set_minishield" title="自动迷你盾"><br>
+
+		<input type="checkbox" id="set_autodel" title="自动友尽"> 
+		<input type="checkbox" id="set_online" title="掉线重连">
+		<input type="checkbox" id="set_livedone" title="过期兑换"><br>
+
+		<input type="checkbox" id="set_no1" title="抢世界榜"> 
+		<input type="checkbox" id="set_lastreward" title="延后领能量"><br>
+
+		</div>
+		</form>
+	      <button type="submit" class="btn btn-success" onclick="setting('');">保存生效设置</button>　<a href='javascript:;' class="fa fa-question-circle" onclick='open_contral_help()'></a>
+    </div>
+    <div class="layui-tab-item">
+		<div class="layui-form-item">
+		<div class="alert alert-error">
+
+			<form class="layui-form" action="">
+			<div class="layui-form-item">
+			
+			<input type="checkbox" id="set_byemoney" title="放弃偷取">　　<input type="checkbox" id="set_kill_normal" title="随机攻击"><br>
+			<input type="checkbox" id="set_kill_ware" title="攻击专属">　　<input type="checkbox" id="set_kill_tongji" class="layui-bg-orange" title="神之助攻" lay-filter="set_kill_tongji"><br>
+			<input type="checkbox" id="set_collect" title="矿满自取">　　<input type="checkbox" id="set_change_auto" title="自动兑换"><br>
+			<input type="checkbox" id="set_automutil" title="智能倍率">　　<input type="checkbox" id="set_keep_bet" title="强制1倍率"><br>
+			<input type="checkbox" id="set_keep_bet3" title="强制3倍率">　　<input type="checkbox" id="set_keep_bet5" title="强制5倍率"><br>
+			</div>
+			</form>
+
+			<label class="control-label">转盘能量保留</label> <input id="set_keep_tili" type="text" placeholder="200" style='width:80px'> <a class="fa fa-question-circle" data-content="默认是空 不保留能量，可以输入200或者300或者100，点保存生效设置，自动转盘转到该能量 就会取消停止自动转盘，保留能量 便于持续满盾" onclick='tips(this)'></a><br>
+			<label class="control-label">限定能量消耗</label> <input id="set_limit_tili" type="text" placeholder="0" style='width:80px'> <a class="fa fa-question-circle" data-content="默认是2000 限制每天只转2000，可以输入500或者1000或者2000或99999，为公会做输出贡献，设置好后 点保存生效设置，当你的自动转盘转到该能量 就会取消停止自动转盘" onclick='tips(this)'></a><br>
+    <label>定时自动转盘</label>
+    <select id="zhuan_timer_hour" onchange="timer_set('zhuan_timer', 'hour', this.value)">
+        <option value="88">取消</option>
+        <option value="0">0时</option> <option value="1">1时</option> <option value="2">2时</option> <option value="3">3时</option> <option value="4">4时</option> <option value="5">5时</option> <option value="6">6时</option> <option value="7">7时</option> <option value="8">8时</option> <option value="9">9时</option> <option value="10">10时</option> <option value="11">11时</option> <option value="12">12时</option> <option value="13">13时</option> <option value="14">14时</option> <option value="15">15时</option> <option value="16">16时</option> <option value="17">17时</option> <option value="18">18时</option> <option value="19">19时</option> <option value="20">20时</option> <option value="21">21时</option> <option value="22">22时</option> <option value="23">23时</option> 
+    </select>
+    <select id="zhuan_timer_min" onchange="timer_set('zhuan_timer', 'min', this.value)">
+        <option value="88">取消</option>
+        <option value="1">1分</option> <option value="2">2分</option> <option value="3">3分</option> <option value="4">4分</option> <option value="5">5分</option> <option value="6">6分</option> <option value="7">7分</option> <option value="8">8分</option> <option value="9">9分</option> <option value="10">10分</option> <option value="11">11分</option> <option value="12">12分</option> <option value="13">13分</option> <option value="14">14分</option> <option value="15">15分</option> <option value="16">16分</option> <option value="17">17分</option> <option value="18">18分</option> <option value="19">19分</option> <option value="20">20分</option> <option value="21">21分</option> <option value="22">22分</option> <option value="23">23分</option> <option value="24">24分</option> <option value="25">25分</option> <option value="26">26分</option> <option value="27">27分</option> <option value="28">28分</option> <option value="29">29分</option> <option value="30">30分</option> <option value="31">31分</option> <option value="32">32分</option> <option value="33">33分</option> <option value="34">34分</option> <option value="35">35分</option> <option value="36">36分</option> <option value="37">37分</option> <option value="38">38分</option> <option value="39">39分</option> <option value="40">40分</option> <option value="41">41分</option> <option value="42">42分</option> <option value="43">43分</option> <option value="44">44分</option> <option value="45">45分</option> <option value="46">46分</option> <option value="47">47分</option> <option value="48">48分</option> <option value="49">49分</option> <option value="50">50分</option> <option value="51">51分</option> <option value="52">52分</option> <option value="53">53分</option> <option value="54">54分</option> <option value="55">55分</option> <option value="56">56分</option> <option value="57">57分</option> <option value="58">58分</option> <option value="59">59分</option>
+    </select>
+<a class="fa fa-question-circle" data-content="周一 ~ 周六 有效<br>错过定时时间，自行勾选【自动转盘】或 定时到后面时间" onclick='tips(this)'></a><br>
+
+    <label>定时关闭转盘</label>
+    <select id="zhuan_timer2_hour" onchange="timer_set('zhuan_timer2', 'hour', this.value)">
+        <option value="88">取消</option>
+        <option value="0">0时</option> <option value="1">1时</option> <option value="2">2时</option> <option value="3">3时</option> <option value="4">4时</option> <option value="5">5时</option> <option value="6">6时</option> <option value="7">7时</option> <option value="8">8时</option> <option value="9">9时</option> <option value="10">10时</option> <option value="11">11时</option> <option value="12">12时</option> <option value="13">13时</option> <option value="14">14时</option> <option value="15">15时</option> <option value="16">16时</option> <option value="17">17时</option> <option value="18">18时</option> <option value="19">19时</option> <option value="20">20时</option> <option value="21">21时</option> <option value="22">22时</option> <option value="23">23时</option> 
+    </select>
+    <select id="zhuan_timer2_min" onchange="timer_set('zhuan_timer2', 'min', this.value)">
+        <option value="88">取消</option>
+        <option value="0">0分</option> <option value="1">1分</option> <option value="2">2分</option> <option value="3">3分</option> <option value="4">4分</option> <option value="5">5分</option> <option value="6">6分</option> <option value="7">7分</option> <option value="8">8分</option> <option value="9">9分</option> <option value="10">10分</option> <option value="11">11分</option> <option value="12">12分</option> <option value="13">13分</option> <option value="14">14分</option> <option value="15">15分</option> <option value="16">16分</option> <option value="17">17分</option> <option value="18">18分</option> <option value="19">19分</option> <option value="20">20分</option> <option value="21">21分</option> <option value="22">22分</option> <option value="23">23分</option> <option value="24">24分</option> <option value="25">25分</option> <option value="26">26分</option> <option value="27">27分</option> <option value="28">28分</option> <option value="29">29分</option> <option value="30">30分</option> <option value="31">31分</option> <option value="32">32分</option> <option value="33">33分</option> <option value="34">34分</option> <option value="35">35分</option> <option value="36">36分</option> <option value="37">37分</option> <option value="38">38分</option> <option value="39">39分</option> <option value="40">40分</option> <option value="41">41分</option> <option value="42">42分</option> <option value="43">43分</option> <option value="44">44分</option> <option value="45">45分</option> <option value="46">46分</option> <option value="47">47分</option> <option value="48">48分</option> <option value="49">49分</option> <option value="50">50分</option> <option value="51">51分</option> <option value="52">52分</option> <option value="53">53分</option> <option value="54">54分</option> <option value="55">55分</option> <option value="56">56分</option> <option value="57">57分</option> <option value="58">58分</option> <option value="59">59分</option>
+    </select><br>
+
+    <label>掉线重连间隔</label>
+    <select id="offline_timer_min" onchange="timer_set('offline_timer', 'min', this.value)">
+        <option value="5">5分钟</option>
+        <option value="0">10分钟</option>
+        <option value="1">15分钟</option>
+        <option value="2">20分钟</option>
+        <option value="3">30分钟</option>
+    </select><br>
+			<button type="submit" class="btn btn-success" onclick="setting('');">保存生效设置</button>　<a href='javascript:;' class="fa fa-question-circle" onclick='open_zhuan_set()'></a>
+		</div>
+            </div>
+
+    </div>
+    <div class="layui-tab-item">
+		<div class="layui-form-item">
+		<div class="alert alert-error">
+		<button class="layui-btn layui-btn-normal layui-btn-radius" onclick="upgrade_building()">升个建筑</button>
+		<button class="layui-btn layui-btn-warm layui-btn-radius" onclick="upgrade_all_building()">一键过岛</button>
+		</div>
+                <form class="layui-form" action="">
+                <div class="layui-form-item">
+		<input type="checkbox" id="set_building" title="不升建筑" lay-filter="set_building">
+		<input type="checkbox" id="set_onebuilding" title="升个建筑停转">
+		<input type="checkbox" id="set_unsortbuilding" title="乱序建筑"><br>
+
+		<input type="checkbox" id="set_mine" title="升级矿工">
+		<input type="checkbox" id="set_onemine" title="升个矿工停转">
+		<input type="checkbox" id="set_fix_building" title="建筑修复"><br>
+
+			<input type="checkbox" id="set_tiligife_bye" title="不领消耗奖"> <input type="checkbox" id="set_outmail" title="不领邮件奖" lay-filter="set_outmail"><br>
+			<input type="checkbox" id="set_no_luckwheel" title="不用夺宝币"> <input type="checkbox" id="set_no_luckgold" title="不用幸运币">
+                </div>
+                </form>
+	      <button type="submit" class="btn btn-success" onclick="setting('');">保存生效设置</button>　<a href='javascript:;' class="fa fa-question-circle" onclick='open_contral_help()'></a>
+		</div>
+    </div>
+
+			    <div class="layui-tab-item">
+                <div class="alert alert-error"> 请授权可控制你的号(但不能进你的链接) </div>
+                <div class="alert">
+			<form class="layui-form" action="">
+								<label>文【至尊💎】 <a href='javascript:;' onclick="show_player(528709900)">528709900</a> 授权控制</label> <input type="checkbox" id="set_contral_528709900" name="set_contral" value="528709900" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"> <a class="fa fa-question-circle" data-content="授权，允许上面的号，可以控制你的号<br>比如摸龙、转盘，但无法进你号的链接" onclick='tips(this)'></a><br>
+								<label>雨花石【至尊🦁】 <a href='javascript:;' onclick="show_player(414405010)">414405010</a> 授权控制</label> <input type="checkbox" id="set_contral_414405010" name="set_contral" value="414405010" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"> <a class="fa fa-question-circle" data-content="授权，允许上面的号，可以控制你的号<br>比如摸龙、转盘，但无法进你号的链接" onclick='tips(this)'></a><br>
+							</form>
+                </div>
+            </div>
+		
+                
+
+    <!--div class="layui-tab-item">
+	<div class="alert alert-info"><span class="label label-info">当前奖池天数</span><b><span class="label label-warning" id="inside_day">0</span></b><a href='javascript:;' onclick='show_inside_reward()'><span class='label label-success'>参与名单</span></a><br>本期上证指数：<span id='inside_now'></span><br>
+		本期获得签号：<span id="inside_id"></span></div>
+	<div class="alert alert-error">
+<button type="button" class="layui-btn layui-btn-normal layui-btn-radius" onclick="action('inside_reward', '确定要扣除1天，投入奖池兑换一签号，有机会赢得奖池里的天数哦')">我要参与奖池</button><br>
+	1.投入天数-1天，得随机签号（如2819）<br>
+	2.周五15点百度<a href='javascript:;' onclick='open_show("上证指数","<img src=https://res.kubeibear.com/img/gupiaozs.png>")'><i class="fa fa-search"></i></a>上证指数，匹配之前抽的签<br>
+	3.周六发奖，如有100天，扣除20%夺得80天<br>
+	4.如多人中签平分。无得主，奖池延期<br>
+	5.每周可参与1次，如延期下周可再抽个号<br>
+	</div>
+    </div-->
+
+  </div>
+</div>
+
+          </div>
+        </div>
+        <div class="layui-colla-item">
+          <li class="layui-colla-title">【游戏功能】</li>
+          <div class="widget-box layui-colla-content">
+
+
+		  <div class="layui-tab layui-tab-card">
+		    <ul class="layui-tab-title">
+		      <li class="">伙伴</li>
+		      <li class="" id='tag_tongji'>通缉</li>
+		      		      <li class="">打肥龙</li>
+		      <!--li class="">怪兽</li-->
+		      		      <li class="" onclick='flush_wareto()'>调控</li>		      <li class="layui-this">公会</li>
+		    </ul>
+		  <div class="layui-tab-content">
+		    <div class="layui-tab-item">
+		    <ul class="recent-posts" style="text-align:center">
+			<img src='' id='petfollow'><br>
+			<span class="label label-success" id='petname'></span> <span>经验条 <span id="petexp"></span> / <span id="petupexp"></span> </span>
+			<div class="progress progress-mini active progress-striped"> <div style="width:100%;" id="petexplen" class="bar"></div> </div>
+			<div class="alert">
+			罢工时间<span class="label label-important" id='petdone'></span><br>
+			等级<span class="label label-important" id='petlv'></span>、
+			伙伴零食<span class="label label-important" id='petfood'></span>、伙伴爱心<span class="label label-important" id='petheart'></span>
+			</div>
+                            <div class="alert alert-error">
+                                <label>跟随</label>
+                                <select id="set_petid" onchange="set_pet('id', this.value)">
+                                    <option value="0">取消</option>
+                                    <option value="1">大队长</option>
+                                    <option value="3">猫警官</option>
+                                    <option value="2">名侦探</option>
+                                    <option value="4">大恶霸</option>
+                                </select><a class="fa fa-question-circle" data-content="指定平时跟随的小伙伴，当大队长防御结束会自动切回" onclick='tips(this)'></a>
+
+                                <label>升伙伴</label>
+                                <select id="set_petupgrade" onchange="set_pet('upgrade', this.value)"> 
+                                    <option value="0">取消</option>
+                                    <option value="1">大队长</option>
+                                    <option value="3">猫警官</option>
+                                    <option value="2">名侦探</option>
+                                    <option value="4">大恶霸</option>
+                                </select><a class="fa fa-question-circle" data-content="转盘过程中切换伙伴，可以增加经验，转完切回平时跟随宠物，通缉中无效<br>(拉动物限15分钟！！！)" onclick='tips(this)'></a>
+
+                            </div>
+			<a href="javascript:;" onclick="apiact('eat','food')" class="btn btn-success">吃零食</a>
+			<a href="javascript:;" onclick="apiact('eat','food40')" class="btn btn-success">吃零食(40个)</a>
+			<a href="javascript:;" onclick="apiact('eat','heart')" class="btn btn-success">吃爱心(10个)</a>
+
+		    </ul>
+		   </div>
+
+			    <div class="layui-tab-item">
+			    <ul class="recent-posts" style="text-align:center">
+				<div class="alert">现有通缉令<span class="label label-important" id=tongjilin></span><br>
+				<label class="control-label">攻击</label><a class="fa fa-question-circle" data-content="比如你有仇人ID/好友ID，就可以放进来，点使用通缉令(通缉这个ID)，或者点保存生效设置(转盘 会优先攻击这个ID)" onclick='tips(this)'></a><input id="set_badgay_uid" type="text" placeholder="好友/仇人ID" style='width:80px'> <a href='javascript:;' onclick="show_player2()" class="btn btn-success">侦查</a> 				<a href="javascript:;" onclick="tongji()" class="btn btn-success">通缉</a>
+				<br>
+				<label class="control-label">连续</label><a class="fa fa-question-circle" data-content="不填就打到平岛为止。填数字用完N张为止。点【清除攻击ID】即可停止连续通缉" onclick='tips(this)'></a><input id="set_tongji_times" type="text" placeholder="N张" style='width:30px'><a href="javascript:;" onclick="tongji_rep()" class="btn btn-success">持续通缉</a>
+				<a href="javascript:;" onclick="action('tongji_cancel', '')" class="btn btn-success">取消通缉</a><br>
+				<a href="javascript:;" onclick="clear_bad_gay();" class="btn btn-success">清除攻击ID</a>
+				<a href="javascript:;" onclick="action('look_tongji', '')" class="btn btn-success">查看通缉</a>
+				<a href='javascript:;' onclick='add_friend()' class="btn btn-success">添加好友</a><br>
+				<button type="submit" class="btn btn-success" onclick="setting('');">保存生效设置</button>
+
+				<!--br><br><select id="badgay_finish" onchange="setting('');">
+					<option value="1">仇人 1/25完成度</option>
+					<option value="5">仇人 5/25完成度</option>
+					<option value="10">仇人 10/25完成度</option>
+					<option value="15">仇人 15/25完成度</option>
+					<option value="20">仇人 20/25完成度</option>
+                                      </select>
+				<form class="layui-form" action="">
+					<label>通缉仇人</label><input type="checkbox" id="set_auto_badgay" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"> <a class="fa fa-question-circle" data-content="监控中的仇人如果建筑<br>完成度 >= 默认15/25，并且有变动<br>就会自动安排通缉<br>中途点保存或进游戏<br>就会撤销这次通缉" onclick='tips(this)'></a><br>
+
+				</form>
+				<div id="chat-messages-inner">
+				<span id=badgay></span>
+				</div-->
+				</div>
+
+			    </ul>
+			    </div>
+
+
+		    <div class="layui-tab-item" style="text-align:center">
+			<img src="https://res.kubeibear.com/images/boss.jpg?v=1"><br>
+<div class="alert">召唤石<span class="label label-important" id=titan_stone></span><span class="label label-important" id=titan_free></span>、<a href="javascript:;" onclick="change_family_coin('2')"><i class="fa fa-plus-square fa-lg"></i></a>打龙炮弹<span class="label label-important" id=titan_ball></span>　<a class="fa fa-search fa-lg" href="javascript:;" onclick='show_missions("show_reward_boss")'></a><br>
+今日召唤<span class="label label-important" id=today_stone></span>、今日摸龙<span class="label label-important" id=today_boss></span></div>
+
+<div class="alert alert-success">
+		<a href="javascript:;" onclick="auto_boss()" class="btn btn-success">一键打龙</a>
+		<a href="javascript:;" onclick="action('get_bossreward', '')" class="btn btn-success">领奖</a><br>
+		<a href="javascript:;" onclick="action('call_boss', '')" class="btn btn-success">召唤</a>
+		<a href="javascript:;" onclick="action('atk', '')" class="btn btn-success">秒杀</a>
+		<a href="javascript:;" onclick="touch_me_boss(1)" class="btn btn-success">自己打</a>
+		<a href="javascript:;" onclick="touch_me_boss(5)" class="btn btn-success">自己打(5次)</a><br>
+		<a href="javascript:;" onclick="check_touch_boss()" class="btn btn-success">查摸龙</a>
+		<!--a href="javascript:;" onclick="touch_boss()" id='touch_boss_btn' class="btn btn-success">摸龙</a-->
+		<input type="button" id='touch_boss_again_btn' class="btn btn-success" value="持续摸龙" /><br>
+		<a href="javascript:;" onclick="search_boss()" class="btn btn-success">查询好友肥龙</a>
+		<a href="javascript:;" onclick="atk_friend_boss()" class="btn btn-success">摸龙好友肥龙</a><br>
+		<select id="friend_boss" style="width:220px" ><option value=""></option></select><br>
+		<div id='info' class="badge badge-warning"></div>
+</div>
+
+<div class="alert alert-error">
+    <label>使用一召唤石</label>
+    <select id="bigboss_timer_hour" onchange="timer_set('bigboss_timer', 'hour', this.value)">
+        <option value="0">取消</option>
+        <option value="1">1时</option> <option value="2">2时</option> <option value="3">3时</option> <option value="4">4时</option> <option value="5">5时</option> <option value="6">6时</option> <option value="7">7时</option> <option value="8">8时</option> <option value="9">9时</option> <option value="10">10时</option> <option value="11">11时</option> <option value="12">12时</option> <option value="13">13时</option> <option value="14">14时</option> <option value="15">15时</option> <option value="16">16时</option> <option value="17">17时</option> <option value="19">19时</option> <option value="20">20时</option> <option value="21">21时</option> <option value="22">22时</option> <option value="23">23时</option>
+    </select>
+    <select id="bigboss_timer_min" onchange="timer_set('bigboss_timer', 'min', this.value)">
+        <option value="0">取消</option>
+        <option value="1">1分</option> <option value="2">2分</option> <option value="3">3分</option> <option value="4">4分</option> <option value="5">5分</option> <option value="6">6分</option> <option value="7">7分</option> <option value="8">8分</option> <option value="9">9分</option> <option value="10">10分</option> <option value="11">11分</option> <option value="12">12分</option> <option value="13">13分</option> <option value="14">14分</option> <option value="15">15分</option> <option value="16">16分</option> <option value="17">17分</option> <option value="18">18分</option> <option value="19">19分</option> <option value="20">20分</option> <option value="21">21分</option> <option value="22">22分</option> <option value="23">23分</option> <option value="24">24分</option> <option value="25">25分</option> <option value="26">26分</option> <option value="27">27分</option> <option value="28">28分</option> <option value="29">29分</option> <option value="30">30分</option> <option value="31">31分</option> <option value="32">32分</option> <option value="33">33分</option> <option value="34">34分</option> <option value="35">35分</option> <option value="36">36分</option> <option value="37">37分</option> <option value="38">38分</option> <option value="39">39分</option> <option value="40">40分</option> <option value="41">41分</option> <option value="42">42分</option> <option value="43">43分</option> <option value="44">44分</option> <option value="45">45分</option> <option value="46">46分</option> <option value="47">47分</option> <option value="48">48分</option> <option value="49">49分</option> <option value="50">50分</option> <option value="51">51分</option> <option value="52">52分</option> <option value="53">53分</option> <option value="54">54分</option> <option value="55">55分</option> <option value="56">56分</option> <option value="57">57分</option> <option value="58">58分</option> <option value="59">59分</option>
+    </select>
+	<br>
+    <label>定时持续摸龙</label>
+    <select id="agboss_timer_hour" onchange="timer_set('agboss_timer', 'hour', this.value)">
+        <option value="0">取消</option>
+        <option value="1">1时</option> <option value="2">2时</option> <option value="3">3时</option> <option value="4">4时</option> <option value="5">5时</option> <option value="6">6时</option> <option value="7">7时</option> <option value="8">8时</option> <option value="9">9时</option> <option value="10">10时</option> <option value="11">11时</option> <option value="12">12时</option> <option value="13">13时</option> <option value="14">14时</option> <option value="15">15时</option> <option value="16">16时</option> <option value="17">17时</option> <option value="19">19时</option> <option value="20">20时</option> <option value="21">21时</option> <option value="22">22时</option> <option value="23">23时</option>
+    </select>
+    <select id="agboss_timer_min" onchange="timer_set('agboss_timer', 'min', this.value)">
+        <option value="0">取消</option>
+        <option value="1">1分</option> <option value="2">2分</option> <option value="3">3分</option> <option value="4">4分</option> <option value="5">5分</option> <option value="6">6分</option> <option value="7">7分</option> <option value="8">8分</option> <option value="9">9分</option> <option value="10">10分</option> <option value="11">11分</option> <option value="12">12分</option> <option value="13">13分</option> <option value="14">14分</option> <option value="15">15分</option> <option value="16">16分</option> <option value="17">17分</option> <option value="18">18分</option> <option value="19">19分</option> <option value="20">20分</option> <option value="21">21分</option> <option value="22">22分</option> <option value="23">23分</option> <option value="24">24分</option> <option value="25">25分</option> <option value="26">26分</option> <option value="27">27分</option> <option value="28">28分</option> <option value="29">29分</option> <option value="30">30分</option> <option value="31">31分</option> <option value="32">32分</option> <option value="33">33分</option> <option value="34">34分</option> <option value="35">35分</option> <option value="36">36分</option> <option value="37">37分</option> <option value="38">38分</option> <option value="39">39分</option> <option value="40">40分</option> <option value="41">41分</option> <option value="42">42分</option> <option value="43">43分</option> <option value="44">44分</option> <option value="45">45分</option> <option value="46">46分</option> <option value="47">47分</option> <option value="48">48分</option> <option value="49">49分</option> <option value="50">50分</option> <option value="51">51分</option> <option value="52">52分</option> <option value="53">53分</option> <option value="54">54分</option> <option value="55">55分</option> <option value="56">56分</option> <option value="57">57分</option> <option value="58">58分</option> <option value="59">59分</option>
+    </select>
+	<br>
+    <label>定时一键打龙</label>
+    <select id="boss_timer_hour" onchange="timer_set('boss_timer', 'hour', this.value)">
+        <option value="0">取消</option>
+        <option value="1">1时</option> <option value="2">2时</option> <option value="3">3时</option> <option value="4">4时</option> <option value="5">5时</option> <option value="6">6时</option> <option value="7">7时</option> <option value="8">8时</option> <option value="9">9时</option> <option value="10">10时</option> <option value="11">11时</option> <option value="12">12时</option> <option value="13">13时</option> <option value="14">14时</option> <option value="15">15时</option> <option value="16">16时</option> <option value="17">17时</option> <option value="19">19时</option> <option value="20">20时</option> <option value="21">21时</option> <option value="22">22时</option> <option value="23">23时</option>
+    </select>
+    <select id="boss_timer_min" onchange="timer_set('boss_timer', 'min', this.value)">
+        <option value="0">取消</option>
+        <option value="1">1分</option> <option value="2">2分</option> <option value="3">3分</option> <option value="4">4分</option> <option value="5">5分</option> <option value="6">6分</option> <option value="7">7分</option> <option value="8">8分</option> <option value="9">9分</option> <option value="10">10分</option> <option value="11">11分</option> <option value="12">12分</option> <option value="13">13分</option> <option value="14">14分</option> <option value="15">15分</option> <option value="16">16分</option> <option value="17">17分</option> <option value="18">18分</option> <option value="19">19分</option> <option value="20">20分</option> <option value="21">21分</option> <option value="22">22分</option> <option value="23">23分</option> <option value="24">24分</option> <option value="25">25分</option> <option value="26">26分</option> <option value="27">27分</option> <option value="28">28分</option> <option value="29">29分</option> <option value="30">30分</option> <option value="31">31分</option> <option value="32">32分</option> <option value="33">33分</option> <option value="34">34分</option> <option value="35">35分</option> <option value="36">36分</option> <option value="37">37分</option> <option value="38">38分</option> <option value="39">39分</option> <option value="40">40分</option> <option value="41">41分</option> <option value="42">42分</option> <option value="43">43分</option> <option value="44">44分</option> <option value="45">45分</option> <option value="46">46分</option> <option value="47">47分</option> <option value="48">48分</option> <option value="49">49分</option> <option value="50">50分</option> <option value="51">51分</option> <option value="52">52分</option> <option value="53">53分</option> <option value="54">54分</option> <option value="55">55分</option> <option value="56">56分</option> <option value="57">57分</option> <option value="58">58分</option> <option value="59">59分</option>
+    </select>
+<br>一键打龙：用掉所有的召唤石和炮弹 慎用！或设置保留！
+</div>
+<div class="alert alert-info">
+		<form class="layui-form" action="">
+			<label>自动领奖摸龙</label><input type="checkbox" id="set_auto_rewardboss" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"><a class="fa fa-question-circle" data-content="在多个时间段会检测领奖(打龙/龙舟)或炮弹大于3个 就自动持续摸龙，并自动召唤大号的免召唤石，避免隔天12点浪费炮弹被重置" onclick='tips(this)'></a><br>
+			<label>抽取打龙能量</label><input type="checkbox" id="set_boss_get" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"><a class="fa fa-question-circle" data-content="转盘没能量、或自动兑换的情况下护盾剩1个优先提取打龙能量，再考虑自动兑换" onclick='tips(this)'></a><br>
+			<label>日常任务打龙</label><input type="checkbox" id="set_boss_daily" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"><a class="fa fa-question-circle" data-content="完成每日领到的日常任务:攻击自己的恶龙5/10次,浪费炮弹不建议勾选，(在召唤时自动触发完成)" onclick='tips(this)'></a><br>
+			<label>龙舟任务打龙</label><input type="checkbox" id="set_boss_boat" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"><a class="fa fa-question-circle" data-content="完成每日领到的龙舟任务:攻击自己的恶龙15次,浪费炮弹不建议勾选，(在召唤时自动触发完成)" onclick='tips(this)'></a><br>
+			<label>强制不领奖励</label><input type="checkbox" id="set_boss_unreward" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"><a class="fa fa-question-circle" data-content="放弃自动领奖" onclick='tips(this)'></a><br>
+			<label>只打免召唤石</label><input type="checkbox" id="set_boss_free" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"><a class="fa fa-question-circle" data-content="持续摸龙只消化专属的免召唤石龙，不动库存龙" onclick='tips(this)'></a>
+		</form>
+
+			<label class="control-label">召唤石保留</label><input id="set_limit_stone" type="text" placeholder="0" style='width:80px'> <a class="fa fa-question-circle" data-content="限定使用当前的召唤石，避免召唤石打光。如果要打完召唤石和打龙炮弹，这里请填写0或者空着，点保存" onclick='tips(this)'></a><br>
+			<label class="control-label">摸龙限制数</label><input id="set_limit_boss" type="text" placeholder="0" style='width:80px'> <a class="fa fa-question-circle" data-content="限定当天持续摸龙只数，比如今天只打10只龙，填写10，否则填写0或者空着不限制次数" onclick='tips(this)'></a>
+</div>
+				<button type="submit" class="btn btn-success" onclick="setting('');">保存生效设置</button>
+		    </div>
+
+
+
+			    <div class="layui-tab-item">
+			    <ul class="recent-posts" style="text-align:center"><div class="alert alert-info" style="text-align:left"><span class="label">拉动物可用</span><span class="label label-important" id=rob_day></span>(仅限制多公会拉动物，其它不变)<br>1.每日点调控，即签到成功，当天可自动拉动物<br>2.专属拉动物信息可以在日志中看到<br>3.点公会ID可筛选好友<font color=red>(>5个专属才显示公会)</font></div>
+				<table class="layui-table" lay-size="sm">
+				  <thead>
+				    <tr>
+				      <th>公会ID</th>
+				      <th>专属数量>5</th>
+				      <th>药水</th>
+				      <th>规则设置</th>
+				    </tr> 
+				  </thead>
+				  <tbody id="flush_wareto">
+				  </tbody>
+				</table>
+			    </ul>
+			    </div>
+
+
+			    <div class="layui-tab-item layui-show">
+			    <ul class="recent-posts" style="text-align:center">
+								<center><div style="width:299px;height:122px;background:url(https://res.kubeibear.com/images/family.jpg?v=2)">
+									<div style='padding-top: 88px;padding-left: 3px;float: left;'><button class="layui-btn layui-btn-sm layui-btn-danger" onclick="family_exit()">退出公会</button></div>
+					<div style="margin: 0px 75px 0px 0px;"><span id=fflower></span></div>
+				</div></center>
+				<span id="family_add">添加公会<input id="add_family_id" type="text" placeholder="输数字ID" style='width:80px'><a href="javascript:;" onclick="family_add()" class="btn btn-success">添加</a>
+				</span>
+
+				<span id="family"><div class="alert">公会ID<span class="label label-important" id='familyId'></span>、<span class="label label-important" id='family_title'></span> <span class="label label-important" id="fname"></span>、排名<span class="label label-important" id='family_rank'></span><br>等级<span class="label label-important" id='familyLv'></span>、经验<span class="label label-important" id='familyActive'></span>、钥匙<span class="label label-important" id='family_key'></span><br><span id='familyPriv'></span> 活跃<span class="label label-important" id='familyWeekActive'></span>、总贡献<span class="label label-important" id='familyTotalActive'></span>、公会币<span class="label label-important" id='familyCoin'></span><br>
+					18元药水包<a href="javascript:;" onclick="buy_robstone18('418136448')"><i class="fa fa-cart-plus fa-2x"></i></a> 、 药水<span class="label label-important" id='robstone'></span> <a href="javascript:;" onclick="buy_robstone('418136448')"><i class="fa fa-cart-plus fa-2x"></i></a></div>
+				      <div class="alert alert-error">
+				      <div id="family_setting"><label>公会门槛</label>
+				      <select id="family_join" onchange="family_join(this.value)">
+					<option value="0">0星</option>
+					<option value="50">50星</option>
+					<option value="100">100星</option>
+					<option value="500">500星</option>
+					<option value="800">800星</option>
+					<option value="1000">1000星</option>
+					<option value="1200">1200星</option>
+					<option value="1500">1500星</option>
+					<option value="2000">2000星</option>
+				      </select></div>
+					<label>自定义发言</label>
+					<input id="set_family_say" type="text" placeholder="Hi" style="width:100px"> <a href='javascript:;' onclick="setting('');"><i class="fa fa-save fa-2x"></i></a>
+				      </div>
+				<div class="alert alert-info">
+				<form class="layui-form" action="">
+					<label>捐赠碎片</label><input type="checkbox" id="set_family_send" lay-skin="switch" lay-filter="setting" lay-text="确定|取消">
+					<a class="fa fa-question-circle" data-content="赠大于5个的碎片,求助最少的碎片" onclick='tips(this)'></a>
+					<label>赛季开箱</label><input type="checkbox" id="set_family_box" lay-skin="switch" lay-filter="setting" lay-text="确定|取消">
+					<a class="fa fa-question-circle" data-content="包括公会争夺战的积分奖励" onclick='tips(this)'></a><br>
+					<label>偷钱任务</label><input type="checkbox" id="set_family_thief" lay-skin="switch" lay-filter="setting" lay-text="确定|取消">
+					<label>不领任务</label><input type="checkbox" id="set_family_unmiss" lay-skin="switch" lay-filter="setting" lay-text="确定|取消">
+					<a class="fa fa-question-circle" data-content="不想领取公会任务、不签到的，请选上，切记要自己去领取，不然少活跃" onclick='tips(this)'></a><div>
+					<label>专属不转盘</label><input type="checkbox" id="set_ware_nozhuan" lay-skin="switch" lay-filter="setting" lay-text="确定|取消">
+					<a class="fa fa-question-circle" data-content="【专属调控】让自己的所有专属，都不转转盘，包括公会不签到" onclick='tips(this)'></a>					</div>
+				</form>
+
+
+				</div>
+				<div class="alert alert-success">
+				<button class="layui-btn layui-btn-sm layui-btn-primary layui-btn-radius" onclick="show_family_member()">更新信息</button>
+				<!--button class="layui-btn layui-btn-sm layui-btn-primary layui-btn-radius" onclick="show_rob()">更新动物</button><br-->
+
+								<button class="layui-btn layui-btn-sm layui-btn-primary layui-btn-radius" onclick="ware_come()">专属调控</button>																				</div>
+				<div class="layui-tab layui-tab-card">
+				  <ul class="layui-tab-title">
+				    <li>成员<span id="family_num"></span></li>
+				    <li id='family_tab2' style="display:none">待审</li>
+				    <li>钻石</li>
+				    <li>王者</li>
+				    <li>小组</li>
+				    <li>积分</li>
+				    <li>商店</li>
+				    <li class="layui-this">动物</li>
+				    <li>挖矿</li>
+				  </ul>
+				  <div class="layui-tab-content">
+				    <div class="layui-tab-item"><div name=family_info class='alert alert-error'><a href='javascript:;' onclick='show_family_member()'>点 更新信息，显示内容</a></div>
+					    <table class="table table-bordered table-striped">
+					      <thead>
+						<tr>
+						  <th width="58">头像</th>
+						  <th>昵称</th>
+						  <th width="68">贡献</th>
+						</tr>
+					      </thead>
+					      <tbody id="family_member" class="choose_img">
+					      </tbody>
+					    </table>
+				    </div>
+				    <div class="layui-tab-item"><div name=family_info class='alert alert-error'><a href='javascript:;' onclick='show_family_member()'>点 更新信息，显示内容</a></div>
+					    <table class="table table-bordered table-striped">
+					      <thead>
+						<tr>
+						  <th width="68">头像</th>
+						  <th>昵称</th>
+						</tr>
+					      </thead>
+					      <tbody id="family_apply">
+					      </tbody>
+					    </table>
+				    </div>
+				    <div class="layui-tab-item"><div name=family_info class='alert alert-error'><a href='javascript:;' onclick='show_family_member()'>点 更新信息，显示内容</a></div>
+					<!--div class="alert alert-info">崇拜公会每人1票，至尊5票
+						【所有公会 <a href='javascript:;' onclick='addfflower(0,1)'><i class='fa fa-thumbs-o-up fa-lg'></i></a>】
+						【蔑视所有公会 <a href='javascript:;' onclick='addfflower(0,0)'><i class='fa fa-thumbs-o-down fa-lg'></i></a>】</div-->
+					    <table class="table table-bordered table-striped">
+					      <thead>
+						<tr>
+						  <th width="98">排名</th>
+						  <!--th width="50">崇拜</th-->
+						  <th>名称</th>
+						</tr>
+					      </thead>
+					      <tbody id="family_ranklist">
+					      </tbody>
+					    </table>
+					<div id="family_rank_memberlist"></div>
+				    </div>
+				    <div class="layui-tab-item"><div name=family_info class='alert alert-error'><a href='javascript:;' onclick='show_family_member()'>点 更新信息，显示内容</a></div>
+					<!--div class="alert alert-info">崇拜公会每人1票，至尊5票
+						【所有公会 <a href='javascript:;' onclick='addfflower(0,1)'><i class='fa fa-thumbs-o-up fa-lg'></i></a>】
+						【蔑视所有公会 <a href='javascript:;' onclick='addfflower(0,0)'><i class='fa fa-thumbs-o-down fa-lg'></i></a>】</div-->
+					    <table class="table table-bordered table-striped">
+					      <thead>
+						<tr>
+						  <th width="98">排名</th>
+						  <!--th width="50">崇拜</th-->
+						  <th>名称</th>
+						</tr>
+					      </thead>
+					      <tbody id="family_ranklist2">
+					      </tbody>
+					    </table>
+					<div id="family_rank_memberlist2"></div>
+				    </div>
+				    <div class="layui-tab-item"><div name=family_info class='alert alert-error'><a href='javascript:;' onclick='show_family_member()'>点 更新信息，显示内容</a></div>
+					    <table class="table table-bordered table-striped">
+					      <thead>
+						<tr>
+						  <th width="30">排名</th>
+						  <th width="60">活跃</th>
+						  <th>名称</th>
+						</tr>
+					      </thead>
+					      <tbody id="family_team_ranklist">
+					      </tbody>
+					    </table>
+					<div id="family_team_memberlist"></div>
+				    </div>
+				    <div class="layui-tab-item"><div name=family_info class='alert alert-error'><a href='javascript:;' onclick='show_family_member()'>点 更新信息，显示内容</a></div>
+					    <table class="table table-bordered table-striped">
+					      <thead>
+						<tr>
+						  <th width="30">排名</th>
+						  <th width="30">积分</th>
+						  <th>名称</th>
+						</tr>
+					      </thead>
+					      <tbody id="family_scorelist">
+					      </tbody>
+					    </table>
+				    </div>
+				    <div class="layui-tab-item">
+					<label>每日0点自动兑换</label><select id="family_shop" onchange="family_shop(this.value)">
+					<option value="0">不兑换</option>
+					<option value="1">能量*20</option>
+					<option value="2">炮弹*10</option>
+					<option value="3">伙伴零食*1</option>
+					<option value="4">友尽卡*1</option>
+					<option value="5">糖果弹*10</option>
+					<option value="6">夹子*10</option>
+					</select>
+					<table class="table table-bordered table-striped">
+					      <thead>
+						<tr>
+						  <th width="68">兑换物品</th>
+						  <th width="100">公会币</th>
+						  <th>兑换</th>
+						</tr>
+					      </thead>
+					      <tbody>
+				      <tr><td><span class="badge badge-success">能量*20</span></td><td>500公会币</td><td><a href="javascript:;" onclick="change_family_coin('1')"><i class="fa fa-plus-square fa-2x"></i></a></td></tr>
+				      <tr><td><span class="badge badge-success">炮弹*10</span></td><td>1000公会币</td><td><a href="javascript:;" onclick="change_family_coin('2')"><i class="fa fa-plus-square fa-2x"></i></a></td></tr>
+				      <tr><td><span class="badge badge-success">伙伴零食*1</span></td><td>800公会币</td><td><a href="javascript:;" onclick="change_family_coin('3')"><i class="fa fa-plus-square fa-2x"></i></a></td></tr>
+				      <tr><td><span class="badge badge-success">友尽卡*1</span></td><td>300公会币</td><td><a href="javascript:;" onclick="change_family_coin('4')"><i class="fa fa-plus-square fa-2x"></i></a></td></tr>
+				      <tr><td><span class="badge badge-success">糖果弹*10</span></td><td>1000公会币</td><td><a href="javascript:;" onclick="change_family_coin('5')"><i class="fa fa-plus-square fa-2x"></i></a></td></tr>
+				      <tr><td><span class="badge badge-success">夹子*10</span></td><td>1000公会币</td><td><a href="javascript:;" onclick="change_family_coin('6')"><i class="fa fa-plus-square fa-2x"></i></a></td></tr>
+					      </tbody>
+					    </table>
+				    </div>
+				    <div class="layui-tab-item layui-show">
+					<!--div class="alert alert-success" style="text-align:center">最受崇拜<span class="label label-success" id=fflower_name></span>公会<span class="label label-warning" id="fflower_num"></span>票
+                                                <a href='javascript:;' onclick='addfflower(-1,1)'><i class='fa fa-thumbs-o-up fa-lg'></i></a></div-->
+					<div class="alert alert-error" style="text-align:center"><span id="didui">今日敌公会</span><span id="didui0">停止搬运</span><span id=rob_family class="label label-important"></span> <a href='javascript:;' onclick='show_rob_team()'><i class='fa fa-search'></i></a><br><span id="rob_timer"></span> 
+					    <table class="hide table table-bordered table-striped" id="rob_family_member2">
+					      <thead>
+						<tr>
+						  <th width="86">玩家ID</th>
+						  <th>玩家名</th>
+						</tr>
+					      </thead>
+					      <tbody id="rob_family_member">
+					      </tbody>
+					    </table>
+					</div>
+					<div class="alert" style="text-align:center">
+					<span id="animal">
+						<span class="badge">浣熊</span>*<span class="label label-important" id="animal_1"></span>个<br>
+						<span class="badge">企鹅</span>*<span class="label label-important" id="animal_2"></span>个<br>
+						<span class="badge">野猪</span>*<span class="label label-important" id="animal_3"></span>个<br>
+						<span class="badge">羊驼</span>*<span class="label label-important" id="animal_4"></span>个<br>
+						<span class="badge badge-info">熊猫</span>*<span class="label label-important" id="animal_5"></span>个<br>
+						<span class="badge badge-success">大象</span>*<span class="label label-important" id="animal_6"></span>个<br>
+					</span>
+					今日兑换次数<span class="label label-important" id="rob_gold_times"></span>、金块<span class="label label-important" id="goldchunk"></span>(可兑换<span id="goldchunk_can"></span>次)
+					</div>
+					<div class="alert alert-info" style="text-align:center">
+								<form class="layui-form" action=""><label>搬运动物总开关</label><input type="checkbox" id="set_family_rob" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"></form>
+
+					<select id="animal_rule" onchange="animal_change('rule', this.value)">
+					<option value="0">拉动物规则：自己最缺</option>
+					<option value="1">拉动物规则：随机分配</option>
+					<option value="2">拉动物规则：平均分配</option>
+					<option value="3">拉动物规则：123道路</option>
+					<option value="4">拉动物规则：456道路</option>
+					<option value="5">拉动物规则：停止搬运</option>
+					</select><br>
+
+					<select id="animal_change_gold" onchange="animal_change('gold',this.value)">
+					<option value="0">每日兑换金块：不兑换</option>
+					<option value="1">每日兑换金块：1次</option>
+					<option value="2">每日兑换金块：2次</option>
+					<option value="3">每日兑换金块：3次</option>
+					<option value="4">每日兑换金块：4次</option>
+					<option value="5">每日兑换金块：5次</option>
+					<option value="999">每日兑换金块：999次</option>
+					</select><br>
+
+					每日自动兑换金块组<br>
+					<select id="animal_change" onchange="animal_change('sel',this.value)">
+					<option value="0">不兑换</option>
+					<option value="1">双倍卡,沙漏</option>
+					<option value="2">爱心,友尽卡,喇叭</option>
+					<option value="3">能量,炮弹</option>
+					<option value="4">能量,炮弹,爱心,友尽卡,喇叭</option>
+					</select>
+
+					</div>
+				    </div>
+
+				    <div class="layui-tab-item"><div name=family_info class='alert alert-error'><a href='javascript:;' onclick='show_family_member()'>点 更新信息，显示内容</a></div>
+					    <table class="table table-bordered table-striped">
+					      <thead>
+						<tr>
+						  <th width="30">排名</th>
+						  <th width="50">积分</th>
+						  <th>名称</th>
+						</tr>
+					      </thead>
+					      <tbody id="mine_scorelist">
+					      </tbody>
+					    </table>
+				    </div>
+				  </div>
+				</div></span>
+
+			    </ul>
+			    </div>
+
+
+
+			  </div>
+
+	  </div>
+	  </div>
+	</div>
+
+	<div class="layui-colla-item">
+	  <li class="layui-colla-title">【道具相关】</li>
+	  <div class="widget-box layui-colla-content">
+
+			  <div class="layui-tab layui-tab-card">
+			    <ul class="layui-tab-title">
+			      <li class="layui-this">糖宝</li>
+			      <li class="">糖果</li>			      <li class="">拼图</li>
+			      			      			      			      			      			      			      			      			      			      <li class="">海滩</li>			      <li class="" onclick='tiact("show_mine_rank")'>挖矿</li>			      			    </ul>
+			  <div class="layui-tab-content">
+			    <div class="layui-tab-item layui-show">
+			    <ul class="recent-posts" style="text-align:center">
+				<center><div style="width:299px;height:122px;background:url(https://res.kubeibear.com/images/stone_banner.jpg?v=1)"><span class="label label-important" style='float:left;text-align:left'>[自己]抓取<span id='cat_s'></span><br>[好友]抓取<span id='cat_f'></span></span></div></center>
+				<div class="alert alert-info">
+				 <input type="checkbox" id="set_pin_flush"><label for='set_pin_flush'>自动使用<span class="label label-important" id="flush_num"></span>魔水时光机、夹子炮弹<span class="label label-important" id="catch_num"></span></label><br>
+				<form class="layui-form">
+				<label>抓普通</label>
+				<input type="checkbox" id="set_mypin1" title="自己"><input type="checkbox" id="set_pin1" title="好友"><input type="checkbox" id="set_catch_ignore" title="节省"> <a class="fa fa-question-circle" data-content="节省对应的[品质]小岛或糖果树,抓到1个宝石或糖果就不再继续抓" onclick='tips(this)'></a><br>
+				<label>抓稀有</label>
+				<input type="checkbox" id="set_mypin2" title="自己"><input type="checkbox" id="set_pin2" title="好友"><input type="checkbox" id="set_catch_ignore2" title="节省"> <a class="fa fa-question-circle" data-content="节省对应的[品质]小岛或糖果树,抓到1个宝石或糖果就不再继续抓" onclick='tips(this)'></a><br>
+				<label>抓传奇</label>
+				<input type="checkbox" id="set_mypin3" title="自己"><input type="checkbox" id="set_pin3" title="好友"><input type="checkbox" id="set_catch_ignore3" title="节省"> <a class="fa fa-question-circle" data-content="节省对应的[品质]小岛或糖果树,抓到1个宝石或糖果就不再继续抓" onclick='tips(this)'></a><br>
+				<label class="control-label">魔水时光机保留</label><input id="set_keep_magic_machine" type="text" placeholder="0" style='width:60px'> <a class="fa fa-question-circle" data-content="默认是空 不保留时光机，亲可以输入20或者50，点保存激活设置，自动时光机到了设定值就不继续刷了" onclick='tips(this)'></a><br>
+				<label class="control-label">夹子炮弹保留</label><input id="set_keep_boom" type="text" placeholder="0" style='width:60px'> <a class="fa fa-question-circle" data-content="默认是空 不保留夹子炮弹，亲可以输入20或者50，点保存激活设置，抓糖果宝石到了设定值就不继续抓了，比如普通(太多)不会一次性浪费完炮弹" onclick='tips(this)'></a><br>
+
+</form>
+				<button type="submit" class="btn btn-success" onclick="setting('');">保存生效设置</button>
+				</div>
+				<div class="alert alert-error">
+				<button type="submit" class="btn btn-mini btn-success" onclick="action('use_magic_search', '')">查询小号个数</button>
+				<button type="submit" class="btn btn-mini btn-success" onclick="use_magic_ware('0');">单刷小号品质</button>
+				<button type="submit" class="btn btn-mini btn-success" onclick="action('use_magic', '')">单刷自己品质</button><br>
+				<button type="submit" class="btn btn-mini btn-success" onclick="use_magic_ware('1');">全刷小号品质</button>
+								</div>
+				<div class="alert">
+	<span class="badge">黄水晶</span>*<span class="label label-important" id="stone_1"></span>个　<a href="javascript:;" onclick="buy('stone','1')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('stone',1)"><i class="fa fa-envelope fa-2x"></i></a><br>
+	<span class="badge">紫水晶</span>*<span class="label label-important" id="stone_2"></span>个　<a href="javascript:;" onclick="buy('stone','2')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('stone',2)"><i class="fa fa-envelope fa-2x"></i></a><br>
+	<span class="badge">黑水晶</span>*<span class="label label-important" id="stone_3"></span>个　<a href="javascript:;" onclick="buy('stone','3')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('stone',3)"><i class="fa fa-envelope fa-2x"></i></a><br>
+	<span class="badge badge-info">绿宝石</span>*<span class="label label-important" id="stone_4"></span>个　<a href="javascript:;" onclick="buy('stone','4')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('stone',4)"><i class="fa fa-envelope fa-2x"></i></a><br>
+	<span class="badge badge-info">红宝石</span>*<span class="label label-important" id="stone_5"></span>个　<a href="javascript:;" onclick="buy('stone','5')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('stone',5)"><i class="fa fa-envelope fa-2x"></i></a><br>
+	<span class="badge badge-success">钻石</span>*<span class="label label-important" id="stone_6"></span>个　<a href="javascript:;" onclick="buy('stone','6')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('stone',6)"><i class="fa fa-envelope fa-2x"></i></a><br>
+				接收<span class="label label-important" id="ts_recv"></span> 赠送<span class="label label-important" id="ts_send"></span><br>
+								<form class="layui-form" action="">
+				自动女孩钻石<input type="checkbox" id="autobuy" lay-skin="switch" lay-filter="autobuy" lay-text="确定|取消"> <a class="fa fa-question-circle" data-content="活动期间只提取姜饼女孩或者钻石" onclick="tips(this)"></a> 
+								 </form>			<a href="#change_stone" data-toggle="modal" class="btn btn-success" onclick="flush_item('stone')">选择兑换奖励</a>
+			</div>
+			<code>活动截止：2022-12-10 23:59:59</code>
+		    </ul>
+		    </div>
+
+		    <div class="layui-tab-item">
+		    <ul class="recent-posts" style="text-align:center">
+				<div class="alert">
+	<span class="badge">水果糖</span>*<span class="label label-important" id="tree_1"></span>个　<a href="javascript:;" onclick="buy('tree','1')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('tree',1)"><i class="fa fa-envelope fa-2x"></i></a><br>
+	<span class="badge">拐棍糖</span>*<span class="label label-important" id="tree_2"></span>个　<a href="javascript:;" onclick="buy('tree','2')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('tree',2)"><i class="fa fa-envelope fa-2x"></i></a><br>
+	<span class="badge">棒棒糖</span>*<span class="label label-important" id="tree_3"></span>个　<a href="javascript:;" onclick="buy('tree','3')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('tree',3)"><i class="fa fa-envelope fa-2x"></i></a><br>
+	<span class="badge badge-info">蛋糕</span>*<span class="label label-important" id="tree_4"></span>个　<a href="javascript:;" onclick="buy('tree','4')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('tree',4)"><i class="fa fa-envelope fa-2x"></i></a><br>
+	<span class="badge badge-info">姜饼男孩</span>*<span class="label label-important" id="tree_5"></span>个　<a href="javascript:;" onclick="buy('tree','5')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('tree',5)"><i class="fa fa-envelope fa-2x"></i></a><br>
+	<span class="badge badge-success">姜饼女孩</span>*<span class="label label-important" id="tree_6"></span>个　<a href="javascript:;" onclick="buy('tree','6')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('tree',6)"><i class="fa fa-envelope fa-2x"></i></a><br>
+				接收<span class="label label-important" id="tree_recv"></span> 赠送<span class="label label-important" id="tree_send"></span><br>
+			<a href="#change_tree" data-toggle="modal" class="btn btn-success" onclick="flush_item('tree')">选择兑换奖励</a>
+			</div>
+			<code>兑换截止：2022-12-10 23:59:59</code>
+		    </ul>
+		    </div>
+		    <div class="layui-tab-item">
+		    <ul class="recent-posts" style="text-align:center">
+			<div class="alert">
+<span class="badge">1号拼图</span>*<span class="label label-important" id="suip_1"></span>个　<a href="javascript:;" onclick="buy('suip','1')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('suip',1)"><i class="fa fa-envelope fa-2x"></i></a><br>
+<span class="badge">2号拼图</span>*<span class="label label-important" id="suip_2"></span>个　<a href="javascript:;" onclick="buy('suip','2')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('suip',2)"><i class="fa fa-envelope fa-2x"></i></a><br>
+<span class="badge">3号拼图</span>*<span class="label label-important" id="suip_3"></span>个　<a href="javascript:;" onclick="buy('suip','3')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('suip',3)"><i class="fa fa-envelope fa-2x"></i></a><br>
+<span class="badge">4号拼图</span>*<span class="label label-important" id="suip_4"></span>个　<a href="javascript:;" onclick="buy('suip','4')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('suip',4)"><i class="fa fa-envelope fa-2x"></i></a><br>
+<span class="badge">5号拼图</span>*<span class="label label-important" id="suip_5"></span>个　<a href="javascript:;" onclick="buy('suip','5')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('suip',5)"><i class="fa fa-envelope fa-2x"></i></a><br>
+<span class="badge">6号拼图</span>*<span class="label label-important" id="suip_6"></span>个　<a href="javascript:;" onclick="buy('suip','6')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('suip',6)"><i class="fa fa-envelope fa-2x"></i></a><br>
+<span class="badge">7号拼图</span>*<span class="label label-important" id="suip_7"></span>个　<a href="javascript:;" onclick="buy('suip','7')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('suip',7)"><i class="fa fa-envelope fa-2x"></i></a><br>
+<span class="badge">8号拼图</span>*<span class="label label-important" id="suip_8"></span>个　<a href="javascript:;" onclick="buy('suip','8')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('suip',8)"><i class="fa fa-envelope fa-2x"></i></a><br>
+<span class="badge">9号拼图</span>*<span class="label label-important" id="suip_9"></span>个　<a href="javascript:;" onclick="buy('suip','9')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('suip',9)"><i class="fa fa-envelope fa-2x"></i></a><br>
+<span class="badge badge-success">万能拼图</span>*<span class="label label-important" id="suip_10"></span>个<br>
+
+			当前兑换次数<span class="label label-important" id="suip_times"></span> 赠送<span class="label label-important" id="suip_send"></span> 已收<span class="label label-important" id="suip_recv"></span><br>
+			</div>
+<div class="alert alert-info">
+			<form class="layui-form" action="">
+				<label>自动提拼图</label><input type="checkbox" id="set_auto_suip" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"><a class="fa fa-question-circle" data-content="不定时自动补齐未兑换完的拼图套数" onclick='tips(this)'></a>
+			<br><input type="checkbox" id="use_powerfull" value="use_powerfull" lay-skin="primary" title="兑换自动使用万能碎片"><br>
+			</form>
+			<a href="javascript:;" onclick="change_suip()" class="btn btn-success">兑换奖励</a>
+</div>
+
+			<code>活动截止：2022-12-05 23:59:59</code>
+		    </ul>
+		    </div>
+
+
+	
+
+
+		    <div id="tab2_12" class="layui-tab-item">
+		    <ul class="recent-posts" style="text-align:center">
+			<div class="alert">
+<span class="badge">蓝珊瑚</span>*<span class="label label-important" id="sea_1"></span>个　<a href="javascript:;" onclick="buy('sea','1')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('sea',1)"><i class="fa fa-envelope fa-2x"></i></a><br>
+<span class="badge">红珊瑚</span>*<span class="label label-important" id="sea_2"></span>个　<a href="javascript:;" onclick="buy('sea','2')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('sea',2)"><i class="fa fa-envelope fa-2x"></i></a><br>
+<span class="badge">黄珊瑚</span>*<span class="label label-important" id="sea_3"></span>个　<a href="javascript:;" onclick="buy('sea','3')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('sea',3)"><i class="fa fa-envelope fa-2x"></i></a><br>
+<span class="badge badge-info">鹦鹉螺</span>*<span class="label label-important" id="sea_4"></span>个　<a href="javascript:;" onclick="buy('sea','4')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('sea',4)"><i class="fa fa-envelope fa-2x"></i></a><br>
+<span class="badge badge-info">海星</span>*<span class="label label-important" id="sea_5"></span>个　<a href="javascript:;" onclick="buy('sea','5')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('sea',5)"><i class="fa fa-envelope fa-2x"></i></a><br>
+<span class="badge badge-success">玄武螺</span>*<span class="label label-important" id="sea_6"></span>个　<a href="javascript:;" onclick="buy('sea','6')"><i class="fa fa-plus-square fa-2x"></i></a>　<a href="javascript:;" onclick="send_toitem('sea',6)"><i class="fa fa-envelope fa-2x"></i></a><br>
+			接收<span class="label label-important" id="sea_recv"></span> 赠送<span class="label label-important" id="sea_send"></span><br>
+			<a href="#change_sea" data-toggle="modal" class="btn btn-success" onclick="flush_item('sea')">选择兑换奖励</a>
+<br>海浪<span class="label label-important" id="sea_wave"></span>+<span class="label label-important" id="sea_wavehelp"></span> 沙滩铲<span class="label label-important" id="sea_scoop"></span>+<span class="label label-important" id="sea_help"></span><a class="fa fa-question-circle" data-content="+后面的数字为[海浪助力,铲子助力]完成情况" onclick='tips(this)'></a><br>免费海浪时间<span class="label label-important" id="sea_freetime"></span><br><code>挖不动点重启管家</code>
+			</div>
+<div class="alert alert-info">
+沙滩铲保留</label><input id="set_keep_sea" type="text" placeholder="0" style='width:60px'> <a class="fa fa-question-circle" data-content="默认是空 不保留沙滩铲，亲可以输入100，留下最后100个铲子下期使用" onclick='tips(this)'></a>　<a href="javascript:;" onclick="setting('');"><i class="fa fa-save fa-2x"></i></a>
+
+			<form class="layui-form" action="">
+				用铲子<input type="checkbox" id="set_auto_sea" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"><a class="fa fa-question-circle" data-content="每分钟使用自己的铲子加自己海滩的开关<br>提醒：专属 只添少于6个空格的海滩" onclick='tips(this)'></a>
+				铲专属<input type="checkbox" id="set_ware_sea" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"><a class="fa fa-question-circle" data-content="铲子过多，用自己的铲子加专属的海滩" onclick='tips(this)'></a>
+			</form>
+			铲子规则<select id="sea_usescoop_times" onchange="sea_usescoop_times(this.value)">
+				<option value="0">一轮限用 20个</option>
+				<option value="1">一轮限用 15个</option>
+				<option value="2">一轮限用 10个</option>
+				<option value="3">一轮限用 5个</option>
+				<option value="888">不限制 个数</option>
+			      </select>
+
+			<br>海浪规则<select id="sea_usewave" onchange="sea_usewave(this.value)">
+				<option value="0">不使用</option>
+				<option value="1">只用免费海浪</option>
+				<option value="2">使用免费或库存海浪</option>
+			      </select><a class="fa fa-question-circle" data-content="海滩完成后,才会按照选项,使用海浪" onclick='tips(this)'></a>
+</div>
+			  <code>活动截止：2022-12-10 23:59:59</code>
+		    </ul>
+		    </div>
+
+
+			    <div id="tab2_13" class="layui-tab-item">
+		    <ul class="recent-posts" style="text-align:center">
+			<div class="alert alert-info">
+				赛区排行<span id="mine_rank0" class="badge badge-info"></span>
+				全服排行<span id="mine_rank1" class="badge badge-info"></span>
+			</div>
+			<div class="alert">
+<span class="badge">鱼叉</span>*<span class="label label-important" id="mine_1"></span>个<br>
+<span class="badge">鱼雷</span>*<span class="label label-important" id="mine_2"></span>个<br>
+<span class="badge">水雷</span>*<span class="label label-important" id="mine_3"></span>个<br>
+<span class="badge">积分</span>*<span class="label label-important" id="mine_4"></span>个 <a href='javascript:;' class="fa fa-list-ol" onclick='open_wa_reward()'></a> <br> 
+			<form class="layui-form" action="">
+				自动挖挖<input type="checkbox" id="set_auto_mine" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"><a class="fa fa-question-circle" data-content="重启后即刻开挖、或者开启后1分钟开挖。<br>提示：周日当天不挖矿" onclick='tips(this)'></a><br>
+				限定5100<input type="checkbox" id="set_limit_mine" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"><a class="fa fa-question-circle" data-content="勾选后，每周只挖5100积分，是最优秀。周日排行奖励可存于邮件，可储备起来" onclick='tips(this)'></a><br>
+				不领奖励<input type="checkbox" id="set_mine_reward" lay-skin="switch" lay-filter="setting" lay-text="确定|取消"> <a href='javascript:;' onclick='action("mine_reward", "")'><i class="fa fa-hand-o-left"></i></a><br><code>挖不动点重启管家</code>
+			</form>
+			</div>
+			<code>活动截止：2022-12-03 23:59:59</code>
+		    </ul>
+		    </div>
+
+
+		  </div>
+		</div>
+
+
+	  </div>
+	</div>
+
+	<div class="layui-colla-item" >
+	  <li class="layui-colla-title" id='rank_coll'>【榜上有名】</li>
+	  <div class="widget-box layui-colla-content">
+		<div class="alert alert-info"><center>点名字查建筑、点<i class="fa fa-copy fa-lg"></i>会填到通缉-攻击ID、点<i class="fa fa-eye fa-lg"></i>添加监控</center></div>
+
+		<div class="layui-tab layui-tab-card">
+		    <ul class="layui-tab-title">
+		      <li class="" onclick="show_rank('rank_enemyweek')">周恶</li>
+		      <li class="" onclick="show_rank('rank_enemyweekall')">恶人</li>
+		      <li class="layui-this" onclick="show_rank('rank_friends')">好友</li>
+		      <li class="" onclick="show_rank('applylist')">申请</li>
+		      <li class="" onclick="show_rank('rank_msglist')">消息</li>
+		      <li class="" onclick="show_rank('rank_top')">世界</li>
+		      <li class="" onclick="show_rank('money_top')">豪门</li>
+		    </ul>
+		  <div class="layui-tab-content">
+		    <div id="tab11" class="layui-tab-item">
+		    <ul class="recent-posts" style="text-align:center">
+			  <div class="widget-title"> <span class="icon"> <i class="icon-th"></i> </span>
+			    <h5>本周恶人</h5>
+			  </div>
+			  <div class="widget-content nopadding">
+			    <table class="table table-bordered table-striped" id="rank_enemyweek">
+			      <thead>
+				<tr>
+				  <th width="58">头像</th>
+				  <th>玩家昵称</th>
+				  <th>攻偷</th>
+				</tr>
+			      </thead>
+			      <tbody>
+			      </tbody>
+			    </table>
+			  </div>
+		    </ul>
+		    </div>
+
+		    <div id="tab12" class="layui-tab-item" style="text-align:center">
+		    <ul class="recent-posts">
+			  <div class="widget-title"> <span class="icon"> <i class="icon-th"></i> </span>
+			    <h5>所有恶人</h5>
+			  </div>
+			  <div class="widget-content nopadding">
+			    <table class="table table-bordered table-striped" id="rank_enemyweekall">
+			      <thead>
+				<tr>
+				  <th width="58">头像</th>
+				  <th>玩家昵称</th>
+				  <th>攻偷</th>
+				</tr>
+			      </thead>
+			      <tbody>
+			      </tbody>
+			    </table>
+			  </div>
+		    </ul>
+		    </div>
+
+		    <div id="tab13" class="layui-tab-item layui-show" style="text-align:center">
+		    <ul class="recent-posts">
+			  <div class="widget-title"> <span class="icon"> <i class="icon-th"></i> </span>
+			    <h5>好友排行</h5>
+			  </div>
+			  <div class="widget-content nopadding">
+			   <div class="alert">好友<span class="label label-important" id=friend_num></span>、友尽卡<span class="label label-important" id=friend_card></span><br>
+				<!--span class="badge badge-success">请保留1个空位，方便管家帮你完成添加好友任务</span><br-->
+								<button type="submit" class="btn btn-mini btn-danger" onclick="action('start_vipware', '')">批量激活</button>				<button type="submit" class="btn btn-mini btn-success" onclick="window.open('https://m.kubeibear.com/api.php?act=imgs&uid=418136448')">专属头像</button>
+				<button type="submit" class="btn btn-mini btn-success" onclick="action('del_unonline', '')">删3天不在</button>
+				<button type="submit" class="btn btn-mini btn-danger" onclick="action('found_vipware', '')">找回专属</button>
+			   </div>
+			    <table class="table table-bordered table-striped" id="rank_friends">
+			      <thead>
+				<tr>
+				  <th width="58">头像</th>
+				  <th>玩家昵称</th>
+				  				  <th>公会</th>				</tr>
+			      </thead>
+			      <tbody id="rank_friends2"></tbody>
+			    </table>
+			  </div>
+		    </ul>
+		    </div>
+		    <div id="tab14" class="layui-tab-item" style="text-align:center">
+		    <ul class="recent-posts">
+			  <div class="widget-title"> <span class="icon"> <i class="icon-th"></i> </span>
+			    <h5>好友申请</h5>
+			  </div>
+			  <div class="alert">永久专属小号 请>>>联系优惠猫 <a href="javascript:;" class="fa fa-commenting fa-lg" style="color:#3A87AD" onclick="tip_mao(418136448)"></a></div>
+			  <div class="widget-content nopadding">
+			    <table class="table table-bordered table-striped" id="applylist">
+			      <thead>
+				<tr>
+				  <th width="58">头像</th>
+				  <th>玩家昵称</th>
+				  <th>备注</th>
+				</tr>
+			      </thead>
+			      <tbody>
+			      </tbody>
+			    </table>
+			  </div>
+		    </ul>
+		    </div>
+		    <div id="tab15" class="layui-tab-item" style="text-align:center">
+		    <ul class="recent-posts">
+			  <div class="widget-title"> <span class="icon"> <i class="icon-th"></i> </span>
+			    <h5>消息列表</h5>
+			  </div>
+			  <div class="widget-content nopadding">
+			    <table class="table table-bordered table-striped" id="rank_msglist">
+			      <thead>
+				<tr>
+				  <th width="58">头像</th>
+				  <th>玩家昵称</th>
+				</tr>
+			      </thead>
+			      <tbody>
+			      </tbody>
+			    </table>
+			  </div>
+		    </ul>
+		    </div>
+
+		    <div id="tab16" class="layui-tab-item" style="text-align:center">
+		    <ul class="recent-posts">
+			  <div class="widget-title"> <span class="icon"> <i class="icon-th"></i> </span>
+			    <h5>世界排行</h5>
+			  </div>
+			  <div class="widget-content nopadding">
+			    <table class="table table-bordered table-striped" id="rank_top">
+			      <thead>
+				<tr>
+				  <th width="58">头像</th>
+				  <th>玩家昵称</th>
+				  <th>排行</th>
+				</tr>
+			      </thead>
+			      <tbody>
+			      </tbody>
+			    </table>
+			  </div>
+		    </ul>
+		    </div>
+
+		    <div id="tab17" class="layui-tab-item" style="text-align:center">
+		    <ul class="recent-posts">
+			  <div class="widget-title"> <span class="icon"> <i class="icon-th"></i> </span>
+			    <h5>豪门排行</h5>
+			  </div>
+			  <div class="widget-content nopadding">
+			    <table class="table table-bordered table-striped" id="money_top">
+			      <thead>
+				<tr>
+				  <th width="58">头像</th>
+				  <th>玩家昵称</th>
+				  <th>排行</th>
+				</tr>
+			      </thead>
+			      <tbody>
+			      </tbody>
+			    </table>
+			  </div>
+		    </ul>
+		    </div>
+
+		  </div>
+		</div>
+
+	  </div>
+	</div>
+
+
+      </div> 
+
+
+	<div class="widget-box">
+		<center><button onclick="show_logs()"  class="btn btn-success" style='width:100%'>挂机日志(弹幕) <span class="caret"></span></button></center>
+		<div class="widget-box" id="log_box" style="display:none">
+		<div class="alert">
+			<form class="layui-form"><label>搜索</label><input id="show_text" type="text" placeholder="文字" style="width:38px">
+			<button type="submit" class="btn btn-mini btn-success" onclick="show_match();return false;">查询</button>
+			<button type="submit" class="btn btn-mini btn-info" onclick="show_rob();return false;">动物</button>
+			<input type="checkbox" id="log_ignore" title="过滤动物龙"></form>
+			<a href='javascript:;' onclick="inse('')">大家在搜：</a>
+			<a href='javascript:;' onclick="inse('能量')">能量</a>、
+			<a href='javascript:;' onclick="inse('炮弹')">炮弹</a>、
+			<a href='javascript:;' onclick="inse('设置')">设置</a>、
+			<a href='javascript:;' onclick="inse('登陆')">登陆</a>、
+			<a href='javascript:;' onclick="inse('兑换')">兑换</a>、
+			<a href='javascript:;' onclick="inse('领取')">领取</a>
+		</div>
+		<div class="alert-info">
+			<div id="logs"></div>
+			<tr><td><a href='javascript:;' onclick="action('reset_url', '<span class=\'label label-important\'><h5>确定要重置链接，防止其他人登陆吗？<br>记得重新密码登陆后，重新收藏链接哦！</h5></span>')"><span class="label label-info">重置链接</span></a></td><td> <span class='label label-important'><span class='fa fa-hand-o-left'></span> 给朋友链接作废 请点它</span></td></tr>
+		</div>
+	</div>
+
+</div>
+
+  <div class="row-fluid"> <div id="footer" class="span12"> 浙ICP备17000853号 本站仅供爱好者学习交流，谢绝传播。如有侵权，请发邮件至fnick@qq.com</div> </div>
+</div>
+
+    <div id="msglist" class="modal hide">
+      <div class="modal-header">
+	<button data-dismiss="modal" id="money_tip" class="close" type="button">×</button>
+	<h3>操作记录(最近200条)</h3>
+      </div>
+      <div class="modal-body">
+	<div id="actions" class="button-group">  <button class="btn btn-info btn-mini" data-filter="*">全部</button>
+	  <button class="btn btn-info btn-mini" data-filter="f_long">打龙</button>
+	  <button class="btn btn-info btn-mini" data-filter="f_tongji">攻击</button>
+	  <button class="btn btn-info btn-mini" data-filter="f_catch">抓抓</button>
+	  <button class="btn btn-info btn-mini" data-filter="f_buy">买买</button>
+	  <button class="btn btn-info btn-mini" data-filter="f_fruit">水果</button>
+	</div>
+	<p class="isotope2" id=infomation></p>
+<span class="badge badge-warning">续费</span>联系 微信号<span class="badge badge-inverse">youhui163</span> <a href="javascript:;" class="fa fa-commenting fa-lg" style="color:#3A87AD" onclick="tip_mao(418136448)"></a><br>
+<span class="badge badge-warning">优点</span>防止被通缉偷袭 游戏下线就让管家来持续满盾、自动队长<br>
+<span class="badge badge-warning">优点</span>能量能叠加 不错过任何能量奖励/迅速补充能量 肥龙召唤秒杀/秒摸龙<br>
+<span class="badge badge-warning">优点</span>仇人信息无所遁形、转盘带分享猜猜、命中土豪<br>
+<span class="badge badge-warning">优点</span>能抓糖果/宝箱，小号开魔水时光机，监控，买道具，免友尽等等<br>
+<span class="badge badge-warning">优点</span>糖果宝石80套 你可以拥有 如图 <a class="lightbox_trigger" href="https://res.kubeibear.com/images/more_tree.jpg" onclick="close_model()"><i class="fa fa-search"></i></a>
+      </div>
+    </div>
+
+    <div id="building_list" class="modal hide">
+      <div class="modal-header">
+	<button data-dismiss="modal" id="money_tip" class="close" type="button">×</button>
+	<h3>升级图鉴 (单位:万 比如210000 就是21亿)</h3>
+      </div>
+	<table class="layui-hide" id="tableb"></table> 
+    </div>
+
+    <div id="change_stone" class="modal hide">
+      <div class="modal-header">
+	<button data-dismiss="modal" class="close" type="button">×</button>
+	<h3>兑换奖励</h3>
+      </div>
+      <div class="modal-body">
+	<div id="chat-messages-inner">
+
+	<span class="badge">黄水晶</span>*<span class="label label-important" id="fstone_1"></span>个
+	<span class="badge">紫水晶</span>*<span class="label label-important" id="fstone_2"></span>个
+	<span class="badge">黑水晶</span>*<span class="label label-important" id="fstone_3"></span>个
+	<span class="badge badge-info">绿宝石</span>*<span class="label label-important" id="fstone_4"></span>个
+	<span class="badge badge-info">红宝石</span>*<span class="label label-important" id="fstone_5"></span>个
+	<span class="badge badge-success">钻石</span>*<span class="label label-important" id="fstone_6"></span>个
+
+<p><span class="msg-block"><a href="javascript:;" onclick="change('stone', '1')" class="label label-important">兑换第1组奖励</a> <span class="badge">123</span><br><span class="label">200w,10能量</span></p>
+<p><span class="msg-block"><a href="javascript:;" onclick="change('stone', '2')" class="label label-important">兑换第2组奖励</a> <span class="badge">123</span><span class="badge badge-info">4</span><br><span class="label">300w,召唤石,时光机</span></p>
+<p><span class="msg-block"><a href="javascript:;" onclick="change('stone', '3')" class="label label-important">兑换第3组奖励</a> <span class="badge">123</span><span class="badge badge-info">5</span><br><span class="label">400w,伙伴爱心,20能量</span></p>
+<p><span class="msg-block"><a href="javascript:;" onclick="change('stone', '4')" class="label label-important">兑换第4组奖励</a> <span class="badge">123</span><span class="badge badge-info">45</span><br><span class="label">500w,伙伴零食,30能量,2时光机</span></p>
+<p><span class="msg-block"><a href="javascript:;" onclick="change('stone', '5')" class="label label-important">兑换第5组奖励</a> <span class="badge">123</span><span class="badge badge-info">45</span><span class="badge badge-success">6</span><br><span class="label">800w,通缉令,80能量,2时光机</span></p>
+
+	</div>
+      </div>
+    </div>
+
+    <div id="change_tree" class="modal hide">
+      <div class="modal-header">
+	<button data-dismiss="modal" class="close" type="button">×</button>
+	<h3>兑换奖励</h3>
+      </div>
+      <div class="modal-body">
+	<div id="chat-messages-inner">
+
+	<span class="badge">水果糖</span>*<span class="label label-important" id="ftree_1"></span>个
+	<span class="badge">拐棍糖</span>*<span class="label label-important" id="ftree_2"></span>个
+	<span class="badge">棒棒糖</span>*<span class="label label-important" id="ftree_3"></span>个<br>
+	<span class="badge badge-info">蛋糕</span>*<span class="label label-important" id="ftree_4"></span>个
+	<span class="badge badge-info">姜饼男孩</span>*<span class="label label-important" id="ftree_5"></span>个
+	<span class="badge badge-success">姜饼女孩</span>*<span class="label label-important" id="ftree_6"></span>个
+
+<p><span class="msg-block"><a href="javascript:;" onclick="change('tree', '1')" class="label label-important">兑换第1组奖励</a> <span class="badge">123</span><br><span class="label">200w,10能量</span></p>
+<p><span class="msg-block"><a href="javascript:;" onclick="change('tree', '2')" class="label label-important">兑换第2组奖励</a> <span class="badge">123</span><span class="badge badge-info">4</span><br><span class="label">300w,召唤石,魔法水</span></p>
+<p><span class="msg-block"><a href="javascript:;" onclick="change('tree', '3')" class="label label-important">兑换第3组奖励</a> <span class="badge">123</span><span class="badge badge-info">5</span><br><span class="label">400w,伙伴爱心,20能量</span></p>
+<p><span class="msg-block"><a href="javascript:;" onclick="change('tree', '4')" class="label label-important">兑换第4组奖励</a> <span class="badge">123</span><span class="badge badge-info">45</span><br><span class="label">500w,伙伴零食,30能量,2魔法水</span></p>
+<p><span class="msg-block"><a href="javascript:;" onclick="change('tree', '5')" class="label label-important">兑换第5组奖励</a> <span class="badge">123</span><span class="badge badge-info">45</span><span class="badge badge-success">6</span><br><span class="label">800w,通缉令,80能量,2魔法水</span></p>
+	</div>
+      </div>
+    </div>
+
+
+
+
+
+
+    <div id="change_sea" class="modal hide">
+      <div class="modal-header">
+	<button data-dismiss="modal" class="close" type="button">×</button>
+	<h3>兑换奖励</h3>
+      </div>
+      <div class="modal-body">
+	<div id="chat-messages-inner">
+
+	<span class="badge">蓝珊瑚</span>*<span class="label label-important" id="fsea_1"></span>个
+	<span class="badge">红珊瑚</span>*<span class="label label-important" id="fsea_2"></span>个
+	<span class="badge">黄珊瑚</span>*<span class="label label-important" id="fsea_3"></span>个<br>
+	<span class="badge badge-info">鹦鹉螺</span>*<span class="label label-important" id="fsea_4"></span>个
+	<span class="badge badge-info">海星</span>*<span class="label label-important" id="fsea_5"></span>个　
+	<span class="badge badge-success">玄武螺</span>*<span class="label label-important" id="fsea_6"></span>个
+
+<p><span class="msg-block"><a href="javascript:;" onclick="change('sea', '1')" class="label label-important">兑换第1组奖励</a> <span class="badge">123</span><br><span class="label">200w,5能量</span></p>
+<p><span class="msg-block"><a href="javascript:;" onclick="change('sea', '2')" class="label label-important">兑换第2组奖励</a> <span class="badge">123</span><span class="badge badge-info">4</span><br><span class="label">300w,20能量,5沙滩铲</span></p>
+<p><span class="msg-block"><a href="javascript:;" onclick="change('sea', '3')" class="label label-important">兑换第3组奖励</a> <span class="badge">123</span><span class="badge badge-info">5</span><br><span class="label">400w,20能量,5炮弹</span></p>
+<p><span class="msg-block"><a href="javascript:;" onclick="change('sea', '4')" class="label label-important">兑换第4组奖励</a> <span class="badge">123</span><span class="badge badge-success">6</span><br><span class="label">500w,30能量,1召唤石</span></p>
+<p><span class="msg-block"><a href="javascript:;" onclick="change('sea', '5')" class="label label-important">兑换第5组奖励</a> <span class="badge">123</span><span class="badge badge-info">45</span><span class="badge badge-success">6</span><br><span class="label">800w,80能量,1海浪,1通缉令</span></p>
+	</div>
+      </div>
+    </div>
+
+<div id="player" style="display:none">
+<span id=playerinfo></span>
+</div>
+
+    <div id="offAlert" class="modal hide">
+      <div class="modal-header"> <button data-dismiss="modal" class="close" type="button">×</button> <h3>挂机已离线</h3> </div>
+      <div class="modal-body"> <p id="off_err"></p> </div>
+    </div>
+
+    <div id="errAlert" class="modal hide">
+      <div class="modal-header"> <button data-dismiss="modal" class="close" type="button">×</button> <h3>提示</h3> </div>
+      <div class="modal-body"> <p id="msg_err"></p> </div>
+    </div>
+
+
+
+</body>
+
+<script src="https://res.kubeibear.com/js/jquery-3.0.0.min.js?v=2"></script>
+<script src="https://res.kubeibear.com/js/jquery.barrager.min.js?v=7"></script><script src="https://res.kubeibear.com/js/bootstrap.min.js?v=1"></script>
+<script src="https://res.kubeibear.com/js/jquery.gritter.min.js?v=20171013"></script> 
+<script src='https://res.kubeibear.com/js/isotope.pkgd.min.js'></script>
+<script src="https://res.kubeibear.com/js/jquery.qrcode.min.js" charset="utf-8"></script>
+<script src="https://res.kubeibear.com/js/layui_new.js?v=3" charset="utf-8"></script>
+<script type="text/javascript">
+var game_uid = 0;
+var gameuid = 418136448;
+var pagetoken = "da97c6f80daff16081534ea65c3feff6";
+var token = "da97c6f80daff16081534ea65c3feff6";
+var signkey = "t=1669859130&s=6a84f9c213b3309e01720bb1128f9d3f&i=418136448&token=da97c6f80daff16081534ea65c3feff6&";
+var pagetitle = "喵喵管家"; 
+var day = 85.3;
+var show_choose = 0;
+
+layui.config({
+	version: '1578314291107267' 
+});
+
+function set_rank_friends(obj){
+	var key = "rank_friends";
+	var tmp = "";
+	var cold = "";
+	var nickname = "";
+	var waremove = "";
+	var isvip = "";
+	$('#'+key+" tbody").empty();
+	for(var item in obj[key]){
+		obj[key][item]['headimg'] = get_rank_head(obj[key][item]['headimg']);
+		obj[key][item]['isfriend'] = get_rank_isfriend(obj[key][item]['isfriend']);
+		obj[key][item]['online'] = get_online_time(obj[key][item]['online']);
+
+		mrob = ""; 
+		rob = ""; 
+		buyrob = ""; 
+		waremove = '';
+		cold = '';
+		isupper = '';
+		afid = '';
+		afidcolor= 'badge badge-info';
+
+		if(obj[key][item]['isvip'] == "true"){
+			isvip = "user-vip";
+		}else	isvip = "user-thumb";
+
+		if(obj[key][item]['ball'] == "1"){
+			goodball = '<i class="fa fa-heart" style="color:red"></i>';
+		}else{
+			goodball = "";
+		}
+		nickname = decode_uri(obj[key][item]['nickname'], "nick").substring(0,12);
+
+
+				if(obj[key][item]['goods'] > 0){
+			rob = "<br>药水<span class='badge badge-warning'>"+obj[key][item]['goods']+"</span>";
+		}
+
+		if(obj[key][item]['ware'] == "1"){
+			namecolor = "label-info";
+			delf = '<a href="javascript:;" class="layui-btn layui-btn-primary layui-btn-xs" onclick="cold_ware('+obj[key][item]['uid']+')">友尽</a>';
+			buyrob = '<a href="javascript:;" onclick="buy_robstone('+obj[key][item]['uid']+')"><i class="fa fa-cart-plus"></i></a> ';
+			afid = obj[key][item]['fid'];
+		}else if(obj[key][item]['ware'] == "2"){
+			namecolor = "label-inverse";
+			delf = '<a href="javascript:;" class="layui-btn layui-btn-primary layui-btn-xs" onclick="cold_ware('+obj[key][item]['uid']+')">友尽</a>';
+			afid = obj[key][item]['fid'];
+		}else if(obj[key][item]['ware'] == "3" || obj[key][item]['ware'] == "4"){
+			if(obj[key][item]['ware'] == "4") namecolor = "label-inverse";
+			else namecolor = "label-important";
+			if(rob != "" || "1" == 1){
+				if("1" == 1) clr = "danger";
+				else clr = "normal";
+				mrob = '<br><a href="javascript:;" class="layui-btn layui-btn-'+clr+' layui-btn-xs" onclick="rec_ware('+obj[key][item]['uid']+')">激活</a>';
+			}else mrob = '';
+			delf = '<a href="javascript:;" class="layui-btn layui-btn-primary layui-btn-xs" onclick="cold_ware('+obj[key][item]['uid']+')">友尽</a>';
+			waremove = '<a href="javascript:;" class="layui-btn layui-btn-xs" onclick="ware_cometo('+obj[key][item]['uid']+')">调离</a>';
+			if(obj[key][item]['fpriv'] == 3){
+				waremove = '　<span class="label label-important">会长</span>';
+				afidcolor = 'badge badge-important';
+			}
+			buyrob = '<a href="javascript:;" onclick="buy_robstone('+obj[key][item]['uid']+')"><i class="fa fa-cart-plus"></i></a> ';
+			if(obj[key][item]['upper'] == 1)
+				isupper = '　<a href="javascript:;" class="layui-btn layui-btn-xs" onclick="ware_upper('+obj[key][item]['uid']+')">过岛</a>';
+			afid = obj[key][item]['fid'];
+		}else{	namecolor = "label-success";
+			delf = '<a href="javascript:;" class="layui-btn layui-btn-primary layui-btn-xs" onclick="del_friend('+obj[key][item]['uid']+', \''+nickname+'\')">删除</a>';
+		}
+
+		if(obj[key][item]['ignore'] == "1"){
+			namecolor = "";
+			IgnoreIt = "取消";
+			IgnoreType = "0";
+		}else{
+			IgnoreIt = "屏蔽";
+			IgnoreType = "1";
+		}
+
+		if(obj[key][item]['t'] != "" && typeof(obj[key][item]['t']) != "undefined" ){
+			headpic = "open_game1('"+obj[key][item]['t']+"')";
+		}else{
+			headpic = "show_player("+obj[key][item]['uid']+")";
+		}
+
+		tmp = "";
+		tmp = tmp + "<td><div class='"+isvip+"'><a href='javascript:;' onclick=\""+headpic+"\"><img width=55 height=55 src='" + obj[key][item]['headimg'] + "'></a></div>"+goodball+obj[key][item]['online']+mrob+'</td>';
+		tmp = tmp + "<td><span class='badge badge-important'>" + obj[key][item]['rank'] + "</span> <a href='javascript:;' onclick=\"show_player("+obj[key][item]['uid']+")\"><span class='label "+namecolor+"'>" + nickname + '</span></a>['+ obj[key][item]['star'] + '星]<br><a href="javascript:;" onclick="look_badgay('+obj[key][item]['uid']+')">'+ obj[key][item]['uid'] +'</a>　'+buyrob+rob+'<br><a id="ignore_'+obj[key][item]['uid']+'" href="javascript:;" class="layui-btn layui-btn-primary layui-btn-xs" onclick="ignore_friend(this.id, '+IgnoreType+', '+obj[key][item]['uid']+')">'+IgnoreIt+'</a><a href="javascript:;" class="layui-btn layui-btn-xs" onclick="set_send_item(\''+nickname+'\','+obj[key][item]['uid']+')">赠送</a>'+delf+waremove+'</td>';
+		tmp = tmp + "<td><span class='"+afidcolor+"'>"+ afid +"</span><br><span>"+isupper+"</span></td>";
+
+		
+		$("#"+key).append("<tr>"+tmp+"</tr>");
+	}
+}
+
+
+function tip_mao(){
+        layer.prompt({title: '发短信给优惠猫', value: '在不在，我要续费', formType: 0}, function(msg, index){
+                layer.close(index);
+                loading_show();
+                $.get("/api.php?"+signkey+"act=tip_mao&msg="+msg+"&id="+game_uid,function(data){
+                        loading_hide();
+                        layer.msg(data);
+                });
+        });
+}
+
+function ware_upper(fuid){
+	$.get("/api.php?"+signkey+"act=ware_upper&type="+fuid+"&id="+game_uid,function(data){
+		loading_hide();
+		layer.msg(data);
+	});
+}
+
+function ware_come(){
+	var id = $("#familyId").html();
+	layer.prompt({title: '请输入专属要调到某公会的ID', value: id, formType: 0, maxlength:10}, function(fid, index){
+		layer.close(index);
+		loading_show();
+		$.get("/api.php?"+signkey+"act=ware_come&type="+fid+"&id="+game_uid,function(data){
+			loading_hide();
+			layer.msg(data);
+		});
+	});
+}
+
+function ware_cometo(uid){
+	layer.prompt({title: '请输入['+uid+']该专属要调到某公会的ID', value: '', formType: 0, maxlength:10}, function(fid, index){
+		layer.close(index);
+		loading_show();
+		$.get("/api.php?"+signkey+"act=ware_cometo&type="+fid+"&type2="+uid+"&id="+game_uid,function(data){
+			loading_hide();
+			layer.msg(data);
+		});
+	});
+}
+
+function wareto_rule_change(fid, rid){
+	$.get("/api.php?"+signkey+"act=wareto_rule_change&type="+fid+"&type2="+rid+"&id="+game_uid,function(data){
+		loading_hide();
+		layer.msg(data);
+	});
+}
+
+function wareto_start(fid){
+	var rid = $('#ware_' + fid).val();
+	$.get("/api.php?"+signkey+"act=wareto_start&type="+fid+"&type2="+rid+"&id="+game_uid,function(data){
+		loading_hide();
+		layer.msg(data);
+	});
+}
+
+function flush_wareto(){
+	$('#flush_wareto').empty();
+	$.get("/api.php?"+signkey+"act=flush_wareto&id="+game_uid,function(data){
+		var obj = eval( "(" + data + ")" );
+		for(var item in obj){
+			tmp = "";
+			if(item == 0)
+			tmp = tmp + "<td><a href='javascript:;' onclick='filter_fid("+item+")'><span class='label label-important'>"+item+"</span></a></td><td>"+obj[item]['num']+"</td><td>"+obj[item]['stone']+"</td><td></td>";
+			else{
+				tmp = tmp + "<td><a href='javascript:;' onclick='filter_fid("+item+")'><span class='label label-important'>"+item+"</span></a></td><td>"+obj[item]['num']+"</td><td>"+obj[item]['stone']+"</td><td><select id=ware_"+item+" onchange=\"wareto_rule_change("+item+", this.value)\">";
+				for(i=0; i<=5; i++){
+					choose = obj[item]['rule'] == i ? 'selected' : '';
+					tmp = tmp + "<option value="+i+" "+choose+">" + road(i) +"</option>";
+				}
+				tmp = tmp + "</select>　<i class='fa fa-play-circle-o fa-2x' style='color:green;vertical-align:middle' onclick='wareto_start("+item+")'></i></td>";
+			}
+			$("#flush_wareto").append("<tr>"+tmp+"</tr><tr><td colspan=4>我方时间: "+obj[item]['timer']+"</td></tr>");
+		}
+	});
+}
+
+function filter_fid(fid){
+	layer.msg("请先点开【榜上有名】【好友】再点这个公会ID，即可筛选公会专属");
+	$('#rank_friends2').find("tr").each(function(){
+		var v = $(this).children('td:eq(2)').text();
+		if(v.indexOf(fid) == -1){
+			$(this).hide();
+		}else{
+			$(this).show();
+		}
+	});
+}
+
+
+
+</script>
+<script src="https://res.kubeibear.com/js/cats.js?v=183" charset="utf-8"></script>
+</html>
+

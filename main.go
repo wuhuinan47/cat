@@ -79,8 +79,8 @@ func main() {
 		panic(err)
 	}
 
-	run_dir = "/mnt/app/cat/"
-	api_url = "https://cat.rosettawe.com/"
+	run_dir = "/data/cat/"
+	api_url = "https://avu.rosettawe.com/"
 
 	run_dir = cfg.Str("run_dir")
 	api_url = cfg.Str("api_url")
@@ -181,6 +181,7 @@ func main() {
 		go runner.NamedRunnerWithSeconds("RunnerBeach", 21600, &running, RunnerBeach)
 
 		go runner.NamedRunnerWithHMS("RunnerInitTodayAnimal", 6, 30, 0, &running, InitTodayAnimal)
+		go runner.NamedRunnerWithHMS("PlayLuckyWheelGo", 5, 31, 0, &running, PlayLuckyWheelGo)
 		go runner.NamedRunnerWithHMS("RunnerFamilySignGo", 0, 1, 0, &running, RunnerFamilySignGo)
 
 		go runner.NamedRunnerWithSeconds("RunnerCheckTokenGo", 2000, &running, RunnerCheckTokenGo)
@@ -653,11 +654,13 @@ func attackBossLogic(id string) (err error) {
 	}
 
 	var count float64
-	if uid == "302691822" || uid == "309392050" || uid == "403573789" {
-		count = math.Floor(bossCannonFloat/hitBossNums) * hitBossNums
-	} else {
-		count = math.Floor(bossCannonFloat/hitBossNums) * hitBossNums
-	}
+	count = math.Floor(bossCannonFloat/hitBossNums) * hitBossNums
+
+	// if uid == "302691822" || uid == "309392050" || uid == "403573789" {
+	// 	count = math.Floor(bossCannonFloat/hitBossNums) * hitBossNums
+	// } else {
+	// 	count = math.Floor(bossCannonFloat/hitBossNums) * hitBossNums
+	// }
 	if bossCannonFloat == 2 {
 		count = 2
 	}
@@ -713,20 +716,20 @@ func attackBossLogic(id string) (err error) {
 
 		if hitBossNums == 3 {
 			if leftHp <= 600 && leftHp >= 500 {
-				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 200, 200, 0)
 				countI += 3
 			} else if leftHp == 601 {
-				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 1, 1, 0)
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 1, 1, 0)
 				countI += 1
 			} else if leftHp <= 1000 && leftHp >= 500 {
-				attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
-				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400, 0)
+				attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 200, 200, 0)
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 400, 400, 0)
 				countI += 4
 			} else if leftHp == 400 {
-				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 200, 200, 0)
 				countI += 2
 			} else if leftHp == 200 {
-				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 200, 200, 0)
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 0)
 				countI += 1
 			} else {
 				flag = false
@@ -734,36 +737,41 @@ func attackBossLogic(id string) (err error) {
 			}
 		} else {
 			if leftHp <= 600 && leftHp >= 500 {
-				attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 0, 100, 100, 0)
-				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
+				attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 0)
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 200, 200, 0)
 				countI += 5
 			} else if leftHp == 601 {
-				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 1, 1, 0)
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 1, 1, 0)
 				countI += 1
 			} else if leftHp <= 1000 && leftHp >= 500 {
-				attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
-				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400, 0)
+				attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 200, 200, 0)
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 400, 400, 0)
 				countI += 4
 			} else if leftHp == 400 {
-				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 200, 200, 0)
 				countI += 2
 			} else if leftHp == 200 {
-				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 200, 200, 0)
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 0)
 				countI += 1
 			} else {
+				if id == "" {
+					if leftHp >= 1150 {
+						attackBoss(serverURL, zoneToken, bossID)
+					}
+				}
 				flag = false
 				log.Println("ignore")
 			}
 		}
 		Pool.Exec("delete from boss_list where boss_id = ?", bossID)
 		if flag {
-			go func() {
+			go func(bossID string) {
 				fmt.Printf("[%v]start getBossPrize \n", name)
 				time.Sleep(time.Second * 82800)
 				serverURL, zoneToken = getSeverURLAndZoneToken(token)
-				getBossPrize(serverURL, zoneToken, v["id"].(string))
+				getBossPrize(serverURL, zoneToken, bossID)
 				fmt.Printf("[%v]end getBossPrize \n", name)
-			}()
+			}(bossID)
 		}
 
 	}
@@ -1756,7 +1764,7 @@ func AddFirewoodH(w http.ResponseWriter, req *http.Request) {
 	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
 
 	if id == "0" {
-		SQL = "select id, name, token from tokens where id <> 302691822 and id <> 309392050"
+		SQL = "select id, name, token from tokens"
 	}
 
 	rows, err := Pool.Query(SQL)
@@ -1778,7 +1786,6 @@ func AddFirewoodH(w http.ResponseWriter, req *http.Request) {
 			}
 			log.Printf("[%v]给[%v]添加柴火", name, v)
 		}
-
 		for _, v := range helpUids {
 			fuid := fmt.Sprintf("%v", v)
 			openSteamBox(serverURL, zoneToken, fuid)
@@ -2797,6 +2804,10 @@ func attackMyBossLogic(id, mode string) (err error) {
 					return
 				}
 
+				if uid == "302691822" || uid == "309392050" {
+					return
+				}
+
 				// Pool.Exec("insert into boss_list (boss_id) values (?)", bossID)
 				Pool.Exec("update config set conf_value = 0 where conf_key = 'checkTokenStatus'")
 				inviteBoss(serverURL, zoneToken, bossID)
@@ -3098,7 +3109,7 @@ func LoginByQrcodeH(w http.ResponseWriter, req *http.Request) {
 		SQL := "select conf_value from config where conf_key = 'wechatLoginQrcode'"
 		go func() {
 			log.Println("start python")
-			cmd := exec.Command("/bin/python3", str)
+			cmd := exec.Command("python3", str)
 			err := cmd.Run()
 			if err != nil {
 				return
@@ -3126,7 +3137,7 @@ func LoginByQrcodeH(w http.ResponseWriter, req *http.Request) {
 		SQL := "select conf_value from config where conf_key = 'wechatLoginQrcode'"
 		go func() {
 			log.Println("start python")
-			cmd := exec.Command("/bin/python3", str)
+			cmd := exec.Command("python3", str)
 			err := cmd.Run()
 			if err != nil {
 				return
@@ -3280,7 +3291,7 @@ func LoginByQrcodeH1(s *web.Session) web.Result {
 		// SQL := "select conf_value from config where conf_key = 'wechatLoginQrcode'"
 		// // go func() {
 		// // 	log.Println("start python")
-		// // 	cmd := exec.Command("/bin/python3", str)
+		// // 	cmd := exec.Command("python3", str)
 		// // 	err := cmd.Run()
 		// // 	if err != nil {
 		// // 		return
@@ -3322,7 +3333,7 @@ func LoginByQrcodeH1(s *web.Session) web.Result {
 		SQL := "select conf_value from config where conf_key = 'wechatLoginQrcode'"
 		go func() {
 			log.Println("start python")
-			cmd := exec.Command("/bin/python3", str)
+			cmd := exec.Command("python3", str)
 			err := cmd.Run()
 			if err != nil {
 				return
@@ -3348,7 +3359,7 @@ func LoginByQrcodeH1(s *web.Session) web.Result {
 		SQL := "select conf_value from config where conf_key = 'wechatLoginQrcode'"
 		go func() {
 			log.Println("start python")
-			cmd := exec.Command("/bin/python3", str)
+			cmd := exec.Command("python3", str)
 			err := cmd.Run()
 			if err != nil {
 				return
@@ -3543,7 +3554,13 @@ func GetZoneTokenH(w http.ResponseWriter, req *http.Request) {
 
 func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 	// go func() {
+	id := req.URL.Query().Get("id")
 	SQL := "select id, token, name, password from tokens"
+	if id == "null" {
+		SQL = "select id, token, name, password from tokens where token=''"
+	} else if id != "" {
+		SQL = "select id, token, name, password from tokens where id=" + id
+	}
 
 	rows, err := Pool.Query(SQL)
 
@@ -4189,7 +4206,7 @@ func AddAccountH(w http.ResponseWriter, req *http.Request) {
 	Pool.QueryRow("select id from tokens where id = ?", uid).Scan(&id)
 	if id != "" {
 		SQL := "update tokens set serverURL = ?, zoneToken = ?, password=? where token = ?"
-		Pool.Exec(SQL, serverURL, zoneToken, token)
+		Pool.Exec(SQL, serverURL, zoneToken, password, token)
 	} else {
 		SQL := "insert into tokens (id, name, token, serverURL, zoneToken, password) values (?, ?, ?, ?, ?, ?)"
 		Pool.Exec(SQL, uid, nickname, token, serverURL, zoneToken, password)
@@ -4899,7 +4916,7 @@ func getSeverURLAndZoneToken(token string) (serverURL, zoneToken string) {
 				return
 			}
 		} else {
-			Pool.Exec("update tokens set password = '' where id = ?", uid)
+			// Pool.Exec("update tokens set password = '' where id = ?", uid)
 		}
 
 	}
@@ -7001,7 +7018,8 @@ func collectMineGold(serverURL, zoneToken string) {
 
 func loginByPassword(uid, password string) (token string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-	URL := fmt.Sprintf("https://login.11h5.com/account/api.php?c=login&d=auth&uid=%v&password=%v&v=%v", uid, password, now)
+
+	URL := fmt.Sprintf("https://login.11h5.com/account/api.php?c=login&d=auth&uid=%v&password=%v&ver=%v", uid, password, now)
 	formData := httpGetReturnJson(URL)
 	log.Println("uid ->", uid)
 	log.Println("password ->", password)
@@ -7017,7 +7035,7 @@ func loginByPassword(uid, password string) (token string) {
 
 func loginByPasswordReturnUidToken(uid, password string) (userID float64, token string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-	URL := fmt.Sprintf("https://login.11h5.com/account/api.php?c=login&d=auth&uid=%v&password=%v&v=%v", uid, password, now)
+	URL := fmt.Sprintf("https://login.11h5.com/account/api.php?c=login&d=auth&uid=%v&password=%v&ver=%v", uid, password, now)
 	formData := httpGetReturnJson(URL)
 	log.Println("uid ->", uid)
 	log.Println("password ->", password)
@@ -7049,9 +7067,9 @@ func getSteamBoxHelpList(serverURL, zoneToken string, quality float64) (uids []f
 						if ok {
 							firewood, ok := steamBox["firewood"].(float64)
 							if ok {
+								endTime := startTime/1000 + (2*(3-firewood)+1)*3600
 
 								if firewood != 3 {
-									endTime := startTime/1000 + (2*(3-firewood)+1)*3600
 									if time.Now().Unix() < int64(endTime) {
 
 										if quality == 0 {
@@ -7066,6 +7084,10 @@ func getSteamBoxHelpList(serverURL, zoneToken string, quality float64) (uids []f
 										}
 
 									} else {
+										helpUids = append(helpUids, uid)
+									}
+								} else {
+									if time.Now().Unix() > int64(endTime) {
 										helpUids = append(helpUids, uid)
 									}
 								}
@@ -7209,7 +7231,9 @@ func httpGetReturnJson(url string) (formData map[string]interface{}) {
 		log.Printf("httpGet err is %v, url is %v", err, url)
 		return
 	}
-	request.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36")
+	request.Header.Add("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1")
+	// request.Header.Add("origin", "https://game.11h5.com")
+	// request.Header.Add("authority", "login.11h5.com")
 	response, err := client.Do(request)
 
 	if err != nil {
@@ -7395,12 +7419,15 @@ func RunnerSteamBox() (err error) {
 	}
 	defer rows.Close()
 
+	users := [][]string{}
+
 	for rows.Next() {
 		var uid, name, token string
 		rows.Scan(&uid, &name, &token)
 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
 		addFirewood(serverURL, zoneToken, "302691822")
 		addFirewood(serverURL, zoneToken, "309392050")
+		users = append(users, []string{uid, name, token})
 	}
 
 	SQL = "select id, name, token from tokens where id in (302691822,309392050)"
@@ -7415,21 +7442,41 @@ func RunnerSteamBox() (err error) {
 		var uid, uname, utoken string
 		rows.Scan(&uid, &uname, &utoken)
 		serverURL, zoneToken := getSeverURLAndZoneToken(utoken)
-		uids, _ := getSteamBoxHelpList(serverURL, zoneToken, 2)
+		uids, helpUids := getSteamBoxHelpList(serverURL, zoneToken, 2)
 		for _, v := range uids {
 			fuid := fmt.Sprintf("%v", v)
 			addFirewood(serverURL, zoneToken, fuid)
 			log.Printf("[%v]给[%v]添加柴火", uname, fuid)
 		}
+		for _, v := range helpUids {
+			fuid := fmt.Sprintf("%v", v)
+			openSteamBox(serverURL, zoneToken, fuid)
+			log.Printf("[%v]给[%v]打开汤圆", uname, v)
 
-		uids, _ = getSteamBoxHelpList(serverURL, zoneToken, 3)
+		}
+
+		uids, helpUids = getSteamBoxHelpList(serverURL, zoneToken, 3)
 		for _, v := range uids {
 			fuid := fmt.Sprintf("%v", v)
 			addFirewood(serverURL, zoneToken, fuid)
 			log.Printf("[%v]给[%v]添加柴火", uname, fuid)
+		}
+		for _, v := range helpUids {
+			fuid := fmt.Sprintf("%v", v)
+			openSteamBox(serverURL, zoneToken, fuid)
+			log.Printf("[%v]给[%v]打开汤圆", uname, v)
+
 		}
 	}
-
+	for _, v := range users {
+		serverURL, zoneToken := getSeverURLAndZoneToken(v[2])
+		uids, _ := getSteamBoxHelpList(serverURL, zoneToken, 0)
+		for _, v2 := range uids {
+			fuid := fmt.Sprintf("%v", v2)
+			addFirewood(serverURL, zoneToken, fuid)
+			log.Printf("[%v]给[%v]添加柴火", v[1], fuid)
+		}
+	}
 	return
 }
 
@@ -7458,7 +7505,7 @@ func RunnerDraw() (err error) {
 			followCompanion_1(serverURL, zoneToken, 2)
 
 			iMax := int((maxDraw - dayDrawFloat) / 5)
-			if iMax == 0 {
+			if iMax <= 0 {
 				log.Printf("[%v]不用摇", cowBoyName)
 			} else {
 				for i := 0; i < iMax; i++ {
@@ -7490,7 +7537,7 @@ func RunnerDraw() (err error) {
 			log.Printf("---------------------------[%v]开始转盘---------------------------", cowBoyName)
 			iMax := int((maxDraw - dayDrawFloat) / 5)
 
-			if iMax == 0 {
+			if iMax <= 0 {
 				log.Printf("[%v]不用摇", cowBoyName)
 				return
 			}
@@ -7583,7 +7630,7 @@ func RunnerDraw() (err error) {
 				log.Printf("---------------------------[%v]开始转盘---------------------------", goName)
 
 				iMax := int((maxDraw - goDayDraw) / 5)
-				if iMax == 0 {
+				if iMax <= 0 {
 					log.Printf("[%v]不用摇", goName)
 
 				} else {
@@ -7640,7 +7687,7 @@ func RunnerDraw() (err error) {
 					// amount := draw(goUid, goName, goServerURL, goZoneToken, 1)
 					iMax := int((maxDraw - goDayDraw) / 5)
 					// time.Sleep(time.Millisecond * 2100)
-					if iMax == 0 {
+					if iMax <= 0 {
 						log.Printf("[%v]不用摇", goName)
 						return
 					}
@@ -7911,14 +7958,70 @@ func AttackBossGo() (err error) {
 		rows.Scan(&uuid)
 		ids = append(ids, uuid)
 	}
+
+	// for _, v := range ids {
+	// bossList := getBossHelpList(serverURL, zoneToken)
+	// for _, v := range bossList {
+	// 	leftHp, ok := v["leftHp"].(float64)
+	// 	if ok {
+	// 		if leftHp >= 1150 {
+	// 			attackBoss(serverURL, zoneToken, v["id"].(string))
+	// 		}
+	// 	}
+	// }
+	// }
 	for _, v := range ids {
 		attackBossLogic(v)
 	}
-
 	getbossPrizeLogic("")
-
 	return
 }
+
+func PlayLuckyWheelGo() (err error) {
+	amount := 100
+	sql := "select id, name, token from tokens"
+	rows, err := Pool.Query(sql)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
+		serverURL := getServerURL()
+		zoneToken, wheelUpgradeItem := getEnterInfo(uid, name, serverURL, token, "wheelUpgradeItem")
+		wheelUpgradeItemMap, ok := wheelUpgradeItem.(map[string]interface{})
+		if !ok {
+			break
+		}
+		luckCount, ok := wheelUpgradeItemMap["174"].(float64)
+		if !ok {
+			break
+		}
+		log.Printf("[%v] luckCount [%v]", name, luckCount)
+
+		var i float64 = 0
+
+		for {
+			if i >= luckCount {
+				break
+			}
+			if i >= float64(amount) {
+				break
+			}
+			log.Printf("[%v] start playLuckyWheel", name)
+			shareAPI(serverURL, zoneToken)
+			playLuckyWheel(serverURL, zoneToken)
+			log.Printf("[%v] end playLuckyWheel", name)
+			log.Printf("[%v] i [%v]", name, i)
+			time.Sleep(time.Millisecond * 300)
+			i += 5
+		}
+
+	}
+	return
+}
+
 func InitTodayAnimal() (err error) {
 	sql := `select id, name, token from tokens where id = (select conf_value from config where conf_key = 'animalUid')`
 	var uid, name, token string
@@ -7948,6 +8051,7 @@ func InitTodayAnimal() (err error) {
 		_, err = Pool.Exec("update tokens set init_animals = ?, all_animals = null where id = ?", ToJSON(animal), uuid)
 	}
 
+	exchangeRiceCakeLogic("")
 	return
 }
 
