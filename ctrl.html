@@ -56,10 +56,29 @@
         <option selected="selected" value="">全部</option>
     </select>
 
+    <select style="font-size:40px;width:150px; height:100px;" name="setPullRowsSelectFamily" id="setPullRowsSelectFamily">
+        <option selected="selected" value="">选择公会</option>
+    </select>
+
     <button style="font-size:40px;width:300px; height:100px;" onclick="setPullRows()">
-        设置几道
+        设置几道(设置0表示不拉)
     </button>
     <input style="font-size:40px;width:200px; height:100px;" type="text" value="1,2,3,4,5,6" id="setPullRows" class="textClass" name="textName">
+    <br>
+
+    <select style="font-size:40px;width:150px; height:100px;" name="setPullRowsSelectFamily1" id="setPullRowsSelectFamily1">
+        <option selected="selected" value="">选择公会</option>
+    </select>
+
+    <select style="font-size:40px;width:150px; height:100px;" name="setFamilyCount" id="setFamilyCount">
+        <option selected="selected" value="1995">转2000</option>
+        <option value="795">转800</option>
+        <option value="-1">不转</option>
+    </select>
+
+    <button style="font-size:40px;width:300px; height:100px;" onclick="setFamilyCount()">
+        是否转盘
+    </button>
     <br>
 
 
@@ -253,6 +272,29 @@
     </button>
 
     <br>
+
+
+    <select style="font-size:40px;width:250px; height:100px;" name="userMingingItem" id="userMingingItem">
+        <option selected="selected" value="">选择</option>
+    </select>
+    <button style="font-size:40px;width:500px; height:100px;" onclick="userMingingItem()">
+        挖矿5000分(测试)
+    </button>
+
+    <br>
+
+    <br>
+
+
+    <select style="font-size:40px;width:250px; height:100px;" name="getMiningScoreReward" id="getMiningScoreReward">
+        <option selected="selected" value="">选择</option>
+    </select>
+    <button style="font-size:40px;width:500px; height:100px;" onclick="getMiningScoreReward()">
+        领取挖矿奖励(测试)
+    </button>
+
+    <br>
+    
     <button style="font-size:40px;width:400px; height:100px;" onclick="checkToken()">
         检测账号状态
     </button>
@@ -525,6 +567,11 @@
         <option selected="selected" value="">全部</option>
     </select>
 
+    <select style="font-size:40px;width:200px; height:100px;" name="cancelFamilyRobFlag" id="cancelFamilyRobFlag">
+        <option value="">个人</option>
+        <option selected="selected" value="1">公会</option>
+    </select>
+
     <button style="font-size:40px;width:400px; height:100px;" onclick="cancelFamilyRob()">
         取消拉动物
     </button>
@@ -664,11 +711,22 @@
             });
         }
 
+        // setPullRowsCount
+
+        setFamilyCount = function(){
+            var familyId = $("#setPullRowsSelectFamily1 option:selected").val();
+            var setFamilyCount = $("#setFamilyCount option:selected").val();
+            $.get(APIURL + "/setFamilyCount?input="+setFamilyCount+"&familyId="+familyId, function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
         setPullRows = function(){
             var id = $("#setPullRowsSelect option:selected").val();
+            var familyId = $("#setPullRowsSelectFamily option:selected").val();
 
             var value = document.getElementById("setPullRows").value
-            $.get(APIURL + "/setPullRows?input="+value+"&id="+id, function (data) {
+            $.get(APIURL + "/setPullRows?input="+value+"&id="+id+"&familyId="+familyId, function (data) {
                 alert(data)
                 window.status = "1";
             });
@@ -701,10 +759,7 @@
             var r = confirm("checkToken是否继续")
             if (r == true) {
                 $.get(APIURL + "/checkToken", function (data) {
-                    var jsarr = JSON.parse(data);
-                    alert(jsarr.data1)
-                    alert(jsarr.data2)
-                    alert(jsarr.data3)
+                    alert(data)
                     window.status = "1";
                 });
             }
@@ -842,8 +897,9 @@
             var r = confirm("cancelFamilyRob是否继续")
             if (r == true) {
                 var id = $("#cancelFamilyRob option:selected").val();
+                var flag = $("#cancelFamilyRobFlag option:selected").val();
 
-                $.get(APIURL + "/cancelFamilyRob?id=" + id, function (data) {
+                $.get(APIURL + "/cancelFamilyRob?id=" + id+"&flag="+flag, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1000,6 +1056,40 @@
 
         }
 
+        userMingingItem = function () {
+            // buildUpUsers
+
+            var r = confirm("userMingingItem是否继续")
+            if (r == true) {
+                var id = $("#userMingingItem option:selected").val();
+
+                $.get(APIURL + "/useMiningItem5000?id=" + id, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        getMiningScoreReward = function () {
+            // buildUpUsers
+
+            var r = confirm("getMiningScoreReward是否继续")
+            if (r == true) {
+                var id = $("#getMiningScoreReward option:selected").val();
+
+                $.get(APIURL + "/getMiningScoreReward?id=" + id, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        
+
+        
+
 
         setRunner = function () {
             var r = confirm("setRunner是否继续")
@@ -1124,6 +1214,25 @@
             $.get(APIURL + "/delServerLogs", function (data) {
                 alert(data)
                 window.status = "1";
+            });
+        }
+
+        queryfamilyId = function (){
+            $.get(APIURL + "/queryfamilyId", function (data) {
+                var jsarr = JSON.parse(data);
+                console.log(jsarr)
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i];
+                    tOption.value = jsarr[i];
+                    document.getElementById("setPullRowsSelectFamily").options.add(tOption);
+                }
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i];
+                    tOption.value = jsarr[i];
+                    document.getElementById("setPullRowsSelectFamily1").options.add(tOption);
+                }
             });
         }
 
@@ -1350,6 +1459,26 @@
                     tOption.text = jsarr[i]["name"];
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
+                    document.getElementById("userMingingItem").options.add(tOption);
+                }
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("getMiningScoreReward").options.add(tOption);
+                }
+
+
+
+                
+                
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"];
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
                     document.getElementById("familySignSelect").options.add(tOption);
                 }
 
@@ -1496,6 +1625,7 @@
         var APIURL = url["protocol"] + "//" + url["host"]
 
         getAllTokens();
+        queryfamilyId();
 
     </script>
 

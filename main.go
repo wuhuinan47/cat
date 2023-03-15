@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/Centny/rediscache"
+	"github.com/codingeasygo/util/converter"
 	"github.com/codingeasygo/util/xmap"
 	"github.com/codingeasygo/util/xprop"
 	"github.com/codingeasygo/web"
@@ -53,6 +54,7 @@ var adminUID int64 = 302691822
 
 type User struct {
 	Uid           string
+	FamilyId      string
 	Token         string
 	Name          string
 	ServerURL     string
@@ -60,6 +62,7 @@ type User struct {
 	Public        map[string]interface{}
 	FamilyDayTask interface{}
 	DayDraw       float64
+	MaxDraw       float64
 }
 
 func main() {
@@ -117,6 +120,13 @@ func main() {
 	http.HandleFunc("/oneSonAttackBoss", OneSonAttackBossH)
 	http.HandleFunc("/giftPiece", GiftPieceH)
 	http.HandleFunc("/draw", DrawH)
+	http.HandleFunc("/useMiningItem5000", UseMiningItem5000H)
+	http.HandleFunc("/getMiningScoreReward", GetMiningScoreRewardH)
+
+	http.HandleFunc("/queryfamilyId", QueryfamilyIdH)
+	http.HandleFunc("/setPullRowsCount", SetPullRowsCountH)
+	http.HandleFunc("/setFamilyCount", SetFamilyCountH)
+
 	http.HandleFunc("/throwDice", ThrowDiceH)
 	http.HandleFunc("/getMailPrize", GetMailPrizeH)
 	http.HandleFunc("/getBossPrize", GetBossPrizeH)
@@ -181,8 +191,9 @@ func main() {
 		go runner.NamedRunnerWithSeconds("RunnerBeach", 21600, &running, RunnerBeach)
 
 		go runner.NamedRunnerWithHMS("RunnerInitTodayAnimal", 6, 30, 0, &running, InitTodayAnimal)
-		go runner.NamedRunnerWithHMS("PlayLuckyWheelGo", 5, 31, 0, &running, PlayLuckyWheelGo)
-		go runner.NamedRunnerWithHMS("RunnerFamilySignGo", 0, 1, 0, &running, RunnerFamilySignGo)
+		go runner.NamedRunnerWithHMS("PlayLuckyWheelGo", 7, 35, 0, &running, PlayLuckyWheelGo)
+		go runner.NamedRunnerWithHMS("RunnerFamilySignGo010", 0, 1, 0, &running, RunnerFamilySignGo)
+		go runner.NamedRunnerWithHMS("RunnerFamilySignGo210", 2, 1, 0, &running, RunnerFamilySignGo)
 
 		go runner.NamedRunnerWithSeconds("RunnerCheckTokenGo", 2000, &running, RunnerCheckTokenGo)
 
@@ -406,13 +417,22 @@ func CatDemoH(w http.ResponseWriter, req *http.Request) {
 }
 
 func GetServerLogsH(w http.ResponseWriter, req *http.Request) {
-	_, err := os.Stat("screenlog.0")
+	cmd := "journalctl -n 100 -u cat"
+	c := exec.Command("bash", "-c", cmd)
+	xx, err := c.Output()
 	if err != nil {
 		io.WriteString(w, err.Error())
-		return
+	} else {
+		io.WriteString(w, string(xx))
 	}
-	t, _ := template.ParseFiles("screenlog.0")
-	t.Execute(w, nil)
+
+	// _, err := os.Stat("screenlog.0")
+	// if err != nil {
+	// 	io.WriteString(w, err.Error())
+	// 	return
+	// }
+	// t, _ := template.ParseFiles("screenlog.0")
+	// t.Execute(w, nil)
 }
 
 func DelServerLogsH(w http.ResponseWriter, req *http.Request) {
@@ -1055,7 +1075,7 @@ func GetBossPrizeH(w http.ResponseWriter, req *http.Request) {
 
 }
 func getbossPrizeLogic(id string) {
-	SQL := "select token, name from tokens where id != (select conf_value from config where conf_key = 'cowBoy')"
+	SQL := "select token, name from tokens"
 
 	if id != "" {
 		SQL = fmt.Sprintf("select token, name from tokens where id = %v", id)
@@ -1385,11 +1405,16 @@ func OpenSteamBoxH(w http.ResponseWriter, req *http.Request) {
 
 func SetPullRowsH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
+	familyId := req.URL.Query().Get("familyId")
 	input := req.URL.Query().Get("input")
-	if id == "" {
-		Pool.Exec("update tokens set pull_rows = ?", input)
+	if familyId != "" {
+		Pool.Exec("update tokens set pull_rows = ? where familyId = ?", input, familyId)
 	} else {
-		Pool.Exec("update tokens set pull_rows = ? where id = ?", input, id)
+		if id == "" {
+			Pool.Exec("update tokens set pull_rows = ?", input)
+		} else {
+			Pool.Exec("update tokens set pull_rows = ? where id = ?", input, id)
+		}
 	}
 	io.WriteString(w, "SUCCESS")
 }
@@ -1889,6 +1914,7 @@ func SearchFamilyH1(s *web.Session) web.Result {
 
 func cancelFamilyRobH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
+	flag := req.URL.Query().Get("flag")
 	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
 	if id == "" {
 		SQL = "select id, name, token from tokens"
@@ -1899,13 +1925,38 @@ func cancelFamilyRobH(w http.ResponseWriter, req *http.Request) {
 		io.WriteString(w, "FAIL")
 		return
 	}
-	defer rows.Close()
+	var familyId float64
 	for rows.Next() {
 		var uid, name, token string
 		rows.Scan(&uid, &name, &token)
 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
-		flag := cancelFamilyRob(serverURL, zoneToken)
-		log.Printf("[%v]取消拉动物[%v]\n", name, flag)
+		flagx := cancelFamilyRob(serverURL, zoneToken)
+		log.Printf("[%v]取消拉动物[%v]\n", name, flagx)
+
+		if id != "" && flag == "1" {
+			familyId, _ = getFamilyId(serverURL, zoneToken)
+		}
+	}
+	rows.Close()
+
+	if familyId > 0 {
+		SQL = "select id, name, token from tokens"
+		rows, err := Pool.Query(SQL)
+		if err != nil {
+			io.WriteString(w, "FAIL")
+			return
+		}
+		for rows.Next() {
+			var uid, name, token string
+			rows.Scan(&uid, &name, &token)
+			serverURL, zoneToken := getSeverURLAndZoneToken(token)
+			familyId2, _ := getFamilyId(serverURL, zoneToken)
+			if familyId2 == familyId {
+				flagx := cancelFamilyRob(serverURL, zoneToken)
+				log.Printf("[%v]取消拉动物[%v]\n", name, flagx)
+			}
+		}
+		rows.Close()
 
 	}
 
@@ -2145,6 +2196,91 @@ func helpMeForBeach(toid, toname string) {
 		}
 
 	}
+}
+
+func SetPullRowsCountH(w http.ResponseWriter, req *http.Request) {
+	familyId := req.URL.Query().Get("familyId")
+	input := req.URL.Query().Get("input")
+	Pool.Exec(`update tokens set pull_rows = ? where familyId = ?`, input, familyId)
+	Pool.Exec(`insert into config (conf_key, conf_value) values (?, ?)`, "family_draw_"+familyId, input)
+	Pool.Exec(`update config set conf_value = ? where conf_key = ?`, "family_draw_"+familyId, input)
+	io.WriteString(w, "SUCCESS")
+}
+
+func SetFamilyCountH(w http.ResponseWriter, req *http.Request) {
+	familyId := req.URL.Query().Get("familyId")
+	input := req.URL.Query().Get("input")
+	Pool.Exec(`insert into config (conf_key, conf_value) values (?, ?)`, "family_draw_"+familyId, input)
+	Pool.Exec(`update config set conf_value = ? where conf_key = ?`, input, "family_draw_"+familyId)
+
+	if input == "-1" {
+		Pool.Exec(`update tokens set draw_status = 0 where familyId = ?`, familyId)
+	} else {
+		Pool.Exec(`update tokens set draw_status = 1 where familyId = ?`, familyId)
+	}
+	io.WriteString(w, "SUCCESS")
+}
+
+func QueryfamilyIdH(w http.ResponseWriter, req *http.Request) {
+	sql := `select familyId from tokens group by familyId`
+	rows, err := Pool.Query(sql)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+	familyIds := []string{}
+	for rows.Next() {
+		var familyId string
+		rows.Scan(&familyId)
+		if familyId != "" {
+			familyIds = append(familyIds, familyId)
+		}
+	}
+
+	jsonBytes, err := json.Marshal(familyIds)
+	if err != nil {
+		io.WriteString(w, err.Error())
+		return
+	}
+	io.WriteString(w, string(jsonBytes))
+
+}
+
+func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
+	var uid, name, token string
+	err := Pool.QueryRow(SQL).Scan(&uid, &name, &token)
+	if err != nil {
+		return
+	}
+	serverURL, zoneToken := getSeverURLAndZoneToken(token)
+	xlog.Infof("[%v]开始挖矿", name)
+	useMiningItem5000(name, serverURL, zoneToken)
+	xlog.Infof("[%v]挖矿结束", name)
+	io.WriteString(w, "SUCCESS")
+}
+
+func GetMiningScoreRewardH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
+	var uid, name, token string
+	err := Pool.QueryRow(SQL).Scan(&uid, &name, &token)
+	if err != nil {
+		return
+	}
+	serverURL, zoneToken := getSeverURLAndZoneToken(token)
+	xlog.Infof("[%v]开始领取挖矿奖励", name)
+	for {
+		if !getMiningScoreReward(serverURL, zoneToken) {
+			break
+		}
+
+		xlog.Infof("[%v]继续领取挖矿奖励", name)
+	}
+	xlog.Infof("[%v]领取挖矿奖励结束", name)
+	io.WriteString(w, "SUCCESS")
+
 }
 
 func DrawH(w http.ResponseWriter, req *http.Request) {
@@ -2771,7 +2907,7 @@ func attackMyBossLogic(id, mode string) (err error) {
 	SQL := fmt.Sprintf("select id, name, token from tokens where id = %s", id)
 
 	if id == "" {
-		SQL = "select id, name, token from tokens where id <> 302691822 and id <> 309392050 "
+		SQL = "select id, name, token from tokens"
 	}
 
 	rows, err := Pool.Query(SQL)
@@ -2803,16 +2939,15 @@ func attackMyBossLogic(id, mode string) (err error) {
 					log.Printf("---------------------------[%v]bossID无法打龙---------------------------", name)
 					return
 				}
-
-				if uid == "302691822" || uid == "309392050" {
-					return
-				}
-
 				// Pool.Exec("insert into boss_list (boss_id) values (?)", bossID)
 				Pool.Exec("update config set conf_value = 0 where conf_key = 'checkTokenStatus'")
 				inviteBoss(serverURL, zoneToken, bossID)
 				time.Sleep(time.Second * 1)
 				shareAPI(serverURL, zoneToken)
+				if uid == "302691822" || uid == "309392050" {
+					Pool.Exec("update config set conf_value = 1 where conf_key = 'checkTokenStatus'")
+					return
+				}
 				log.Printf("---------------------------[%v]开始打龙---------------------------", name)
 				attackMyBoss(uid, serverURL, zoneToken, bossID, mode)
 				log.Printf("---------------------------[%v]结束打龙---------------------------", name)
@@ -3554,109 +3689,109 @@ func GetZoneTokenH(w http.ResponseWriter, req *http.Request) {
 
 func CheckTokenH(w http.ResponseWriter, req *http.Request) {
 	// go func() {
-	id := req.URL.Query().Get("id")
-	SQL := "select id, token, name, password from tokens"
-	if id == "null" {
-		SQL = "select id, token, name, password from tokens where token=''"
-	} else if id != "" {
-		SQL = "select id, token, name, password from tokens where id=" + id
-	}
-
-	rows, err := Pool.Query(SQL)
-
-	if err != nil {
-		return
-	}
-
-	defer rows.Close()
-
-	var groupconcat1, groupconcat2, groupconcat3 string
-
-	Pool.Exec("update config set conf_value = 0 where conf_key = 'isRunDone'")
-
-	for rows.Next() {
-		var id, token, name, password string
-		rows.Scan(&id, &token, &name, &password)
-
-		serverURL := getServerURL()
-
-		if password != "" {
-			token = loginByPassword(id, password)
-			Pool.Exec("update tokens set token = ? where id = ?", token, id)
-		}
-
-		zoneToken, firewood, flag, riceCake := getZoneToken_1(serverURL, token)
-
-		upgradeWheel := upgradeWheel(serverURL, zoneToken)
-		fmt.Printf("[%v]upgradeWheel is %v\n", name, upgradeWheel)
-
-		var riceCakeStr string
-		for k, v := range riceCake {
-			riceCakeStr += fmt.Sprintf("[%v:%v]", formatItemName(k), v)
-		}
-
-		fmt.Println("riceCake is ", riceCakeStr)
-
-		if zoneToken == "" {
-			Pool.Exec("update tokens set token = '' where id = ?", id)
-
-			groupconcat1 += "["
-			groupconcat1 += name
-			groupconcat1 += "]"
-			groupconcat1 += ":"
-			groupconcat1 += "失效"
-			groupconcat1 += "/"
-
-			sendMsg(id + ":" + name)
-		} else {
-
-			log.Printf("[%v]助力能量箱子", name)
-			helpEraseGift(serverURL, zoneToken)
-			_, mailEnergyCount := getMailListByCakeID(serverURL, zoneToken, "", "2")
-
-			// groupconcat2 += name
-			// groupconcat2 += ":"
-			// groupconcat2 += fmt.Sprintf("%v->mail->%v;firewood->%v", flag, mailEnergyCount, firewood)
-			// groupconcat2 += "/"
-
-			if flag {
-				groupconcat2 += name
-				groupconcat2 += ":"
-				groupconcat2 += fmt.Sprintf("[%v]-mail-[%v]firewood-[%v]", flag, mailEnergyCount, firewood)
-				groupconcat2 += "/"
-			} else {
-				groupconcat3 += name
-				groupconcat3 += ":"
-				groupconcat3 += fmt.Sprintf("[%v]-mail-[%v]firewood-[%v]", flag, mailEnergyCount, firewood)
-				groupconcat3 += "/"
-			}
-
-		}
-
-		// time.Sleep(time.Millisecond * 100)
-
-	}
-
-	Pool.Exec("update config set conf_value = 1 where conf_key = 'isRunDone'")
-
-	if runnerStatus("checkPiece") == "1" && runnerStatus("isRunDone") == "1" {
-		go checkPiece()
-	}
-	// if groupconcat1 == "" {
-	// 	if runnerStatus("checkPiece") == "1" {
-	// 		go checkPiece()
-	// 	}
+	// id := req.URL.Query().Get("id")
+	// SQL := "select id, token, name, password from tokens"
+	// if id == "null" {
+	// 	SQL = "select id, token, name, password from tokens where token=''"
+	// } else if id != "" {
+	// 	SQL = "select id, token, name, password from tokens where id=" + id
 	// }
 
-	mapList := map[string]interface{}{"data1": groupconcat1, "data2": groupconcat2, "data3": groupconcat3}
-	jsonBytes, err := json.Marshal(mapList)
-	if err != nil {
-		io.WriteString(w, "FAIL")
-		return
-	}
+	// rows, err := Pool.Query(SQL)
 
-	io.WriteString(w, string(jsonBytes))
+	// if err != nil {
+	// 	return
+	// }
 
+	// defer rows.Close()
+
+	// var groupconcat1, groupconcat2, groupconcat3 string
+
+	// Pool.Exec("update config set conf_value = 0 where conf_key = 'isRunDone'")
+
+	// for rows.Next() {
+	// 	var id, token, name, password string
+	// 	rows.Scan(&id, &token, &name, &password)
+
+	// 	serverURL := getServerURL()
+
+	// 	if password != "" {
+	// 		token = loginByPassword(id, password)
+	// 		Pool.Exec("update tokens set token = ? where id = ?", token, id)
+	// 	}
+
+	// 	zoneToken, firewood, flag, riceCake := getZoneToken_1(serverURL, token)
+
+	// 	upgradeWheel := upgradeWheel(serverURL, zoneToken)
+	// 	fmt.Printf("[%v]upgradeWheel is %v\n", name, upgradeWheel)
+
+	// 	var riceCakeStr string
+	// 	for k, v := range riceCake {
+	// 		riceCakeStr += fmt.Sprintf("[%v:%v]", formatItemName(k), v)
+	// 	}
+
+	// 	fmt.Println("riceCake is ", riceCakeStr)
+
+	// 	if zoneToken == "" {
+	// 		Pool.Exec("update tokens set token = '' where id = ?", id)
+
+	// 		groupconcat1 += "["
+	// 		groupconcat1 += name
+	// 		groupconcat1 += "]"
+	// 		groupconcat1 += ":"
+	// 		groupconcat1 += "失效"
+	// 		groupconcat1 += "/"
+
+	// 		sendMsg(id + ":" + name)
+	// 	} else {
+
+	// 		log.Printf("[%v]助力能量箱子", name)
+	// 		helpEraseGift(serverURL, zoneToken)
+	// 		_, mailEnergyCount := getMailListByCakeID(serverURL, zoneToken, "", "2")
+
+	// 		// groupconcat2 += name
+	// 		// groupconcat2 += ":"
+	// 		// groupconcat2 += fmt.Sprintf("%v->mail->%v;firewood->%v", flag, mailEnergyCount, firewood)
+	// 		// groupconcat2 += "/"
+
+	// 		if flag {
+	// 			groupconcat2 += name
+	// 			groupconcat2 += ":"
+	// 			groupconcat2 += fmt.Sprintf("[%v]-mail-[%v]firewood-[%v]", flag, mailEnergyCount, firewood)
+	// 			groupconcat2 += "/"
+	// 		} else {
+	// 			groupconcat3 += name
+	// 			groupconcat3 += ":"
+	// 			groupconcat3 += fmt.Sprintf("[%v]-mail-[%v]firewood-[%v]", flag, mailEnergyCount, firewood)
+	// 			groupconcat3 += "/"
+	// 		}
+
+	// 	}
+
+	// 	// time.Sleep(time.Millisecond * 100)
+
+	// }
+
+	// Pool.Exec("update config set conf_value = 1 where conf_key = 'isRunDone'")
+
+	// if runnerStatus("checkPiece") == "1" && runnerStatus("isRunDone") == "1" {
+	// 	go checkPiece()
+	// }
+	// // if groupconcat1 == "" {
+	// // 	if runnerStatus("checkPiece") == "1" {
+	// // 		go checkPiece()
+	// // 	}
+	// // }
+
+	// mapList := map[string]interface{}{"data1": groupconcat1, "data2": groupconcat2, "data3": groupconcat3}
+	// jsonBytes, err := json.Marshal(mapList)
+	// if err != nil {
+	// 	io.WriteString(w, "FAIL")
+	// 	return
+	// }
+
+	// io.WriteString(w, string(jsonBytes))
+	io.WriteString(w, "暂停此功能")
 }
 
 func GetFreeBossCannonH(w http.ResponseWriter, req *http.Request) {
@@ -4201,15 +4336,15 @@ func AddAccountH(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	serverURL := getServerURL()
-	zoneToken, nickname := getNickName(serverURL, token)
+	zoneToken, nickname, familyId := getNickNameFamilyId(serverURL, token)
 	var id string
 	Pool.QueryRow("select id from tokens where id = ?", uid).Scan(&id)
 	if id != "" {
-		SQL := "update tokens set serverURL = ?, zoneToken = ?, password=? where token = ?"
-		Pool.Exec(SQL, serverURL, zoneToken, password, token)
+		SQL := "update tokens set serverURL = ?, zoneToken = ?, password=?, familyId = ? where token = ?"
+		Pool.Exec(SQL, serverURL, zoneToken, password, familyId, token)
 	} else {
-		SQL := "insert into tokens (id, name, token, serverURL, zoneToken, password) values (?, ?, ?, ?, ?, ?)"
-		Pool.Exec(SQL, uid, nickname, token, serverURL, zoneToken, password)
+		SQL := "insert into tokens (id, name, token, serverURL, zoneToken, password, familyId) values (?, ?, ?, ?, ?, ?, ?)"
+		Pool.Exec(SQL, uid, nickname, token, serverURL, zoneToken, password, familyId)
 	}
 	io.WriteString(w, "SUCCESS")
 }
@@ -4883,8 +5018,12 @@ func getEnterInfo(uid, name, serverURL, token, key string) (zoneToken string, in
 	if !ok {
 		return
 	}
+	familyId, ok := formData["familyId"].(float64)
+	if !ok {
+		return
+	}
 
-	Pool.Exec("update tokens set serverURL = ?, zoneToken = ? where token = ?", serverURL, zoneToken, token)
+	Pool.Exec("update tokens set serverURL = ?, zoneToken = ?, familyId = ? where token = ?", serverURL, zoneToken, familyId, token)
 
 	return
 }
@@ -4898,10 +5037,10 @@ func getSeverURLAndZoneToken(token string) (serverURL, zoneToken string) {
 		return
 	}
 	serverURL = getServerURL()
-	zoneToken = getZoneToken(serverURL, token)
+	zoneToken, familyId := getZoneTokenFamilyId(serverURL, token)
 	if zoneToken != "" {
-		SQL = "update tokens set serverURL = ?, zoneToken = ? where token = ?"
-		Pool.Exec(SQL, serverURL, zoneToken, token)
+		SQL = "update tokens set serverURL = ?, zoneToken = ?, familyId = ? where token = ?"
+		Pool.Exec(SQL, serverURL, zoneToken, familyId, token)
 		return
 	}
 
@@ -4909,10 +5048,10 @@ func getSeverURLAndZoneToken(token string) (serverURL, zoneToken string) {
 		newToken := loginByPassword(uid, password)
 		if newToken != "" {
 			serverURL = getServerURL()
-			zoneToken = getZoneToken(serverURL, newToken)
+			zoneToken, familyId = getZoneTokenFamilyId(serverURL, newToken)
 			if zoneToken != "" {
-				SQL = "update tokens set token = ?, serverURL = ?, zoneToken = ? where id = ?"
-				Pool.Exec(SQL, newToken, serverURL, zoneToken, uid)
+				SQL = "update tokens set token = ?, serverURL = ?, zoneToken = ?, familyId = ? where id = ?"
+				Pool.Exec(SQL, newToken, serverURL, zoneToken, familyId, uid)
 				return
 			}
 		} else {
@@ -4921,6 +5060,20 @@ func getSeverURLAndZoneToken(token string) (serverURL, zoneToken string) {
 
 	}
 
+	return
+}
+
+func getZoneTokenFamilyId(serverURL, token string) (zoneToken string, familyId float64) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := serverURL + "/zone?cmd=enter&token=" + token + "&yyb=0&inviteId=null&share_from=null&cp_shareId=null&now=" + now
+	formData := httpGetReturnJson(URL)
+	zoneToken, ok := formData["zoneToken"].(string)
+	if !ok {
+		log.Printf("token:%v get zoneToken err", token)
+		Pool.Exec("update tokens set serverURL = '', zoneToken = '', token = '' where token = ?", token)
+		return
+	}
+	familyId = formData["familyId"].(float64)
 	return
 }
 
@@ -5065,6 +5218,21 @@ func getNickName(serverURL, token string) (zoneToken, nickname string) {
 	return
 }
 
+func getNickNameFamilyId(serverURL, token string) (zoneToken, nickname string, familyId float64) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := serverURL + "/zone?cmd=enter&token=" + token + "&yyb=0&inviteId=null&share_from=null&cp_shareId=null&now=" + now
+	formData := httpGetReturnJson(URL)
+	zoneToken, ok := formData["zoneToken"].(string)
+	if !ok {
+		log.Printf("token:%v get zoneToken err", token)
+		return
+	}
+	nickname, _ = formData["nickname"].(string)
+	nickname, _ = url.QueryUnescape(nickname)
+	familyId = formData["familyId"].(float64)
+	return
+}
+
 func enterFamilyRob(serverURL, zoneToken string) (foods []map[string]interface{}) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := serverURL + "/game?cmd=enterFamilyRob&token=" + zoneToken + "&now=" + now
@@ -5194,8 +5362,6 @@ func getFamilyId(serverURL, zoneToken string) (familyId float64, timeFlushList [
 	}
 
 	for _, v := range myFlushTimeList {
-		log.Println(v)
-
 		vv, ok := v.(string)
 		if !ok {
 			return
@@ -5218,7 +5384,6 @@ func getFamilyId(serverURL, zoneToken string) (familyId float64, timeFlushList [
 		}
 
 		familyId, ok = vv["familyId"].(float64)
-		log.Println(familyId)
 		if ok {
 			if familyId != 1945 {
 				return
@@ -7021,9 +7186,9 @@ func loginByPassword(uid, password string) (token string) {
 
 	URL := fmt.Sprintf("https://login.11h5.com/account/api.php?c=login&d=auth&uid=%v&password=%v&ver=%v", uid, password, now)
 	formData := httpGetReturnJson(URL)
-	log.Println("uid ->", uid)
-	log.Println("password ->", password)
-	log.Println("loginByPassword ->", formData)
+	// log.Println("uid ->", uid)
+	// log.Println("password ->", password)
+	// log.Println("loginByPassword ->", formData)
 	errorID, ok := formData["error"].(float64)
 	if ok {
 		if errorID == 0 {
@@ -7481,6 +7646,11 @@ func RunnerSteamBox() (err error) {
 }
 
 func RunnerDraw() (err error) {
+
+	if time.Now().Weekday() == time.Sunday {
+		return
+	}
+
 	// RunnerSteamBox()
 	drawStatus := runnerStatus("drawStatus")
 	if drawStatus == "0" {
@@ -7577,7 +7747,7 @@ func RunnerDraw() (err error) {
 
 	if hour == 1 || hour == 3 || hour == 8 || hour == 11 || hour == 14 || hour == 17 || hour == 20 || hour == 22 {
 		log.Println("start draw")
-		SQL := "select id, name, token from tokens where find_in_set(id, (select conf_value from config where conf_key = 'drawIds'))"
+		SQL := "select id, name, token, familyId from tokens where draw_status = 1"
 
 		rows, err := Pool.Query(SQL)
 
@@ -7590,7 +7760,7 @@ func RunnerDraw() (err error) {
 
 		for rows.Next() {
 			var user User
-			err = rows.Scan(&user.Uid, &user.Name, &user.Token)
+			err = rows.Scan(&user.Uid, &user.Name, &user.Token, &user.FamilyId)
 			if err != nil {
 				break
 			}
@@ -7619,6 +7789,17 @@ func RunnerDraw() (err error) {
 			goFamilyDayTask := u.FamilyDayTask
 			goDayDraw := u.DayDraw
 
+			if u.FamilyId != "" {
+				Pool.QueryRow("select conf_value from config where conf_key = ?", "family_draw_"+u.FamilyId).Scan(&u.MaxDraw)
+			}
+			gomaxDraw := maxDraw
+			if u.MaxDraw == -1 {
+				continue
+			}
+			if u.MaxDraw != 0 {
+				gomaxDraw = u.MaxDraw
+			}
+
 			if hour == 11 || hour == 17 {
 				log.Printf("[%v]【摇一摇】获取免费20能量", goName)
 				getFreeEnergy(goServerURL, goZoneToken)
@@ -7629,7 +7810,7 @@ func RunnerDraw() (err error) {
 			if goUid == "302691822" {
 				log.Printf("---------------------------[%v]开始转盘---------------------------", goName)
 
-				iMax := int((maxDraw - goDayDraw) / 5)
+				iMax := int((gomaxDraw - goDayDraw) / 5)
 				if iMax <= 0 {
 					log.Printf("[%v]不用摇", goName)
 
@@ -7685,7 +7866,7 @@ func RunnerDraw() (err error) {
 					log.Printf("---------------------------[%v]开始转盘---------------------------", goName)
 					followCompanion_1(goServerURL, goZoneToken, 2)
 					// amount := draw(goUid, goName, goServerURL, goZoneToken, 1)
-					iMax := int((maxDraw - goDayDraw) / 5)
+					iMax := int((gomaxDraw - goDayDraw) / 5)
 					// time.Sleep(time.Millisecond * 2100)
 					if iMax <= 0 {
 						log.Printf("[%v]不用摇", goName)
@@ -7831,6 +8012,11 @@ func RunnerPullAnimal() (err error) {
 	return
 }
 
+func getDrawStatus(familyId string) (confValue string) {
+	Pool.QueryRow("select conf_value from config where conf_key = ?", "family_draw_"+familyId).Scan(&confValue)
+	return
+}
+
 func runnerStatus(confKey string) (confValue string) {
 	Pool.QueryRow("select conf_value from config where conf_key = ?", confKey).Scan(&confValue)
 	return
@@ -7943,10 +8129,11 @@ func RunnerCheckTokenGo() (err error) {
 }
 
 func AttackBossGo() (err error) {
+	getbossPrizeLogic("")
 	attackMyBossLogic("", "4400")
 	time.Sleep(450 * time.Second)
 	attackBossLogic("")
-	sql := `select id from tokens where id <> 302691822`
+	sql := `select id from tokens`
 	rows, err := Pool.Query(sql)
 	if err != nil {
 		return
@@ -8048,7 +8235,7 @@ func InitTodayAnimal() (err error) {
 			miningApply(serverURL, zoneToken)
 			getMiningRankList(serverURL, zoneToken)
 		}
-		_, err = Pool.Exec("update tokens set init_animals = ?, all_animals = null where id = ?", ToJSON(animal), uuid)
+		_, err = Pool.Exec("update tokens set init_animals = ?, all_animals = null, pull_rows = '1,2,3,4,5,6' where id = ?", ToJSON(animal), uuid)
 	}
 
 	exchangeRiceCakeLogic("")
@@ -8537,4 +8724,79 @@ func formatItemName(key string) (name string) {
 	}
 
 	return
+}
+
+// https://s147.11h5.com//game?cmd=getMiningScoreReward&token=ild_n_kINUD6mj_vz9RdSuutJaqmoGgxTz7&now=1678856320313
+
+func useMiningItem5000(name, serverURL, zoneToken string) {
+	data, err := ioutil.ReadFile("useMiningItem.json")
+	if err != nil {
+		fmt.Println("ReadFile: ", err.Error())
+		return
+	}
+	// 解析json
+	var result [][]string
+	err = json.Unmarshal(data, &result)
+	if err != nil {
+		fmt.Println("Unmarshal: ", err.Error())
+		return
+	}
+	for _, v := range result {
+		flag := useMiningItem(serverURL, zoneToken, v[0], v[1], v[2])
+		xlog.Infof("[%v]挖矿itemId:%v,row:%v,column:%v,结果:%v", name, v[0], v[1], v[2], flag)
+	}
+}
+
+func useMiningItem(serverURL, zoneToken, itemId, row, column string) bool {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=useMiningItem&token=%v&itemId=%v&row=%v&column=%v&now=%v", serverURL, zoneToken, itemId, row, column, now)
+	form := httpGetReturnJson(URL)
+	_, ok := form["getItem"].(map[string]interface{})
+	return ok
+}
+
+func getMiningScoreReward(serverURL, zoneToken string) bool {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=getMiningScoreReward&token=%v&now=%v", serverURL, zoneToken, now)
+	form := httpGetReturnJson(URL)
+	_, ok := form["getItem"].(map[string]interface{})
+	return ok
+}
+
+func 挖矿配置() (conf [][]string) {
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildJWmqlUOv70JTxS0H6iuqtD9ZVZQDf9RS&itemId=184&row=4&column=3&now=1678714436555
+	conf = [][]string{}
+	conf = append(conf, []string{"184", "4", "3"})
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildJWmqlUOv70JTxS0H6iuqtD9ZVZQDf9RS&itemId=186&row=4&column=3&now=1678714534431
+	conf = append(conf, []string{"186", "4", "3"})
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildJWmqlUOv70JTxS0H6iuqtD9ZVZQDf9RS&itemId=186&row=5&column=2&now=1678714574612
+	conf = append(conf, []string{"186", "5", "2"})
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildJWmqlUOv70JTxS0H6iuqtD9ZVZQDf9RS&itemId=186&row=6&column=3&now=1678714593796
+	conf = append(conf, []string{"186", "6", "3"})
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildJWmqlUOv70JTxS0H6iuqtD9ZVZQDf9RS&itemId=185&row=6&column=3&now=1678714610997
+	conf = append(conf, []string{"185", "6", "3"})
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildJWmqlUOv70JTxS0H6iuqtD9ZVZQDf9RS&itemId=184&row=7&column=5&now=1678714631263
+	conf = append(conf, []string{"184", "7", "5"})
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildJWmqlUOv70JTxS0H6iuqtD9ZVZQDf9RS&itemId=184&row=7&column=5&now=1678714644764
+	conf = append(conf, []string{"184", "7", "5"})
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildJWmqlUOv70JTxS0H6iuqtD9ZVZQDf9RS&itemId=184&row=7&column=5&now=1678714667582
+	conf = append(conf, []string{"184", "7", "5"})
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildJWmqlUOv70JTxS0H6iuqtD9ZVZQDf9RS&itemId=185&row=6&column=5&now=1678714680117
+	conf = append(conf, []string{"185", "6", "5"})
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildJWmqlUOv70JTxS0H6iuqtD9ZVZQDf9RS&itemId=186&row=6&column=2&now=1678714695458
+	conf = append(conf, []string{"186", "6", "2"})
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildJWmqlUOv70JTxS0H6iuqtD9ZVZQDf9RS&itemId=184&row=7&column=3&now=1678714709290
+	conf = append(conf, []string{"184", "7", "3"})
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildJWmqlUOv70JTxS0H6iuqtD9ZVZQDf9RS&itemId=184&row=7&column=3&now=1678714734812
+	conf = append(conf, []string{"184", "7", "3"})
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildJWmqlUOv70JTxS0H6iuqtD9ZVZQDf9RS&itemId=184&row=7&column=3&now=1678714751912
+	conf = append(conf, []string{"184", "7", "3"})
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildJWmqlUOv70JTxS0H6iuqtD9ZVZQDf9RS&itemId=185&row=6&column=3&now=1678714773749
+	conf = append(conf, []string{"185", "6", "3"})
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildJWmqlUOv70JTxS0H6iuqtD9ZVZQDf9RS&itemId=186&row=6&column=1&now=1678714801359
+	conf = append(conf, []string{"186", "6", "1"})
+
+	xlog.Infof("挖矿配置:%v", converter.JSON(conf))
+	return
+
 }
