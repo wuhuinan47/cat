@@ -190,6 +190,7 @@ func main() {
 		go runner.NamedRunnerWithSeconds("RunnerSteamBox", 1900, &running, RunnerSteamBox)
 		go runner.NamedRunnerWithSeconds("RunnerBeach", 21600, &running, RunnerBeach)
 
+		go runner.NamedRunnerWithHMS("RunnerInitPullRows", 6, 0, 0, &running, InitPullRows)
 		go runner.NamedRunnerWithHMS("RunnerInitTodayAnimal", 6, 30, 0, &running, InitTodayAnimal)
 		go runner.NamedRunnerWithHMS("PlayLuckyWheelGo", 7, 35, 0, &running, PlayLuckyWheelGo)
 		go runner.NamedRunnerWithHMS("RunnerFamilySignGo010", 0, 1, 0, &running, RunnerFamilySignGo)
@@ -1916,6 +1917,10 @@ func cancelFamilyRobH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	flag := req.URL.Query().Get("flag")
 	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
+
+	if flag != "" {
+		SQL = fmt.Sprintf("select id, name, token from tokens where familyId = %v", flag)
+	}
 	if id == "" {
 		SQL = "select id, name, token from tokens"
 	}
@@ -1925,7 +1930,7 @@ func cancelFamilyRobH(w http.ResponseWriter, req *http.Request) {
 		io.WriteString(w, "FAIL")
 		return
 	}
-	var familyId float64
+	// var familyId float64
 	for rows.Next() {
 		var uid, name, token string
 		rows.Scan(&uid, &name, &token)
@@ -1933,32 +1938,32 @@ func cancelFamilyRobH(w http.ResponseWriter, req *http.Request) {
 		flagx := cancelFamilyRob(serverURL, zoneToken)
 		log.Printf("[%v]取消拉动物[%v]\n", name, flagx)
 
-		if id != "" && flag == "1" {
-			familyId, _ = getFamilyId(serverURL, zoneToken)
-		}
+		// if id != "" && flag == "1" {
+		// 	familyId, _ = getFamilyId(serverURL, zoneToken)
+		// }
 	}
 	rows.Close()
 
-	if familyId > 0 {
-		SQL = "select id, name, token from tokens"
-		rows, err := Pool.Query(SQL)
-		if err != nil {
-			io.WriteString(w, "FAIL")
-			return
-		}
-		for rows.Next() {
-			var uid, name, token string
-			rows.Scan(&uid, &name, &token)
-			serverURL, zoneToken := getSeverURLAndZoneToken(token)
-			familyId2, _ := getFamilyId(serverURL, zoneToken)
-			if familyId2 == familyId {
-				flagx := cancelFamilyRob(serverURL, zoneToken)
-				log.Printf("[%v]取消拉动物[%v]\n", name, flagx)
-			}
-		}
-		rows.Close()
+	// if familyId > 0 {
+	// 	SQL = "select id, name, token from tokens"
+	// 	rows, err := Pool.Query(SQL)
+	// 	if err != nil {
+	// 		io.WriteString(w, "FAIL")
+	// 		return
+	// 	}
+	// 	for rows.Next() {
+	// 		var uid, name, token string
+	// 		rows.Scan(&uid, &name, &token)
+	// 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
+	// 		familyId2, _ := getFamilyId(serverURL, zoneToken)
+	// 		if familyId2 == familyId {
+	// 			flagx := cancelFamilyRob(serverURL, zoneToken)
+	// 			log.Printf("[%v]取消拉动物[%v]\n", name, flagx)
+	// 		}
+	// 	}
+	// 	rows.Close()
 
-	}
+	// }
 
 	io.WriteString(w, "SUCCESS")
 }
@@ -8206,6 +8211,11 @@ func PlayLuckyWheelGo() (err error) {
 		}
 
 	}
+	return
+}
+
+func InitPullRows() (err error) {
+	_, err = Pool.Exec("update tokens set pull_rows = '1,2,3,4,5,6'")
 	return
 }
 
