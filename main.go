@@ -1865,12 +1865,14 @@ func BuildUpH(w http.ResponseWriter, req *http.Request) {
 
 func SearchFamilyH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
-	SQL := "select id, name, token from tokens where id = ?"
+
+	SQL := "select id, name, token, familyId from tokens where id = ?"
 	var uid, name, token string
-	Pool.QueryRow(SQL, id).Scan(&uid, &name, &token)
+	var oldFamilyId float64
+	Pool.QueryRow(SQL, id).Scan(&uid, &name, &token, &oldFamilyId)
 	log.Printf("[name:%v][id:%v]", name, id)
 	serverURL, zoneToken := getSeverURLAndZoneToken(token)
-	familyId, timeFlushList := getFamilyId(serverURL, zoneToken)
+	familyId, timeFlushList := getFamilyId2(serverURL, zoneToken, oldFamilyId)
 	familyName := searchFamily(serverURL, zoneToken, familyId)
 
 	familyName, _ = url.QueryUnescape(familyName)
@@ -4841,25 +4843,28 @@ func othersSign() {
 	}
 
 	// 互相助力逻辑
+
+	beizhuliM := map[string]bool{}
+
 	for _, user := range tokenList {
 		var chanziTimes = 1
 		for _, v := range tokenList {
-			if chanziTimes < 6 {
-				if v["uid"] != user["uid"] {
-					helpTimes := helpInfo[v["uid"]]
-					if helpTimes != 3 {
-						// log.Printf("[%v]为[%v]海浪助力", user["name"], v["name"])
-						// beachHelp(user["serverURL"], user["zoneToken"], v["uid"], 42)
-						// time.Sleep(time.Second * 2)
-						log.Printf("[%v]为[%v]铲子助力", user["name"], v["name"])
-						beachHelp(user["serverURL"], user["zoneToken"], v["uid"], 43)
-						helpInfo[v["uid"]] = helpTimes + 1
-						chanziTimes++
-						time.Sleep(time.Second * 1)
-					}
+			if chanziTimes > 5 {
+				break
+			}
+			vF := false
+			vF = beizhuliM[v["uid"]]
+			if v["uid"] != user["uid"] && !vF {
+				helpTimes := helpInfo[v["uid"]]
+				if helpTimes != 3 {
+					log.Printf("[%v]为[%v]铲子助力", user["name"], v["name"])
+					beachHelp(user["serverURL"], user["zoneToken"], v["uid"], 43)
+					helpInfo[v["uid"]] = helpTimes + 1
+					chanziTimes++
+					time.Sleep(time.Second * 1)
+					beizhuliM[v["uid"]] = true
 				}
 			}
-
 		}
 	}
 
@@ -5391,6 +5396,65 @@ func getFamilyId(serverURL, zoneToken string) (familyId float64, timeFlushList [
 		familyId, ok = vv["familyId"].(float64)
 		if ok {
 			if familyId != 1945 {
+				return
+			}
+		}
+
+	}
+
+	return
+}
+
+func getFamilyId2(serverURL, zoneToken string, oldFamilyId float64) (familyId float64, timeFlushList []string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	url := serverURL + "/game?cmd=enterFamilyRob&token=" + zoneToken + "&now=" + now
+	formData := httpGetReturnJson(url)
+	if formData == nil {
+		return
+	}
+	familyRob, ok := formData["familyRob"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	foodList, ok := familyRob["foodList"].([]interface{})
+	if !ok {
+		return
+	}
+
+	// log.Println(foodList)
+
+	myFlushTimeList, ok := familyRob["myFlushTimeList"].([]interface{})
+	// log.Println(myFlushTimeList)
+
+	if !ok {
+		return
+	}
+
+	for _, v := range myFlushTimeList {
+		vv, ok := v.(string)
+		if !ok {
+			return
+		}
+		timeInt, err := strconv.Atoi(vv)
+		// log.Println(timeInt)
+
+		if err != nil {
+			return
+		}
+
+		date := time.Unix(int64(timeInt/1000), 0).Format("15:04")
+		timeFlushList = append(timeFlushList, date)
+	}
+
+	for _, v := range foodList {
+		vv, ok := v.(map[string]interface{})
+		if !ok {
+			break
+		}
+
+		familyId, ok = vv["familyId"].(float64)
+		if ok {
+			if familyId != oldFamilyId {
 				return
 			}
 		}
