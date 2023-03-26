@@ -9,6 +9,7 @@ require (
 	github.com/codingeasygo/util v0.0.0-20220217032635-18b3c7cd610c
 	github.com/codingeasygo/web v0.0.0-20211223064502-c2f8e0e9af2f
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/shopspring/decimal v1.2.0
 	github.com/tebeka/selenium v0.9.9
 	gtlb.zhongzefun.com/base/go v0.0.0-20211110083034-0e00664c9f04
 )
