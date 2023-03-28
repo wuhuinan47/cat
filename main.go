@@ -2493,8 +2493,11 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 			time.Sleep(time.Millisecond * 2100)
 
 			for i := 1; i <= intAmount; i++ {
-				draw(uid, name, serverURL, zoneToken, drawMulti)
+				xx := draw(uid, name, serverURL, zoneToken, drawMulti)
 				log.Println("剩余转盘次数:", intAmount-i)
+				if xx == -1 {
+					break
+				}
 				time.Sleep(time.Millisecond * 2100)
 			}
 
@@ -4659,7 +4662,13 @@ func LoginH1(s *web.Session) web.Result {
 // 一键拉动物
 func pullAnimalGo() {
 	log.Println("start pullAnimalGo")
-	SQL := "select id, token, name, pull_rows, follow_uids from tokens"
+	SQL := "select id, token, name, pull_rows, follow_uids from tokens where FIND_IN_SET(id, (select conf_value from config where conf_key='cannotdeleteusers')) "
+	pullAnimalBySql(SQL)
+	SQL = "select id, token, name, pull_rows, follow_uids from tokens where NOT FIND_IN_SET(id, (select conf_value from config where conf_key='cannotdeleteusers')) "
+	pullAnimalBySql(SQL)
+}
+
+func pullAnimalBySql(SQL string) {
 	rows, err := Pool.Query(SQL)
 	if err != nil {
 		return
@@ -4668,6 +4677,11 @@ func pullAnimalGo() {
 	for rows.Next() {
 		var uid, token, name, pullRows, followUids string
 		rows.Scan(&uid, &token, &name, &pullRows, &followUids)
+
+		if pullRows == "" || pullRows == "0" {
+			continue
+		}
+
 		user := GetUser(uid)
 
 		collectMineGold(user.ServerURL, user.ZoneToken)
