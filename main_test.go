@@ -7,8 +7,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/codingeasygo/util/converter"
 	"github.com/codingeasygo/util/xmap"
 )
+
+func TestGame(t *testing.T) {
+	fmt.Println(converter.JSON(game("ild34NcKkKX9f_ir5L1WoP6oXwP9dUJWhWo")))
+}
 
 func TestLogin(t *testing.T) {
 	// 	l := xmap.M{

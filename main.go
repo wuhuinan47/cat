@@ -24,6 +24,7 @@ import (
 
 	"github.com/Centny/rediscache"
 	"github.com/codingeasygo/util/converter"
+	"github.com/codingeasygo/util/xhttp"
 	"github.com/codingeasygo/util/xmap"
 	"github.com/codingeasygo/util/xprop"
 	"github.com/codingeasygo/web"
@@ -121,7 +122,7 @@ func GetUser(uid string) *User {
 		if user.Token != "" {
 			user.ServerURL = getServerURL()
 			var f float64
-			user.ZoneToken, f = getZoneTokenFamilyId(user.ServerURL, user.Token)
+			user.ZoneToken, f = getZoneTokenFamilyId(user.ServerURL, user.Token, user.ZoneToken)
 			user.FamilyId = strconv.FormatFloat(f, 'f', 0, 64)
 			if user.ZoneToken != "" {
 				return user
@@ -804,19 +805,19 @@ func AttackBossH(w http.ResponseWriter, req *http.Request) {
 func attackBossLogic(id string) (err error) {
 	log.Println("AttackBossH id :", id)
 
-	var SQL, uid, name, token string
+	var SQL, uid, name, token, oldZoneToken string
 	var hitBossNums float64
 	if id == "" {
-		SQL = "select id, name, token, hit_boss_nums from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
+		SQL = "select id, name, token, hit_boss_nums, zoneToken from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
 	} else {
-		SQL = fmt.Sprintf("select id, name, token, hit_boss_nums from tokens where id = %v", id)
+		SQL = fmt.Sprintf("select id, name, token, hit_boss_nums, zoneToken from tokens where id = %v", id)
 	}
 
-	Pool.QueryRow(SQL).Scan(&uid, &name, &token, &hitBossNums)
+	Pool.QueryRow(SQL).Scan(&uid, &name, &token, &hitBossNums, &oldZoneToken)
 
 	serverURL := getServerURL()
 
-	zoneToken, bossCannon := getEnterInfo(uid, name, serverURL, token, "bossCannon")
+	zoneToken, bossCannon := getEnterInfo(uid, name, serverURL, token, oldZoneToken, "bossCannon")
 
 	UpdateUser(uid, serverURL, zoneToken, token)
 	bossCannonFloat, ok := bossCannon.(float64)
@@ -1037,18 +1038,18 @@ func AttackBossH1(s *web.Session) web.Result {
 
 	log.Println("AttackBossH id :", id)
 
-	var SQL, uid, name, token string
+	var SQL, uid, name, token, oldZoneToken string
 	if id == "" {
-		SQL = "select id, name, token from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
+		SQL = "select id, name, token, zoneToken from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
 	} else {
-		SQL = fmt.Sprintf("select id, name, token from tokens where id = %v", id)
+		SQL = fmt.Sprintf("select id, name, token, zoneToken from tokens where id = %v", id)
 	}
 
-	Pool.QueryRow(SQL).Scan(&uid, &name, &token)
+	Pool.QueryRow(SQL).Scan(&uid, &name, &token, &oldZoneToken)
 
 	serverURL := getServerURL()
 
-	zoneToken, bossCannon := getEnterInfo(uid, name, serverURL, token, "bossCannon")
+	zoneToken, bossCannon := getEnterInfo(uid, name, serverURL, token, oldZoneToken, "bossCannon")
 
 	bossCannonFloat, ok := bossCannon.(float64)
 
@@ -2120,9 +2121,9 @@ func cancelFamilyRobH(w http.ResponseWriter, req *http.Request) {
 func UnlockWorkerH(w http.ResponseWriter, req *http.Request) {
 	// mineList
 	id := req.URL.Query().Get("id")
-	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
+	SQL := fmt.Sprintf("select id, name, token, zoneToken from tokens where id = %v", id)
 	if id == "" {
-		SQL = "select id, name, token from tokens"
+		SQL = "select id, name, token, zoneToken from tokens"
 	}
 
 	rows, err := Pool.Query(SQL)
@@ -2134,11 +2135,11 @@ func UnlockWorkerH(w http.ResponseWriter, req *http.Request) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var uid, name, token string
-		rows.Scan(&uid, &name, &token)
+		var uid, name, token, oldZoneToken string
+		rows.Scan(&uid, &name, &token, &oldZoneToken)
 		serverURL := getServerURL()
 
-		zoneToken, mineList := getEnterInfo(uid, name, serverURL, token, "mineList")
+		zoneToken, mineList := getEnterInfo(uid, name, serverURL, token, oldZoneToken, "mineList")
 		UpdateUser(uid, serverURL, zoneToken, token)
 		l1, ok := mineList.(map[string]interface{})
 		if ok {
@@ -2193,7 +2194,7 @@ func beachRunner(id string) {
 		// serverURL := getServerURL()
 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
 		startBeachActivity(serverURL, zoneToken)
-		zoneToken, beach := getEnterInfo(uid, name, serverURL, token, "beach")
+		zoneToken, beach := getEnterInfo(uid, name, serverURL, token, zoneToken, "beach")
 		UpdateUser(uid, serverURL, zoneToken, token)
 		if beach != nil {
 			beachMap, ok := beach.(map[string]interface{})
@@ -2321,16 +2322,16 @@ func helpMeForBeach(toid, toname string) {
 	}
 
 	// beachItems
-	rows, err := Pool.Query("select id, name, token from tokens where find_in_set(id, (select conf_value from config where conf_key = 'beachHelpUids'))")
+	rows, err := Pool.Query("select id, name, token, zoneToken from tokens where find_in_set(id, (select conf_value from config where conf_key = 'beachHelpUids'))")
 	if err != nil {
 		return
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var uid, name, token string
-		rows.Scan(&uid, &name, &token)
+		var uid, name, token, zoneToken string
+		rows.Scan(&uid, &name, &token, &zoneToken)
 		serverURL := getServerURL()
-		zoneToken, beachItems1 := getEnterInfo(uid, name, serverURL, token, "beachItems")
+		zoneToken, beachItems1 := getEnterInfo(uid, name, serverURL, token, zoneToken, "beachItems")
 		UpdateUser(uid, serverURL, zoneToken, token)
 		beachItems, ok := beachItems1.(map[string]interface{})
 		log.Println("beachItems:", beachItems)
@@ -2447,7 +2448,7 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 	intDrawMulti, _ := strconv.Atoi(drawMulti)
 	intAmount, _ := strconv.Atoi(amount)
 
-	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
+	SQL := fmt.Sprintf("select id, name, token, zoneToken from tokens where id = %v", id)
 
 	if id == "" {
 		fmt.Println("intDrawMulti:", intDrawMulti)
@@ -2465,12 +2466,12 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var uid, name, token string
-		rows.Scan(&uid, &name, &token)
+		var uid, name, token, zoneToken string
+		rows.Scan(&uid, &name, &token, &zoneToken)
 
 		serverURL := getServerURL()
 
-		zoneToken, familyDayTask := getEnterInfo(uid, name, serverURL, token, "familyDayTask")
+		zoneToken, familyDayTask := getEnterInfo(uid, name, serverURL, token, zoneToken, "familyDayTask")
 		UpdateUser(uid, serverURL, zoneToken, token)
 		// zoneToken := getZoneToken(serverURL, token)
 
@@ -2568,7 +2569,7 @@ func drawAll(intDrawMulti, intAmount int) {
 		}
 		user.ServerURL = getServerURL()
 
-		user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, "familyDayTask")
+		user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
 		UpdateUser(user.Uid, user.ServerURL, user.ZoneToken, user.Token)
 		// user.ZoneToken = getZoneToken(user.ServerURL, user.Token)
 		log.Println("append users by ", user.Name)
@@ -2708,14 +2709,14 @@ func DrawH1(s *web.Session) web.Result {
 	intDrawMulti, _ := strconv.Atoi(drawMulti)
 	intAmount, _ := strconv.Atoi(amount)
 
-	SQL := "select id, name, token from tokens where id = ?"
+	SQL := "select id, name, token, zoneToken from tokens where id = ?"
 
-	var uid, name, token string
-	Pool.QueryRow(SQL, id).Scan(&uid, &name, &token)
+	var uid, name, token, zoneToken string
+	Pool.QueryRow(SQL, id).Scan(&uid, &name, &token, &zoneToken)
 
 	serverURL := getServerURL()
 
-	zoneToken, familyDayTask := getEnterInfo(uid, name, serverURL, token, "familyDayTask")
+	zoneToken, familyDayTask := getEnterInfo(uid, name, serverURL, token, zoneToken, "familyDayTask")
 
 	// zoneToken := getZoneToken(serverURL, token)
 
@@ -2787,10 +2788,10 @@ func PlayLuckyWheelH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	targetAmountS := req.URL.Query().Get("amount")
 	amount, _ := strconv.Atoi(targetAmountS)
-	sql := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
+	sql := fmt.Sprintf("select id, name, token, zoneToken from tokens where id = %v", id)
 
 	if id == "" || id == "0" {
-		sql = "select id, name, token from tokens"
+		sql = "select id, name, token, zoneToken from tokens"
 	}
 	rows, err := Pool.Query(sql)
 	if err != nil {
@@ -2799,10 +2800,10 @@ func PlayLuckyWheelH(w http.ResponseWriter, req *http.Request) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var uid, name, token string
-		rows.Scan(&uid, &name, &token)
+		var uid, name, token, zoneToken string
+		rows.Scan(&uid, &name, &token, &zoneToken)
 		serverURL := getServerURL()
-		zoneToken, wheelUpgradeItem := getEnterInfo(uid, name, serverURL, token, "wheelUpgradeItem")
+		zoneToken, wheelUpgradeItem := getEnterInfo(uid, name, serverURL, token, zoneToken, "wheelUpgradeItem")
 		UpdateUser(uid, serverURL, zoneToken, token)
 		wheelUpgradeItemMap, ok := wheelUpgradeItem.(map[string]interface{})
 		if !ok {
@@ -3091,7 +3092,7 @@ func attackMyBossLogic(id, mode string) (err error) {
 			serverURL, zoneToken := user.ServerURL, user.ZoneToken
 			getFreeBossCannon(serverURL, zoneToken)
 
-			zoneToken, bossCannon := getEnterInfo(uid, name, serverURL, token, "bossCannon")
+			zoneToken, bossCannon := getEnterInfo(uid, name, serverURL, token, zoneToken, "bossCannon")
 
 			bossCannonFloat, ok := bossCannon.(float64)
 
@@ -3101,7 +3102,7 @@ func attackMyBossLogic(id, mode string) (err error) {
 			}
 
 			if zoneToken != "" {
-				bossID := summonBoss(serverURL, zoneToken, bossCannonFloat)
+				bossID, bossHp := summonBossBlood(serverURL, zoneToken, bossCannonFloat)
 				if bossID == "" {
 					log.Printf("---------------------------[%v]bossID无法打龙---------------------------", name)
 					return
@@ -3116,7 +3117,7 @@ func attackMyBossLogic(id, mode string) (err error) {
 					return
 				}
 				log.Printf("---------------------------[%v]开始打龙---------------------------", name)
-				attackMyBoss(uid, serverURL, zoneToken, bossID, mode)
+				attackMyBossByHp(uid, serverURL, zoneToken, bossID, mode, bossHp)
 				log.Printf("---------------------------[%v]结束打龙---------------------------", name)
 				Pool.Exec("update config set conf_value = 1 where conf_key = 'checkTokenStatus'")
 			}
@@ -3148,7 +3149,7 @@ func AttackMyBossH1(s *web.Session) web.Result {
 
 			serverURL, zoneToken := getSeverURLAndZoneToken(token)
 			if zoneToken != "" {
-				zoneToken, bossCannon := getEnterInfo(uid, name, serverURL, token, "bossCannon")
+				zoneToken, bossCannon := getEnterInfo(uid, name, serverURL, token, zoneToken, "bossCannon")
 				getFreeBossCannon(serverURL, zoneToken)
 
 				bossCannonFloat, ok := bossCannon.(float64)
@@ -3221,7 +3222,7 @@ func OneSonAttackBossH(w http.ResponseWriter, req *http.Request) {
 		rows.Scan(&uid, &token, &name)
 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
 		if zoneToken != "" {
-			zoneToken, bossCannon := getEnterInfo(fmt.Sprintf("%v", uid), name, serverURL, token, "bossCannon")
+			zoneToken, bossCannon := getEnterInfo(fmt.Sprintf("%v", uid), name, serverURL, token, zoneToken, "bossCannon")
 			UpdateUser(fmt.Sprintf("%v", uid), serverURL, zoneToken, token)
 			getFreeBossCannon(serverURL, zoneToken)
 
@@ -3295,7 +3296,7 @@ func SonAttackBossH(w http.ResponseWriter, req *http.Request) {
 
 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
 		if zoneToken != "" {
-			zoneToken, bossCannon := getEnterInfo(fmt.Sprintf("%v", uid), name, serverURL, token, "bossCannon")
+			zoneToken, bossCannon := getEnterInfo(fmt.Sprintf("%v", uid), name, serverURL, token, zoneToken, "bossCannon")
 			UpdateUser(fmt.Sprintf("%v", uid), serverURL, zoneToken, token)
 			bossCannonFloat, ok := bossCannon.(float64)
 
@@ -3332,7 +3333,7 @@ func SonAttackBossH(w http.ResponseWriter, req *http.Request) {
 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
 
 		if zoneToken != "" {
-			zoneToken, bossCannon := getEnterInfo(fmt.Sprintf("%v", uid), name, serverURL, token, "bossCannon")
+			zoneToken, bossCannon := getEnterInfo(fmt.Sprintf("%v", uid), name, serverURL, token, zoneToken, "bossCannon")
 			UpdateUser(fmt.Sprintf("%v", uid), serverURL, zoneToken, token)
 			bossCannonFloat, ok := bossCannon.(float64)
 
@@ -3372,7 +3373,7 @@ func SonAttackBossH(w http.ResponseWriter, req *http.Request) {
 		serverURL, zoneToken := getSeverURLAndZoneToken(token)
 		if zoneToken != "" {
 
-			zoneToken, bossCannon := getEnterInfo(fmt.Sprintf("%v", uid), name, serverURL, token, "bossCannon")
+			zoneToken, bossCannon := getEnterInfo(fmt.Sprintf("%v", uid), name, serverURL, token, zoneToken, "bossCannon")
 			UpdateUser(fmt.Sprintf("%v", uid), serverURL, zoneToken, token)
 			bossCannonFloat, ok := bossCannon.(float64)
 
@@ -3878,7 +3879,7 @@ func AllBeachHelpGo() (err error) {
 			return
 		}
 		var helpCount, shovelHelpNum int
-		serverURL, zoneToken, familyId, helpCount, shovelHelpNum = enterWithBeachHelp(token)
+		serverURL, zoneToken, familyId, helpCount, shovelHelpNum = enterWithBeachHelp(token, zoneToken)
 		s[id] = xmap.M{
 			"token":         token,
 			"name":          name,
@@ -4214,17 +4215,17 @@ func HitCandyH1(s *web.Session) web.Result {
 
 func GetTodayAnimalsH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
-	sql := `select id, name, token, init_animals from tokens where id = (select conf_value from config where conf_key = 'animalUid')`
+	sql := `select id, name, token, init_animals,zoneToken from tokens where id = (select conf_value from config where conf_key = 'animalUid')`
 
 	if id != "" {
-		sql = fmt.Sprintf("select id, name, token, init_animals from tokens where id = %v", id)
+		sql = fmt.Sprintf("select id, name, token, init_animals,zoneToken from tokens where id = %v", id)
 	}
 
-	var uid, name, token string
+	var uid, name, token, zoneToken string
 	var initAnimals []byte
-	Pool.QueryRow(sql).Scan(&uid, &name, &token, &initAnimals)
+	Pool.QueryRow(sql).Scan(&uid, &name, &token, &initAnimals, &zoneToken)
 	serverURL := getServerURL()
-	zoneToken, animal := getEnterInfo(uid, name, serverURL, token, "animal")
+	zoneToken, animal := getEnterInfo(uid, name, serverURL, token, zoneToken, "animal")
 	UpdateUser(uid, serverURL, zoneToken, token)
 	log.Println("animal ", animal)
 
@@ -5068,9 +5069,9 @@ func othersSign() {
 	for rows.Next() {
 		var uid, token, name string
 		rows.Scan(&uid, &token, &name)
-		_, _, newToken := getSeverURLAndZoneTokenAndToken(token)
+		_, zoneToken, newToken := getSeverURLAndZoneTokenAndToken(token)
 		token = newToken
-		serverURL, zoneToken, familyId, helpInt, shovelHelpNum := enterWithBeachHelp(token)
+		serverURL, zoneToken, familyId, helpInt, shovelHelpNum := enterWithBeachHelp(token, zoneToken)
 		if zoneToken == "" {
 			sendMsg(uid + ":" + name)
 			log.Printf("[ %v] token is invalid\n", uid)
@@ -5308,12 +5309,25 @@ func getServerURL() (serverURL string) {
 
 }
 
-func enterWithBeachHelp(token string) (serverURL, zoneToken, familyId string, helpInt, shovelHelpNum int) {
+func game(zoneToken string) (data xmap.M) {
+	data = xmap.M{}
+	// https://s147.11h5.com//game
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	data, _ = xhttp.PostMap(nil, "https://s147.11h5.com//game?cmd=alive&token=%v&now=%v", zoneToken, now)
+	return
+}
+
+func enterWithBeachHelp(token, oldZoneToken string) (serverURL, zoneToken, familyId string, helpInt, shovelHelpNum int) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	serverURL = getServerURL()
-	URL := serverURL + "/zone?cmd=enter&token=" + token + "&yyb=0&inviteId=null&share_from=null&cp_shareId=null&now=" + now
-	formData := httpGetReturnXmapM(URL)
-	zoneToken = formData.Str("zoneToken")
+	zoneToken = oldZoneToken
+	formData := game(oldZoneToken)
+	// {"error":10004}
+	if formData.Float64("error") == 10004 {
+		URL := serverURL + "/zone?cmd=enter&token=" + token + "&yyb=0&inviteId=null&share_from=null&cp_shareId=null&now=" + now
+		formData = httpGetReturnXmapM(URL)
+		zoneToken = formData.Str("zoneToken")
+	}
 	familyId = formData.Str("familyId")
 	helpUids := formData.ArrayStrDef([]string{}, "beachHelp/shovelHelp/helpUids")
 	helpInt = len(helpUids)
@@ -5322,11 +5336,30 @@ func enterWithBeachHelp(token string) (serverURL, zoneToken, familyId string, he
 	return
 }
 
-func getEnterInfo(uid, name, serverURL, token, key string) (zoneToken string, info interface{}) {
+func getEnterInfo(uid, name, serverURL, token, oldZoneToken, key string) (zoneToken string, info interface{}) {
+	// nokeys := []string{"mineList", "familyDayTask", "beach"}
+	// for _, v := range nokeys {
+	// 	if v == key {
+	// 		data := game(zoneToken)
+	// 		if data.Float64("error") == 10004 {
+	// 			break
+	// 		}
+	// 		info = data[key]
+	// 		return
+	// 	}
+	// }
+
+	data := game(zoneToken)
+	info, ok := data[key]
+	if ok {
+		zoneToken = oldZoneToken
+		return
+	}
+
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := serverURL + "/zone?cmd=enter&token=" + token + "&yyb=0&inviteId=null&share_from=null&cp_shareId=null&now=" + now
 	formData := httpGetReturnJson(URL)
-	_, ok := formData["zoneToken"].(string)
+	_, ok = formData["zoneToken"].(string)
 	if !ok {
 		log.Printf("[%v] token is invaild", name)
 		sendMsg(uid + ":" + name)
@@ -5358,7 +5391,7 @@ func getSeverURLAndZoneTokenAndTokenByIDPassword(uid, password string) (serverUR
 	if newToken != "" {
 		serverURL = getServerURL()
 		var f float64
-		zoneToken, f = getZoneTokenFamilyId(serverURL, newToken)
+		zoneToken, f = getZoneTokenFamilyId(serverURL, newToken, "")
 		familyId = fmt.Sprintf("%v", f)
 		if zoneToken != "" {
 			return
@@ -5376,7 +5409,7 @@ func getSeverURLAndZoneTokenAndToken(token string) (serverURL, zoneToken, newTok
 		return
 	}
 	serverURL = getServerURL()
-	zoneToken, familyId := getZoneTokenFamilyId(serverURL, token)
+	zoneToken, familyId := getZoneTokenFamilyId(serverURL, token, zoneToken)
 	if zoneToken != "" {
 		SQL = "update tokens set serverURL = ?, zoneToken = ?, familyId = ? where token = ?"
 		Pool.Exec(SQL, serverURL, zoneToken, familyId, token)
@@ -5387,7 +5420,7 @@ func getSeverURLAndZoneTokenAndToken(token string) (serverURL, zoneToken, newTok
 		newToken = loginByPassword(uid, password)
 		if newToken != "" {
 			serverURL = getServerURL()
-			zoneToken, familyId = getZoneTokenFamilyId(serverURL, newToken)
+			zoneToken, familyId = getZoneTokenFamilyId(serverURL, newToken, "")
 			if zoneToken != "" {
 				SQL = "update tokens set token = ?, serverURL = ?, zoneToken = ?, familyId = ? where id = ?"
 				Pool.Exec(SQL, newToken, serverURL, zoneToken, familyId, uid)
@@ -5411,7 +5444,7 @@ func getSeverURLAndZoneToken(token string) (serverURL, zoneToken string) {
 		return
 	}
 	serverURL = getServerURL()
-	zoneToken, familyId := getZoneTokenFamilyId(serverURL, token)
+	zoneToken, familyId := getZoneTokenFamilyId(serverURL, token, zoneToken)
 	if zoneToken != "" {
 		SQL = "update tokens set serverURL = ?, zoneToken = ?, familyId = ? where token = ?"
 		Pool.Exec(SQL, serverURL, zoneToken, familyId, token)
@@ -5422,7 +5455,7 @@ func getSeverURLAndZoneToken(token string) (serverURL, zoneToken string) {
 		newToken := loginByPassword(uid, password)
 		if newToken != "" {
 			serverURL = getServerURL()
-			zoneToken, familyId = getZoneTokenFamilyId(serverURL, newToken)
+			zoneToken, familyId = getZoneTokenFamilyId(serverURL, newToken, "")
 			if zoneToken != "" {
 				SQL = "update tokens set token = ?, serverURL = ?, zoneToken = ?, familyId = ? where id = ?"
 				Pool.Exec(SQL, newToken, serverURL, zoneToken, familyId, uid)
@@ -5445,7 +5478,7 @@ func getSzf(user *User) bool {
 		user.Token = loginByPassword(user.Uid, user.Password)
 		if user.Token != "" {
 			user.ServerURL = getServerURL()
-			user.ZoneToken, _ = getZoneTokenFamilyId(user.ServerURL, user.Token)
+			user.ZoneToken, _ = getZoneTokenFamilyId(user.ServerURL, user.Token, user.ZoneToken)
 			if user.ZoneToken != "" {
 				return true
 			}
@@ -5456,7 +5489,7 @@ func getSzf(user *User) bool {
 	}
 	user.ServerURL = getServerURL()
 	var f float64
-	user.ZoneToken, f = getZoneTokenFamilyId(user.ServerURL, user.Token)
+	user.ZoneToken, f = getZoneTokenFamilyId(user.ServerURL, user.Token, user.ZoneToken)
 	user.FamilyId = fmt.Sprintf("%v", f)
 	if user.ZoneToken != "" {
 		return true
@@ -5465,7 +5498,7 @@ func getSzf(user *User) bool {
 		user.Token = loginByPassword(user.Uid, user.Password)
 		if user.Token != "" {
 			user.ServerURL = getServerURL()
-			user.ZoneToken, f = getZoneTokenFamilyId(user.ServerURL, user.Token)
+			user.ZoneToken, f = getZoneTokenFamilyId(user.ServerURL, user.Token, "")
 			user.FamilyId = fmt.Sprintf("%v", f)
 			if user.ZoneToken != "" {
 				return true
@@ -5475,7 +5508,13 @@ func getSzf(user *User) bool {
 	return false
 }
 
-func getZoneTokenFamilyId(serverURL, token string) (zoneToken string, familyId float64) {
+func getZoneTokenFamilyId(serverURL, token, oldZoneToken string) (zoneToken string, familyId float64) {
+	data := game(oldZoneToken)
+	if data.Float64("error") != 10004 {
+		zoneToken = oldZoneToken
+		familyId = data.Float64("familyId")
+		return
+	}
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := serverURL + "/zone?cmd=enter&token=" + token + "&yyb=0&inviteId=null&share_from=null&cp_shareId=null&now=" + now
 	formData := httpGetReturnJson(URL)
@@ -6086,6 +6125,53 @@ func summonBoss(serverURL, zoneToken string, bossCannonFloat float64) string {
 	return bossID
 }
 
+// 开启Boss
+func summonBossBlood(serverURL, zoneToken string, bossCannonFloat float64) (bossID string, leftHp float64) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+
+	if bossCannonFloat < 26 {
+		url := fmt.Sprintf("%v/game?cmd=getMyBoss&token=%v&now=%v", serverURL, zoneToken, now)
+		formData := httpGetReturnJson(url)
+		myBoss, ok := formData["boss"].(map[string]interface{})
+		if !ok {
+			return
+		}
+		bossID, ok = myBoss["id"].(string)
+		if !ok {
+			return
+		}
+		leftHp = myBoss["leftHp"].(float64)
+		return
+	}
+	now = fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	url := fmt.Sprintf("%v/game?cmd=summonBoss&token=%v&now=%v", serverURL, zoneToken, now)
+
+	formData := httpGetReturnJson(url)
+	boss, ok := formData["boss"].(map[string]interface{})
+	if !ok {
+		now = fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+		url = fmt.Sprintf("%v/game?cmd=getMyBoss&token=%v&now=%v", serverURL, zoneToken, now)
+		formData = httpGetReturnJson(url)
+		myBoss, ok := formData["boss"].(map[string]interface{})
+		if !ok {
+			return
+		}
+		bossID, ok = myBoss["id"].(string)
+		if !ok {
+			return
+		}
+		leftHp = myBoss["leftHp"].(float64)
+		return
+	}
+
+	bossID, ok = boss["id"].(string)
+	if !ok {
+		return
+	}
+	leftHp = boss["leftHp"].(float64)
+	return
+}
+
 // 邀请BOSS
 func inviteBoss(serverURL, zoneToken, bossID string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
@@ -6245,6 +6331,524 @@ func attackMyBoss(uid, serverURL, zoneToken, bossID, mode string) {
 			attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 299, 299, 4400)
 		} else {
 			attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+		}
+
+		return
+	}
+
+	// 300
+
+	attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 95, 100, 4400)
+
+	// 1500
+
+	attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 195, 200, 4400)
+
+	// 1800
+
+	attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 95, 100, 4400)
+
+	// 3000
+	attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 195, 200, 4400)
+
+	// 3300
+	attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 95, 100, 4400)
+
+	// 4100
+
+	attackBossAPI(serverURL, zoneToken, bossID, 5, 0, 1, 195, 200, 4400)
+
+	// 4400
+	// attackBossAPI(serverURL, zoneToken, bossID, 1, 400, 1, 1)
+
+}
+
+func attackMyBossByHp(uid, serverURL, zoneToken, bossID, mode string, hp float64) {
+
+	// Pool.QueryRow("select conf_value from config where conf_key = 'attackBossMode'").Scan()
+
+	if mode == "4400" {
+
+		switch hp {
+		case 5000:
+			// 300
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			// 1500
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			// 1800
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			// 3000
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			// 3300
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			// 4100
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			// 4400
+			if uid == "692326562" {
+				attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 299, 299, 4400)
+			} else {
+				attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			}
+			return
+		case 4900:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 4800:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 4700:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 4500:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 5, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 4300:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 4100:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 3900:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 3700:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 3500:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 3400:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 3300:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 3200:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 3000:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 5, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 2800:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 2600:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 2400:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 2200:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 2000:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 1900:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 1800:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+
+		case 1700:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+			if !flag {
+				return
+			}
+		case 1500:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+		case 1300:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+		case 1100:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+		case 900:
+			attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 4400)
+		default:
+
 		}
 
 		return
@@ -8157,12 +8761,12 @@ func RunnerDraw() (err error) {
 	var maxDraw float64
 	Pool.QueryRow("select conf_value from config where conf_key = 'maxDraw'").Scan(&maxDraw)
 	if hour == 4 {
-		SQL := "select id, token, name from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
-		var cowBoyUid, cowBoyToken, cowBoyName string
-		Pool.QueryRow(SQL).Scan(&cowBoyUid, &cowBoyToken, &cowBoyName)
+		SQL := "select id, token, name, zoneToken from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
+		var cowBoyUid, cowBoyToken, cowBoyName, cowBoyZonetoken string
+		Pool.QueryRow(SQL).Scan(&cowBoyUid, &cowBoyToken, &cowBoyName, &cowBoyZonetoken)
 		// serverURL, zoneToken := getSeverURLAndZoneToken(cowBoyToken)
 		serverURL := getServerURL()
-		zoneToken, dayDraw := getEnterInfo(cowBoyUid, "", serverURL, cowBoyToken, "dayDraw")
+		zoneToken, dayDraw := getEnterInfo(cowBoyUid, "", serverURL, cowBoyToken, cowBoyZonetoken, "dayDraw")
 		UpdateUser(cowBoyUid, serverURL, zoneToken, cowBoyToken)
 		dayDrawFloat := dayDraw.(float64)
 
@@ -8190,13 +8794,13 @@ func RunnerDraw() (err error) {
 	}
 
 	if drawStatus != "1" {
-		SQL := "select id, token, name from tokens where id = ?"
-		var cowBoyUid, cowBoyToken, cowBoyName string
-		Pool.QueryRow(SQL, drawStatus).Scan(&cowBoyUid, &cowBoyToken, &cowBoyName)
+		SQL := "select id, token, name, zoneToken from tokens where id = ?"
+		var cowBoyUid, cowBoyToken, cowBoyName, cowBoyZoneToken string
+		Pool.QueryRow(SQL, drawStatus).Scan(&cowBoyUid, &cowBoyToken, &cowBoyName, &cowBoyZoneToken)
 		// serverURL, zoneToken := getSeverURLAndZoneToken(cowBoyToken)
 
 		serverURL := getServerURL()
-		zoneToken, dayDraw := getEnterInfo(cowBoyUid, "", serverURL, cowBoyToken, "dayDraw")
+		zoneToken, dayDraw := getEnterInfo(cowBoyUid, "", serverURL, cowBoyToken, cowBoyZoneToken, "dayDraw")
 		UpdateUser(cowBoyUid, serverURL, zoneToken, cowBoyToken)
 		dayDrawFloat := dayDraw.(float64)
 
@@ -8263,9 +8867,9 @@ func RunnerDraw() (err error) {
 			}
 			user.ServerURL = getServerURL()
 
-			user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, "familyDayTask")
+			user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
 			var dayDraw interface{}
-			user.ZoneToken, dayDraw = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, "dayDraw")
+			user.ZoneToken, dayDraw = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "dayDraw")
 			UpdateUser(user.Uid, user.ServerURL, user.ZoneToken, user.Token)
 			dayDrawFloat, ok := dayDraw.(float64)
 			if !ok {
@@ -8656,17 +9260,17 @@ func AttackBossGo() (err error) {
 
 func PlayLuckyWheelGo() (err error) {
 	amount := 100
-	sql := "select id, name, token from tokens"
+	sql := "select id, name, token,zoneToken from tokens"
 	rows, err := Pool.Query(sql)
 	if err != nil {
 		return
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var uid, name, token string
-		rows.Scan(&uid, &name, &token)
+		var uid, name, token, zoneToken string
+		rows.Scan(&uid, &name, &token, &zoneToken)
 		serverURL := getServerURL()
-		zoneToken, wheelUpgradeItem := getEnterInfo(uid, name, serverURL, token, "wheelUpgradeItem")
+		zoneToken, wheelUpgradeItem := getEnterInfo(uid, name, serverURL, token, zoneToken, "wheelUpgradeItem")
 		UpdateUser(uid, serverURL, zoneToken, token)
 		wheelUpgradeItemMap, ok := wheelUpgradeItem.(map[string]interface{})
 		if !ok {
@@ -8706,15 +9310,15 @@ func InitPullRows() (err error) {
 }
 
 func InitTodayAnimal() (err error) {
-	sql := `select id, name, token from tokens where id = (select conf_value from config where conf_key = 'animalUid')`
-	var uid, name, token string
-	Pool.QueryRow(sql).Scan(&uid, &name, &token)
+	sql := `select id, name, token,zoneToken from tokens where id = (select conf_value from config where conf_key = 'animalUid')`
+	var uid, name, token, zoneToken string
+	Pool.QueryRow(sql).Scan(&uid, &name, &token, &zoneToken)
 	serverURL := getServerURL()
-	zoneToken, animal := getEnterInfo(uid, name, serverURL, token, "animal")
+	zoneToken, animal := getEnterInfo(uid, name, serverURL, token, zoneToken, "animal")
 	UpdateUser(uid, serverURL, zoneToken, token)
 	_, err = Pool.Exec("update config set conf_value = ? where conf_key = 'todayInitAnimal'", ToJSON(animal))
 
-	sql = `select id, name, token from tokens`
+	sql = `select id, name, token, zoneToken from tokens`
 
 	rows, err := Pool.Query(sql)
 	if err != nil {
@@ -8724,10 +9328,10 @@ func InitTodayAnimal() (err error) {
 
 	weekDay := time.Now().Weekday()
 	for rows.Next() {
-		var uuid, uname, utoken string
-		rows.Scan(&uuid, &uname, &utoken)
+		var uuid, uname, utoken, uzoneToken string
+		rows.Scan(&uuid, &uname, &utoken, &uzoneToken)
 		serverURL = getServerURL()
-		zoneToken, animal := getEnterInfo(uuid, uname, serverURL, utoken, "animal")
+		zoneToken, animal := getEnterInfo(uuid, uname, serverURL, utoken, uzoneToken, "animal")
 		UpdateUser(uuid, serverURL, zoneToken, utoken)
 		if weekDay == 1 {
 			miningApply(serverURL, zoneToken)
@@ -8858,17 +9462,17 @@ func ToJSON(src interface{}) []byte {
 }
 
 func getTodayAnimal(id string) (ss, ssEnemy string) {
-	sql := `select id, name, token, init_animals, all_animals from tokens where id = (select conf_value from config where conf_key = 'animalUid')`
+	sql := `select id, name, token, init_animals, all_animals, zoneToken from tokens where id = (select conf_value from config where conf_key = 'animalUid')`
 
 	if id != "" {
-		sql = fmt.Sprintf("select id, name, token, init_animals, all_animals from tokens where id = %v", id)
+		sql = fmt.Sprintf("select id, name, token, init_animals, all_animals, zoneToken from tokens where id = %v", id)
 	}
 
-	var uid, name, token string
+	var uid, name, token, zoneToken string
 	var initAnimals, allAnimals []byte
-	Pool.QueryRow(sql).Scan(&uid, &name, &token, &initAnimals, &allAnimals)
+	Pool.QueryRow(sql).Scan(&uid, &name, &token, &initAnimals, &allAnimals, &zoneToken)
 	serverURL := getServerURL()
-	zoneToken, animal := getEnterInfo(uid, name, serverURL, token, "animal")
+	zoneToken, animal := getEnterInfo(uid, name, serverURL, token, zoneToken, "animal")
 	UpdateUser(uid, serverURL, zoneToken, token)
 	log.Println("animal ", animal)
 
