@@ -270,6 +270,8 @@ func main() {
 	http.HandleFunc("/getMiningScoreReward", GetMiningScoreRewardH)
 
 	http.HandleFunc("/queryfamilyId", QueryfamilyIdH)
+	http.HandleFunc("/queryfamilyId2", QueryfamilyId2H)
+
 	http.HandleFunc("/setPullRowsCount", SetPullRowsCountH)
 	http.HandleFunc("/setFamilyCount", SetFamilyCountH)
 
@@ -329,7 +331,7 @@ func main() {
 	// http.HandleFunc("/", IndexH)
 
 	sendMsg("cat is start")
-	RunnerEveryOneSteamBox()
+	go RunnerEveryOneSteamBox()
 
 	running := true
 	{
@@ -596,7 +598,7 @@ func DelServerLogsH(w http.ResponseWriter, req *http.Request) {
 
 func GetAllTokensH(w http.ResponseWriter, req *http.Request) {
 
-	SQL := "select id, name from tokens"
+	SQL := "select id, name, familyId from tokens"
 
 	rows, err := Pool.Query(SQL)
 
@@ -610,9 +612,9 @@ func GetAllTokensH(w http.ResponseWriter, req *http.Request) {
 
 	for rows.Next() {
 
-		var id, name string
-		rows.Scan(&id, &name)
-		list = append(list, map[string]interface{}{"id": id, "name": name})
+		var id, name, familyId string
+		rows.Scan(&id, &name, &familyId)
+		list = append(list, map[string]interface{}{"id": id, "name": name, "familyId": familyId})
 	}
 
 	bytes, err := json.Marshal(list)
@@ -697,9 +699,7 @@ func SetConfigH(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, "SUCCESS")
 }
 
-func SingleBossAttackH(w http.ResponseWriter, req *http.Request) {
-	id := req.URL.Query().Get("id")
-
+func singleBossAttackLogic(id string) {
 	SQL := "select id, token from tokens where find_in_set(id, (select conf_value from config where conf_key='mmBoss1'))"
 	if id == "2" {
 		SQL = "select id, token from tokens where find_in_set(id, (select conf_value from config where conf_key='cowBoss1'))"
@@ -721,7 +721,6 @@ func SingleBossAttackH(w http.ResponseWriter, req *http.Request) {
 	rows, err := Pool.Query(SQL)
 
 	if err != nil {
-		io.WriteString(w, err.Error())
 		return
 	}
 
@@ -744,9 +743,12 @@ func SingleBossAttackH(w http.ResponseWriter, req *http.Request) {
 
 			}
 		}
-
 	}
+}
 
+func SingleBossAttackH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	singleBossAttackLogic(id)
 	io.WriteString(w, "SUCCESS")
 }
 
@@ -939,86 +941,6 @@ func attackBossLogic(id string) (err error) {
 		}
 
 	}
-
-	// if countI < count {
-	// 	bossList := getBossHelpList(serverURL, zoneToken)
-	// 	for _, v := range bossList {
-	// 		if countI >= count {
-	// 			Pool.Exec("update boss_list set state = 1 where boss_id = ? and state = 3", v["id"].(string))
-	// 			continue
-	// 		}
-
-	// 		leftHp := v["leftHp"].(float64)
-	// 		xlog.Infof("getBossHelpList[%v]leftHp:%v", v["id"], leftHp)
-	// 		var flag bool
-
-	// 		if uid == "302691822" || uid == "309392050" || uid == "403573789" {
-	// 			if leftHp <= 600 && leftHp >= 500 {
-	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
-	// 				countI += 3
-	// 			} else if leftHp == 601 {
-	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 1, 1, 0)
-	// 				countI += 1
-	// 			} else if leftHp <= 1000 && leftHp >= 500 {
-	// 				attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
-	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400, 0)
-	// 				countI += 4
-	// 			} else if leftHp == 400 {
-	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
-	// 				countI += 2
-	// 			} else if leftHp == 200 {
-	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 200, 200, 0)
-	// 				countI += 1
-	// 			} else {
-	// 				flag = false
-	// 				xlog.Infof("ignore")
-	// 			}
-	// 		} else {
-	// 			if leftHp <= 600 && leftHp >= 500 {
-	// 				attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 0, 100, 100, 0)
-	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
-	// 				countI += 5
-	// 			} else if leftHp == 601 {
-	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 1, 1, 0)
-	// 				countI += 1
-	// 			} else if leftHp <= 1000 && leftHp >= 500 {
-	// 				attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
-	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400, 0)
-	// 				countI += 4
-	// 			} else if leftHp == 400 {
-	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
-	// 				countI += 2
-	// 			} else if leftHp == 200 {
-	// 				flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 200, 200, 0)
-	// 				countI += 1
-	// 			} else {
-	// 				flag = false
-	// 				xlog.Infof("ignore")
-	// 			}
-	// 		}
-
-	// 		if flag {
-
-	// 			Pool.Exec("update boss_list set state = 2 where boss_id = ?", v["id"].(string))
-
-	// 			go func() {
-	// 				xlog.Infof("[%v]start getBossPrize \n", name)
-	// 				time.Sleep(time.Second * 82800)
-	// 				serverURL, zoneToken = getSeverURLAndZoneToken(token)
-	// 				getBossPrize(serverURL, zoneToken, v["id"].(string))
-	// 				xlog.Infof("[%v]end getBossPrize \n", name)
-	// 			}()
-	// 		}
-
-	// 		// if leftHp < 1000 && leftHp >= 500 {
-	// 		// 	attackBossByAdmin(serverURL, zoneToken, v["id"].(string))
-	// 		// }
-	// 	}
-	// } else {
-	// 	for _, v := range otherBossList {
-	// 		Pool.Exec("update set state = 1 where boss_id = ? and state = 3", v)
-	// 	}
-	// }
 
 	xlog.Infof("---------------------------[%v]结束打龙---------------------------", name)
 	return
@@ -1219,6 +1141,12 @@ func getbossPrizeLogic(id string) {
 
 	if id != "" {
 		SQL = fmt.Sprintf("select id, token, name from tokens where id = %v", id)
+		if id == "outsystem" {
+			SQL = "select id,token,name from tokens where NOT FIND_IN_SET(id, (select conf_value from config where conf_key='cannotdeleteusers')) "
+		}
+		if id == "system" {
+			SQL = "select id,token,name from tokens where FIND_IN_SET(id, (select conf_value from config where conf_key='cannotdeleteusers'))"
+		}
 	}
 	rows, err := Pool.Query(SQL)
 	if err != nil {
@@ -1292,13 +1220,18 @@ func GetBossPrizeH1(s *web.Session) web.Result {
 
 func GetMailPrizeH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
+	familyId := req.URL.Query().Get("familyId")
 	title := req.URL.Query().Get("title")
 	amount := req.URL.Query().Get("amount")
 	intAmount, _ := strconv.Atoi(amount)
 	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
 
-	if id == "" {
-		SQL = "select id, name, token from tokens"
+	if familyId != "" {
+		SQL = fmt.Sprintf("select id, name, token from tokens where familyId = %v", familyId)
+	} else {
+		if id == "" {
+			SQL = "select id, name, token from tokens"
+		}
 	}
 
 	rows, err := Pool.Query(SQL)
@@ -1925,11 +1858,24 @@ func AddFirewoodH(w http.ResponseWriter, req *http.Request) {
 	quality, _ := strconv.ParseFloat(qualityS, 64)
 
 	// quality
+	if id == "0" {
+		addFirewoodLogic("system", quality)
+		addFirewoodLogic("outsystem", quality)
+	} else {
+		addFirewoodLogic(id, quality)
+	}
 
+	io.WriteString(w, "SUCCESS")
+}
+
+func addFirewoodLogic(id string, quality float64) {
 	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
 
-	if id == "0" {
-		SQL = "select id, name, token from tokens"
+	if id == "system" {
+		SQL = "select id, name, token from tokens where FIND_IN_SET(id, (select conf_value from config where conf_key='cannotdeleteusers'))"
+	}
+	if id == "outsystem" {
+		SQL = "select id, name, token from tokens where NOT FIND_IN_SET(id, (select conf_value from config where conf_key='cannotdeleteusers'))"
 	}
 
 	rows, err := Pool.Query(SQL)
@@ -1956,13 +1902,8 @@ func AddFirewoodH(w http.ResponseWriter, req *http.Request) {
 			fuid := fmt.Sprintf("%v", v)
 			openSteamBox(user.ServerURL, user.ZoneToken, fuid)
 			xlog.Infof("[%v]给[%v]打开汤圆", name, v)
-
 		}
-		//
-
 	}
-
-	io.WriteString(w, "SUCCESS")
 }
 
 func BuildUpH(w http.ResponseWriter, req *http.Request) {
@@ -2060,9 +2001,10 @@ func cancelFamilyRobH(w http.ResponseWriter, req *http.Request) {
 
 	if flag != "" {
 		SQL = fmt.Sprintf("select id, name, token from tokens where familyId = %v", flag)
-	}
-	if id == "" {
-		SQL = "select id, name, token from tokens"
+	} else {
+		if id == "" {
+			SQL = "select id, name, token from tokens"
+		}
 	}
 
 	rows, err := Pool.Query(SQL)
@@ -2393,6 +2335,34 @@ func QueryfamilyIdH(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func QueryfamilyId2H(w http.ResponseWriter, req *http.Request) {
+	sql := `select familyId, max(pull_rows) from tokens group by familyId`
+	rows, err := Pool.Query(sql)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+	familyIds := []xmap.M{}
+	for rows.Next() {
+		var familyId, pullRows string
+		rows.Scan(&familyId, &pullRows)
+		if familyId != "" {
+			familyIds = append(familyIds, xmap.M{
+				"id":        familyId,
+				"pull_rows": pullRows,
+			})
+		}
+	}
+
+	jsonBytes, err := json.Marshal(familyIds)
+	if err != nil {
+		io.WriteString(w, err.Error())
+		return
+	}
+	io.WriteString(w, string(jsonBytes))
+
+}
+
 func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
@@ -2433,6 +2403,9 @@ func GetMiningScoreRewardH(w http.ResponseWriter, req *http.Request) {
 
 func DrawH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
+
+	familyId := req.URL.Query().Get("familyId")
+
 	drawMulti := req.URL.Query().Get("drawMulti")
 	amount := req.URL.Query().Get("amount")
 	intDrawMulti, _ := strconv.Atoi(drawMulti)
@@ -2440,11 +2413,14 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 
 	SQL := fmt.Sprintf("select id, name, token, zoneToken from tokens where id = %v", id)
 
-	if id == "" {
-		drawAll(intDrawMulti, intAmount)
-		io.WriteString(w, "SUCCESS")
-
-		return
+	if familyId != "" {
+		SQL = fmt.Sprintf("select id, name, token, zoneToken from tokens where familyId = %v", familyId)
+	} else {
+		if id == "" {
+			drawAll(intDrawMulti, intAmount)
+			io.WriteString(w, "SUCCESS")
+			return
+		}
 	}
 
 	rows, err := Pool.Query(SQL)
@@ -2452,6 +2428,8 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer rows.Close()
+
+	i := 0
 
 	for rows.Next() {
 		var uid, name, token, zoneToken string
@@ -2462,8 +2440,9 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 		zoneToken, familyDayTask := getEnterInfo(uid, name, serverURL, token, zoneToken, "familyDayTask")
 		UpdateUser(uid, serverURL, zoneToken, token)
 		// zoneToken := getZoneToken(serverURL, token)
-
+		i++
 		go func() {
+			time.Sleep(time.Millisecond * 2000 * time.Duration(i))
 			xlog.Infof("---------------------------[%v]开始转盘---------------------------", name)
 			xlog.Infof("[%v]【摇一摇】获取免费20能量", name)
 			getFreeEnergy(serverURL, zoneToken)
@@ -2476,14 +2455,15 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 
 			targetEnergy := intDrawMulti * intAmount
 
+			intAmountAll := intAmount
 			if targetEnergy > int(energy) {
-				intAmount = int(energy) / intDrawMulti
+				intAmountAll = int(energy) / intDrawMulti
 			}
 			time.Sleep(time.Millisecond * 2100)
 
-			for i := 1; i <= intAmount; i++ {
+			for i := 1; i <= intAmountAll; i++ {
 				xx := draw(uid, name, serverURL, zoneToken, drawMulti)
-				xlog.Infof("剩余转盘次数:%v", intAmount-i)
+				xlog.Infof("剩余转盘次数:%v", intAmountAll-i)
 				if xx == -1 {
 					break
 				}
@@ -4365,18 +4345,17 @@ func PullAnimalH1(s *web.Session) web.Result {
 
 func UpdateH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
-	name := req.URL.Query().Get("name")
 	token := req.URL.Query().Get("token")
 	var serverURL, zoneToken string
-	if name == "" {
-		serverURL = getServerURL()
-		zoneToken, name = getNickName(serverURL, token)
-		UpdateUser(id, serverURL, zoneToken, token)
-	}
-
+	// if name == "" {
+	serverURL = getServerURL()
+	zoneToken, name := getNickName(serverURL, token)
+	UpdateUser(id, serverURL, zoneToken, token)
+	// }
 	SQL := fmt.Sprintf("select id from tokens where id = %v", id)
 	var uid string
 	Pool.QueryRow(SQL).Scan(&uid)
+	xlog.Infof("Update uid:%v name:%v token %v serverURL %v zoneToken %v", uid, name, token, serverURL, zoneToken)
 	if uid == id {
 		SQL = "update tokens set token = ?, serverURL = ?, zoneToken = ? where id = ?"
 		Pool.Exec(SQL, token, serverURL, zoneToken, id)
@@ -4387,6 +4366,39 @@ func UpdateH(w http.ResponseWriter, req *http.Request) {
 			io.WriteString(w, err.Error())
 			return
 		}
+	}
+	gameList := []string{"535", "525", "157", "452", "411"}
+	for _, v := range gameList {
+		xlog.Infof("getAward[%v] uid:%v name:%v token %v serverURL %v zoneToken %v", v, uid, name, token, serverURL, zoneToken)
+		getAward(token, v)
+	}
+	sql := `select id, token, name from tokens`
+	rows, err := Pool.Query(sql)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+	count := 0
+	for rows.Next() {
+		if count == 3 {
+			break
+		}
+		var id1, token1, serverURL1, zoneToken1, name1, _ string
+		err = rows.Scan(&id1, &token1, &name1)
+		if err != nil {
+			return
+		}
+		var shovelHelpNum1 int
+		serverURL1, zoneToken1, _, _, shovelHelpNum1 = enterWithBeachHelp(token1, zoneToken1)
+		if shovelHelpNum1 < 5 {
+			count++
+			beachHelp(serverURL1, zoneToken1, id, 43)
+			xlog.Infof("[%v]beachHelp[%v] uid:%v name:%v token %v serverURL %v zoneToken %v", id1, id, uid, name, token, serverURL, zoneToken)
+		}
+	}
+	for i := 0; i <= 2; i++ {
+		xlog.Infof("[%v] 领取铲子", name)
+		getHelpItem(serverURL, zoneToken, 1, i)
 	}
 
 	io.WriteString(w, "SUCCESS")
@@ -7557,7 +7569,7 @@ func draw(uid, userName, serverURL, zoneToken string, drawMulti interface{}) flo
 		count, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", count/1000000), 64)
 	}
 
-	if energy == 5 {
+	if energy <= 5 {
 		xlog.Infof("[%v]【摇一摇】获取免费20能量", userName)
 		getFreeEnergy(serverURL, zoneToken)
 		xlog.Infof("[%v]【摇一摇】领取好友能量", userName)
@@ -8594,6 +8606,9 @@ func RunnerDraw() (err error) {
 
 			iMax := int((maxDraw - dayDrawFloat) / 5)
 			if iMax <= 0 {
+				if maxDraw-dayDrawFloat < 5 {
+					draw(cowBoyUid, cowBoyName, serverURL, zoneToken, maxDraw-dayDrawFloat)
+				}
 				xlog.Infof("[%v]不用摇", cowBoyName)
 			} else {
 				for i := 0; i < iMax; i++ {
@@ -9037,10 +9052,12 @@ func RunnerCheckTokenGo() (err error) {
 }
 
 func AttackBossGo() (err error) {
-	getbossPrizeLogic("")
+	getbossPrizeLogic("system")
 	attackMyBossLogic("system", "4400")
 	time.Sleep(450 * time.Second)
+	go singleBossAttackLogic("system")
 	attackBossLogic("")
+	getbossPrizeLogic("outsystem")
 	attackMyBossLogic("outsystem", "4400")
 	sql := `select id from tokens`
 	rows, err := Pool.Query(sql)
@@ -9120,7 +9137,8 @@ func PlayLuckyWheelGo() (err error) {
 }
 
 func InitPullRows() (err error) {
-	_, err = Pool.Exec("update tokens set pull_rows = '1,2,3,4,5,6'")
+	Pool.Exec("update tokens set pull_rows = '1,2,3,4,5,6'")
+	_, err = Pool.Exec("update tokens set pull_rows = '1,2,3' where familyId=1945")
 	return
 }
 
@@ -9708,4 +9726,24 @@ func 挖矿配置() (conf [][]string) {
 	xlog.Infof("挖矿配置:%v", converter.JSON(conf))
 	return
 
+}
+
+func wabao(uid, name, serverURL, token string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := serverURL + "/zone?cmd=enter&token=" + token + "&yyb=0&inviteId=null&share_from=null&cp_shareId=null&now=" + now
+	formData := httpGetReturnXmapM(URL)
+	zoneToken := formData.Str("zoneToken")
+	miningItems := formData.Map("miningItems")
+	grids1 := formData.ArrayDef([]interface{}{}, "mine/grids")
+	grids := [][]int{}
+	for _, v := range grids1 {
+		vv := v.([]interface{})
+		vvv := []int{}
+		for _, v2 := range vv {
+			vvv = append(vvv, int(v2.(float64)))
+		}
+
+		grids = append(grids, vvv)
+	}
+	xlog.Infof("[%v]miningItems is %v grids is %v", zoneToken, miningItems, grids)
 }

@@ -1,49 +1,38 @@
 {
     "animal": {
-        "76": 9,
-        "77": 1,
-        "78": 1,
-        "79": 1,
-        "80": 1,
-        "81": 0
+        "76": 10,
+        "77": 9,
+        "78": 9,
+        "79": 8,
+        "80": 4,
+        "81": 2
     },
-    "applyCount": 2,
+    "applyCount": 1,
     "autumnInviteCount": 0,
     "beachHelp": {
-        "receiveNum": 3,
-        "sendNum": 2,
         "shovelHelp": {
             "flag": 7,
             "helpUids": [
-                "425190502",
-                "439943689",
-                "440204933"
+                "690423894",
+                "690708340",
+                "690840661"
             ]
-        },
-        "shovelHelpNum": 4
+        }
     },
     "beachItems": {
-        "176": 15,
-        "177": 24,
+        "176": 17,
+        "177": 0,
         "178": 2,
         "179": 0,
-        "180": 5,
+        "180": 0,
         "181": 0,
-        "182": 1661,
-        "183": 58
+        "182": 1845,
+        "183": 62
     },
     "boatRaceDayTask": {
         "1": {
             "prize": 0,
             "value": 3
-        },
-        "12": {
-            "prize": 0,
-            "value": 15
-        },
-        "13": {
-            "prize": 0,
-            "value": 10
         },
         "2": {
             "prize": 0,
@@ -67,57 +56,57 @@
         },
         "notify": 1
     },
-    "bossCannon": 0,
+    "bossCannon": 24,
     "buyFruit": 0,
     "buyWheelItem": 0,
     "canGetDailyCommonPiece": 0,
     "cannonCard": 0,
     "chatChannel": "147_pdt_1",
     "chocolate": {},
-    "clamp": 3707,
-    "companionStone": 1651,
-    "companionWine": 1657,
+    "clamp": 5107,
+    "companionStone": 1024,
+    "companionWine": 907,
     "dailyGiftBoxBuyNum": {
         "1": 1
     },
     "dayShare": 0,
-    "delFriendCard": 84,
-    "doubleGoldCard": 33,
+    "delFriendCard": 60,
+    "doubleGoldCard": 0,
     "doubleGoldInviteCount": 0,
     "dragonBoatDayLimit": {},
     "duanwuInviteCount": 0,
     "eggHammer": 0,
     "eggInviteCount": 0,
     "eggList": [],
-    "elevenEnergy": 1402,
-    "elevenEnergyPrizeFlag": 15,
+    "elevenEnergy": 536,
+    "elevenEnergyPrizeFlag": 7,
     "elevenGiftDailyTimes": {},
     "elevenGiftTotalTimes": {},
     "elevenRecharge": 0,
     "elevenRechargePrizeFlag": 0,
-    "energy": 122,
+    "energy": 6,
     "energyBottle": 0,
     "familyBoxKey": 0,
-    "familyChatRoomId": "147_pdt_fam_43000",
-    "familyId": 43000,
-    "familyMedal": 2,
+    "familyChatRoomId": "147_pdt_fam_1945",
+    "familyId": 1945,
+    "familyMedal": 0,
     "familyPriv": 1,
-    "familyTotalActive": 354259,
-    "familyWeekActive": 4574,
-    "firewood": 1530,
+    "familyTotalActive": 16615,
+    "familyWeekActive": 6414,
+    "firewood": 2199,
     "footballGuessFreeTimes": 0,
     "footballGuessInviteChance": 0,
     "friendEnergy": 0,
     "friendEnergyDot": 0,
     "giftMsgRedPoint": 0,
-    "gold": 104503732,
-    "goldChunk": 150,
+    "gold": 3368191376,
+    "goldChunk": 0,
     "goldInviteCount": 0,
     "halloweenHammer": 0,
     "hammer": 0,
     "hasNewChat": {},
     "hasNewTreasure": 1,
-    "horn": 1114,
+    "horn": 1049,
     "inviteDrawInviteCount": 0,
     "inviteDrawTimes": 0,
     "inviteReduceEnergy": 0,
@@ -130,75 +119,75 @@
     "isGetDayShareGold": 1,
     "isGetDuanwuPrize": 0,
     "laba": {
-        "157": 10,
-        "158": 43,
-        "159": 125,
-        "160": 26,
-        "161": 31
+        "157": 81,
+        "158": 69,
+        "159": 37,
+        "160": 69,
+        "161": 94
     },
-    "labaRefreshStone": 7,
-    "lastDrawCompanionTime": 1633073156000,
-    "lastEnergyTime": 1680091466000,
+    "labaRefreshStone": 0,
+    "lastDrawCompanionTime": 1644750910000,
+    "lastEnergyTime": 1680156308000,
     "lastRefreshEggTime": 0,
-    "mana": 129,
-    "maxStar": 1829,
-    "mineGold": 245968.875,
+    "mana": 0,
+    "maxStar": 1500,
+    "mineGold": 332787.9050925923,
     "miniShield": 2,
     "miningItems": {
-        "184": 4192,
-        "185": 2357,
-        "186": 1083,
+        "184": 3648,
+        "185": 1992,
+        "186": 867,
         "187": 0
     },
-    "monthVipEndTime": 1680019323000,
+    "monthVipEndTime": 1680019328000,
     "msgList": [],
     "mysteryShopBuyHistory": {},
-    "now": 1680092910799,
+    "now": 1680159418819,
     "payPidList": [],
     "pieceList": {
         "1": {
-            "count": 43,
+            "count": 363,
             "set": 0
         },
         "10": {
-            "count": 62,
+            "count": 21,
             "set": 0
         },
         "2": {
-            "count": 30,
+            "count": 21,
             "set": 0
         },
         "3": {
-            "count": 48,
+            "count": 326,
             "set": 0
         },
         "4": {
-            "count": 39,
+            "count": 359,
             "set": 0
         },
         "5": {
-            "count": 4,
+            "count": 65,
             "set": 0
         },
         "6": {
-            "count": 47,
+            "count": 323,
             "set": 0
         },
         "7": {
-            "count": 49,
+            "count": 357,
             "set": 0
         },
         "8": {
-            "count": 46,
+            "count": 355,
             "set": 0
         },
         "9": {
-            "count": 7,
+            "count": 186,
             "set": 0
         }
     },
     "playLuckyWheelNumDaily": 2,
-    "policeTimes": 113,
+    "policeTimes": 63,
     "qixiInvite": {
         "0": {
             "count": 0,
@@ -211,33 +200,31 @@
     },
     "recvFishTimes": 0,
     "recvGemTimes": 0,
-    "recvPieceTimes": 2,
+    "recvPieceTimes": 0,
     "recvRiceCakeTimes": 0,
     "recvSnowmanTimes": 0,
     "recvXmasTimes": 0,
-    "refreshScroll": 46,
-    "richmanDice": 1247,
+    "refreshScroll": 95,
+    "richmanDice": 1026,
     "robCheerStone": 0,
     "sendChocolateInviteTimes": 0,
     "sendLabaInviteTimes": 0,
     "shield": 3,
     "silent": 0,
-    "snowball": 3994,
-    "star": 1829,
-    "sugarItems": {
-        "19": 0
-    },
-    "summonBossStone": 107,
-    "timeMachine": 169,
+    "snowball": 4625,
+    "star": 1500,
+    "sugarItems": {},
+    "summonBossStone": 33,
+    "timeMachine": 0,
     "titleList": {},
-    "totalGold": 91132151021,
-    "wheelLevel": 15,
+    "totalGold": 45448765673,
+    "wheelLevel": 12,
     "wheelUpgradeItem": {
-        "170": 71,
-        "171": 63,
-        "172": 58,
-        "173": 107,
-        "174": 17,
+        "170": 14,
+        "171": 42,
+        "172": 52,
+        "173": 34,
+        "174": 1084,
         "flag": true
     },
     "wishCoin": 0,

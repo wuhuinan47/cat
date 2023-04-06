@@ -48,54 +48,75 @@
     </select>
     <br>
 
-    <button style="font-size:40px;width:400px; height:100px;" onclick="startPullAnimal()">
+    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="startPullAnimal()">
         开启动物定时器
     </button>
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="stopPullAnimal()">
         关闭动物定时器
+    </button> -->
+
+
+    <br>
+    <select style="font-size:40px;width:200px; height:100px;" name="cancelFamilyRob" id="cancelFamilyRob">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="cancelFamilyRobFlag" id="cancelFamilyRobFlag">
+        <option value="">个人</option>
+        <option selected="selected" value="1">选择公会</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="cancelFamilyRob()">
+        取消拉动物
     </button>
-
-
     <br>
 
     <select style="font-size:40px;width:150px; height:100px;" name="setPullRowsSelect" id="setPullRowsSelect">
         <option selected="selected" value="">全部</option>
     </select>
 
-    <select style="font-size:40px;width:150px; height:100px;" name="setPullRowsSelectFamily" id="setPullRowsSelectFamily">
+    <select style="font-size:40px;width:200px; height:100px;" name="setPullRowsSelectFamily" id="setPullRowsSelectFamily">
         <option selected="selected" value="">选择公会</option>
     </select>
 
     <button style="font-size:40px;width:300px; height:100px;" onclick="setPullRows()">
-        设置几道(设置0表示不拉)
+        设置动物规则
     </button>
-    <input style="font-size:40px;width:200px; height:100px;" type="text" value="1,2,3,4,5,6" id="setPullRows" class="textClass" name="textName">
+
+    <select style="font-size:40px;width:150px; height:100px;" name="setPullRows" id="setPullRows">
+        <option value="1,2,3,4,5,6">拉1-6</option>
+        <option selected="selected" value="0">不拉</option>
+        <option value="1,2,3">拉123</option>
+        <option value="4,5,6">拉456</option>
+    </select>
+
+    <!-- <input style="font-size:40px;width:200px; height:100px;" type="text" value="1,2,3,4,5,6" id="setPullRows" class="textClass" name="textName"> -->
     <br>
 
-    <select style="font-size:40px;width:150px; height:100px;" name="setPullRowsSelectFamily1" id="setPullRowsSelectFamily1">
+    <select style="font-size:40px;width:200px; height:100px;" name="setPullRowsSelectFamily1" id="setPullRowsSelectFamily1">
         <option selected="selected" value="">选择公会</option>
     </select>
 
-    <select style="font-size:40px;width:150px; height:100px;" name="setFamilyCount" id="setFamilyCount">
+    <select style="font-size:40px;width:180px; height:100px;" name="setFamilyCount" id="setFamilyCount">
         <option selected="selected" value="1995">转2000</option>
         <option value="795">转800</option>
         <option value="-1">不转</option>
     </select>
 
     <button style="font-size:40px;width:300px; height:100px;" onclick="setFamilyCount()">
-        是否转盘
+        设置转盘
     </button>
     <br>
 
 
-    <button style="font-size:40px;width:400px; height:100px;" onclick="startDrawStatus()">
+    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="startDrawStatus()">
         开启摇一摇状态
     </button>
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="stopDrawStatus()">
         关闭摇一摇状态
-    </button>
+    </button> -->
 
     <br>
 
@@ -157,8 +178,10 @@
 
 
     <select style="font-size:40px;width:200px; height:100px;" name="SelectMyBoss" id="SelectMyBoss">
-        <option selected="selected" value="">全部(除大号)</option>
-        <option selected="" value="system">系统账号</option>
+        <option selected="" value="">全部(除大号)</option>
+        <option selected="" value="outsystem">外部账号</option>
+        <option selected="selected" value="system">系统账号</option>
+
     </select>
 
     <select style="font-size:40px;width:200px; height:100px;" name="attackMyBossMode" id="attackMyBossMode">
@@ -174,7 +197,9 @@
     <br>
 
     <select style="font-size:40px;width:200px; height:100px;" name="SingleBossSelect" id="SingleBossSelect">
-        <option selected="selected" value="0">小号</option>
+        <option selected="" value="outsystem">外部账号</option>
+        <option selected="" value="0">小号</option>
+        <option selected="selected" value="system">系统账号</option>
         <option value="1">蜜龙组</option>
         <option value="2">牛龙组</option>
         <option value="3">龙组3</option>
@@ -577,18 +602,7 @@
     <br>
     
 
-    <select style="font-size:40px;width:200px; height:100px;" name="cancelFamilyRob" id="cancelFamilyRob">
-        <option selected="selected" value="">全部</option>
-    </select>
-
-    <select style="font-size:40px;width:200px; height:100px;" name="cancelFamilyRobFlag" id="cancelFamilyRobFlag">
-        <option value="">个人</option>
-        <option selected="selected" value="1">选择公会</option>
-    </select>
-
-    <button style="font-size:40px;width:400px; height:100px;" onclick="cancelFamilyRob()">
-        取消拉动物
-    </button>
+    
     
 
 

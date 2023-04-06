@@ -1,18 +1,38 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/codingeasygo/util/converter"
 	"github.com/codingeasygo/util/xmap"
+	"github.com/wuhuinan47/cat/catdb"
 )
+
+func init() {
+	db, err := sql.Open("mysql", "root:123@tcp(localhost:3306)/data_cat")
+	if err != nil {
+		panic(err)
+	}
+	db.SetConnMaxLifetime(100 * time.Second) //最大连接周期，超过时间的连接就close
+	db.SetMaxOpenConns(100)                  //设置最大连接数
+	db.SetMaxIdleConns(16)                   //设置闲置连接数
+
+	Pool = db
+	catdb.Pool = db
+}
 
 func TestGame(t *testing.T) {
 	fmt.Println(converter.JSON(game("ildv-8OmqkUICqn4NausGpcDGpQBb4An_qn")))
+}
+
+func TestGameWabao(t *testing.T) {
+	wabao("695923850", "大南是逗比", "https://s147.11h5.com/", "dd84fab9b6caa625e0efd08d93e8e945")
 }
 
 func TestLogin(t *testing.T) {
