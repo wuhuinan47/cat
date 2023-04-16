@@ -597,17 +597,37 @@
         <option selected="selected" value="">全部</option>
     </select>
 
-    <select style="font-size:40px;width:300px; height:100px;" name="labaSelect" id="labaSelect">
+    <select style="font-size:40px;width:350px; height:100px;" name="labaSelect" id="labaSelect">
         <option value="1">能量助力</option>
         <option value="2">刷新水果</option>
         <option value="3">领光水果奖励</option>
         <option selected="selected" value="0">领取水果奖励</option>
     </select>
 
-    <button style="font-size:40px;width:200px; height:100px;" onclick="getLabaPrize()">
+    <button style="font-size:40px;width:300px; height:100px;" onclick="getLabaPrize()">
         点击确认
     </button>
+    <br>
 
+    <button style="font-size:40px;width:400px; height:100px;" onclick="startSteamBoxStatus()">
+        开启汤圆定时器
+    </button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="stopSteamBoxStatus()">
+        关闭汤圆定时器
+    </button>
+
+    <br>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="startBeachStatus()">
+        开启沙滩定时器
+    </button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="stopBeachStatus()">
+        关闭沙滩定时器
+    </button>
+    <br>
+    <button style="font-size:40px;width:300px; height:100px;" onclick="restart()">
+        重启程序
+    </button>
 
     <br>
     
@@ -622,6 +642,42 @@
     <script type="text/javascript">
         window.status = "1";
 
+        restart = function () {
+            var r = confirm("重启程序是否继续？")
+            if (r == true) {
+            $.get(APIURL + "/restart", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+        }
+
+        startSteamBoxStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=steamBoxStatus&confValue=1", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        stopSteamBoxStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=steamBoxStatus&confValue=0", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+        startBeachStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=beachStatus&confValue=1", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        stopBeachStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=beachStatus&confValue=0", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
         pullAnimal = function () {
             $.get(APIURL + "/pullAnimal", function (data) {
                 alert(data)
@@ -640,9 +696,6 @@
                     window.status = "1";
                 });
             }
-
-
-
         }
 
         openSteamBox = function(){

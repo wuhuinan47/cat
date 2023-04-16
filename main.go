@@ -310,6 +310,7 @@ func main() {
 
 	//
 	http.HandleFunc("/checkToken", CheckTokenH)
+	http.HandleFunc("/restart", RestartH)
 
 	//
 
@@ -567,7 +568,8 @@ func CatDemoH(w http.ResponseWriter, req *http.Request) {
 }
 
 func GetServerLogsH(w http.ResponseWriter, req *http.Request) {
-	cmd := "journalctl -n 20 -u cat | cut -d: -f4-"
+	cmd := `journalctl -n 20 -u cat | cut -d: -f4- | sed -E 's/INFO cat\/main.go:[0-9]+//g'`
+	// cmd := `journalctl -f -u cat | awk '{printf " " ; for (i=6; i<=7; i++) printf " " $i; printf " " $10; for (i=11; i<=NF; i++) printf " " $i; printf "\n"}'`
 	c := exec.Command("bash", "-c", cmd)
 	xx, err := c.Output()
 	if err != nil {
@@ -3798,6 +3800,16 @@ func AllBeachHelpGo() (err error) {
 		}
 	}
 	return
+}
+
+func RestartH(w http.ResponseWriter, req *http.Request) {
+	go func() {
+		time.Sleep(2 * time.Second)
+		cmd := exec.Command("systemctl", "restart", "cat")
+		err := cmd.Run()
+		fmt.Printf("systemctl restart cat: %v", err)
+	}()
+	io.WriteString(w, "重启中...")
 }
 
 func CheckTokenH(w http.ResponseWriter, req *http.Request) {
