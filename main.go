@@ -6831,7 +6831,8 @@ func familySign(serverURL, zoneToken string) {
 func getFamilySignPrize(serverURL, zoneToken string, id int) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := fmt.Sprintf("%v/game?cmd=getFamilySignPrize&token=%v&id=%v&now=%v", serverURL, zoneToken, id, now)
-	httpGetReturnJson(url)
+	form := httpGetReturnXmapM(url)
+	xlog.Infof("领取公会签到奖励:%v", form.Map("getItem"))
 }
 
 // 领取签到奖励
@@ -9003,61 +9004,24 @@ func RunnerCheckTokenGo() (err error) {
 	if minute != 33 {
 		return
 	}
-
-	SQL := "select id, token, name, password from tokens"
-
+	SQL := "select id from tokens"
 	rows, err := Pool.Query(SQL)
-
 	if err != nil {
 		return
 	}
-
 	defer rows.Close()
-
-	var groupconcat1, groupconcat2 string
-
+	users := []string{}
 	for rows.Next() {
-		var id, token, name, password string
-		rows.Scan(&id, &token, &name, &password)
-
-		serverURL := getServerURL()
-
-		if password != "" {
-			token = loginByPassword(id, password)
-			Pool.Exec("update tokens set token = ? where id = ?", token, id)
+		var id string
+		rows.Scan(&id)
+		users = append(users, id)
+	}
+	for _, id := range users {
+		user := GetUser(id)
+		for i := 1; i <= 3; i++ {
+			getFamilySignPrize(user.ServerURL, user.ZoneToken, i)
+			xlog.Infof("[%v] getFamilySignPrize[%v]", user.Name, i)
 		}
-
-		zoneToken, _, flag, _ := getZoneToken_1(serverURL, token)
-
-		if zoneToken == "" {
-
-			if password != "" {
-				newToken := loginByPassword(id, password)
-				Pool.Exec("update tokens set token = ? where id = ?", newToken, id)
-			} else {
-				Pool.Exec("update tokens set token = '' where id = ?", id)
-			}
-
-			groupconcat1 += "["
-			groupconcat1 += name
-			groupconcat1 += "]"
-			groupconcat1 += ":"
-			groupconcat1 += "失效"
-			groupconcat1 += "/"
-
-			sendMsg(id + ":" + name)
-		} else {
-			if flag {
-				groupconcat2 += name
-				groupconcat2 += ":"
-				groupconcat2 += fmt.Sprintf("%v", flag)
-				groupconcat2 += "/"
-			}
-
-		}
-
-		// time.Sleep(time.Millisecond * 100)
-
 	}
 
 	return
@@ -9182,7 +9146,7 @@ func InitTodayAnimal() (err error) {
 			miningApply(serverURL, zoneToken)
 			getMiningRankList(serverURL, zoneToken)
 		}
-		_, err = Pool.Exec("update tokens set init_animals = ?, all_animals = null, pull_rows = '1,2,3,4,5,6' where id = ?", ToJSON(animal), uuid)
+		_, err = Pool.Exec("update tokens set init_animals = ?, all_animals = null where id = ?", ToJSON(animal), uuid)
 	}
 
 	exchangeRiceCakeLogic("")
