@@ -69,6 +69,7 @@ type User struct {
 	DrawStatus    int
 	PullRows      string
 	FollowUids    string
+	AttackSubID   string
 }
 
 type UserOnline struct {
@@ -88,16 +89,17 @@ func AddUser(uid string) {
 	if err == nil {
 		serverURL, zoneToken, newToken := getSeverURLAndZoneTokenAndToken(token)
 		userOnline.Users[id] = &User{
-			Uid:        id,
-			Name:       name,
-			Token:      newToken,
-			ServerURL:  serverURL,
-			ZoneToken:  zoneToken,
-			Public:     make(map[string]interface{}),
-			PullRows:   pullRows,
-			DrawStatus: draw_status,
-			FollowUids: follow_uids,
-			FamilyId:   familyId,
+			Uid:         id,
+			Name:        name,
+			Token:       newToken,
+			ServerURL:   serverURL,
+			ZoneToken:   zoneToken,
+			Public:      make(map[string]interface{}),
+			PullRows:    pullRows,
+			DrawStatus:  draw_status,
+			FollowUids:  follow_uids,
+			FamilyId:    familyId,
+			AttackSubID: "",
 		}
 	}
 	userOnline.Lock.Unlock()
@@ -164,7 +166,7 @@ func newUerOnline() {
 		Lock:  &sync.RWMutex{},
 	}
 	// INSERT INTO `data_cat`.`tokens` (`id`, `name`, `token`, `serverURL`, `zoneToken`, `pull_rows`, `init_animals`, `all_animals`, `password`, `beach_runner`, `add_firewood_types`, `hit_boss_nums`, `update_time`, `create_time`, `state`, `follow_uids`, `familyId`, `draw_status`) VALUES (301807377, 'A', '97722980946f1ca9a44a7b601938941e', 'https://s147.11h5.com/', 'ildb38L4D-RRSlapf8Gmmr7yNX-2msKuoCr', '1,2,3,4,5,6', '{\"76\":3,\"77\":2,\"78\":0,\"79\":0,\"80\":2,\"81\":2}', NULL, 'Aa112211', 0, '2,3', 5, '2023-03-23 20:39:55', '2022-03-23 16:00:00', 1, NULL, '1945', 1);
-	sql := `select id,name,token,serverURL,zoneToken,pull_rows,ifnull(draw_status,0),ifnull(follow_uids,''),familyId,password from tokens`
+	sql := `select id,name,token,serverURL,zoneToken,pull_rows,ifnull(draw_status,0),ifnull(follow_uids,''),familyId,password,ifnull(attack_sub_id,'') from tokens`
 	rows, err := Pool.Query(sql)
 	if err != nil {
 		panic(err)
@@ -172,9 +174,9 @@ func newUerOnline() {
 	defer rows.Close()
 	userOnline.Lock.Lock()
 	for rows.Next() {
-		var id, name, token, serverURL, zoneToken, pullRows, follow_uids, familyId, password string
+		var id, name, token, serverURL, zoneToken, pullRows, follow_uids, familyId, password, attackSubID string
 		var draw_status int
-		err = rows.Scan(&id, &name, &token, &serverURL, &zoneToken, &pullRows, &draw_status, &follow_uids, &familyId, &password)
+		err = rows.Scan(&id, &name, &token, &serverURL, &zoneToken, &pullRows, &draw_status, &follow_uids, &familyId, &password, &attackSubID)
 		if err != nil {
 			panic(err)
 		}
@@ -187,17 +189,18 @@ func newUerOnline() {
 			serverURL, zoneToken, newToken, familyId = getSeverURLAndZoneTokenAndTokenByIDPassword(id, password)
 		}
 		userOnline.Users[id] = &User{
-			Uid:        id,
-			Name:       name,
-			Token:      newToken,
-			ServerURL:  serverURL,
-			ZoneToken:  zoneToken,
-			Public:     make(map[string]interface{}),
-			PullRows:   pullRows,
-			DrawStatus: draw_status,
-			FollowUids: follow_uids,
-			FamilyId:   familyId,
-			Password:   password,
+			Uid:         id,
+			Name:        name,
+			Token:       newToken,
+			ServerURL:   serverURL,
+			ZoneToken:   zoneToken,
+			Public:      make(map[string]interface{}),
+			PullRows:    pullRows,
+			DrawStatus:  draw_status,
+			FollowUids:  follow_uids,
+			FamilyId:    familyId,
+			Password:    password,
+			AttackSubID: attackSubID,
 		}
 	}
 	for _, u := range userOnline.Users {
@@ -4554,33 +4557,58 @@ func pullAnimalBySql(SQL string) {
 		xlog.Infof("[%v]开始拉动物", name)
 
 		if followUids != "" {
+			subUids := strings.Split(followUids, ",")
 			go func() {
 				for i := 0; i <= 20; i++ {
 					members := getFamilyMembers(user.ServerURL, user.ZoneToken)
 					time.Sleep(5 * time.Second)
 					foods := enterFamilyRob(user.ServerURL, user.ZoneToken)
 					for _, v := range foods {
-						if v["robList"].(map[string]bool)[followUids] {
-							if robFamilyFood(user.ServerURL, user.ZoneToken, v["id"].(string)) {
-								return
-							}
-						} else {
-							for _, v2 := range members {
-								if v["robList"].(map[string]bool)[fmt.Sprintf("%d", v2)] {
-									if robFamilyFood(user.ServerURL, user.ZoneToken, v["id"].(string)) {
-										return
-									}
-								}
-							}
 
-							if i == 20 {
-								if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
-									if robFamilyFood(user.ServerURL, user.ZoneToken, v["id"].(string)) {
-										return
-									}
+						for _, v2 := range subUids {
+							if v["robList"].(map[string]bool)[v2] {
+								if robFamilyFood(user.ServerURL, user.ZoneToken, v["id"].(string)) {
+									return
 								}
 							}
 						}
+						for _, v2 := range members {
+							if v["robList"].(map[string]bool)[fmt.Sprintf("%d", v2)] {
+								if robFamilyFood(user.ServerURL, user.ZoneToken, v["id"].(string)) {
+									return
+								}
+							}
+						}
+
+						if i == 20 {
+							if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
+								if robFamilyFood(user.ServerURL, user.ZoneToken, v["id"].(string)) {
+									return
+								}
+							}
+						}
+
+						// if v["robList"].(map[string]bool)[followUids] {
+						// 	if robFamilyFood(user.ServerURL, user.ZoneToken, v["id"].(string)) {
+						// 		return
+						// 	}
+						// } else {
+						// 	for _, v2 := range members {
+						// 		if v["robList"].(map[string]bool)[fmt.Sprintf("%d", v2)] {
+						// 			if robFamilyFood(user.ServerURL, user.ZoneToken, v["id"].(string)) {
+						// 				return
+						// 			}
+						// 		}
+						// 	}
+
+						// 	if i == 20 {
+						// 		if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
+						// 			if robFamilyFood(user.ServerURL, user.ZoneToken, v["id"].(string)) {
+						// 				return
+						// 			}
+						// 		}
+						// 	}
+						// }
 					}
 				}
 				foods := enterFamilyRob(user.ServerURL, user.ZoneToken)
@@ -5223,6 +5251,10 @@ func getEnterInfo(uid, name, serverURL, token, oldZoneToken, key string) (zoneTo
 	if !ok {
 		xlog.Infof("[%v] token is invaild", name)
 		sendMsg(uid + ":" + name)
+		go func() {
+			time.Sleep(time.Second * 1)
+			GetUser(uid)
+		}()
 		return
 	}
 
@@ -6927,9 +6959,9 @@ func autoFriendEnergy(serverURL, zoneToken string) {
 
 // 领取其他链接的奖励
 func getAward(token, gameID string) {
-	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-	url := fmt.Sprintf("https://libao.11h5.com/wall?cmd=getAward&token=%v&gameid=%v&type=1&channel=147&now=%v", token, gameID, now)
-	httpGetReturnJson(url)
+	// now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	// url := fmt.Sprintf("https://libao.11h5.com/wall?cmd=getAward&token=%v&gameid=%v&type=1&channel=147&now=%v", token, gameID, now)
+	// httpGetReturnJson(url)
 }
 
 // 查看好友糖果树
@@ -9022,6 +9054,7 @@ func RunnerCheckTokenGo() (err error) {
 			getFamilySignPrize(user.ServerURL, user.ZoneToken, i)
 			xlog.Infof("[%v] getFamilySignPrize[%v]", user.Name, i)
 		}
+		followCompanion_1(user.ServerURL, user.ZoneToken, 3)
 	}
 
 	return
