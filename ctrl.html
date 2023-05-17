@@ -10,23 +10,30 @@
 </head>
 
 <body>
-
-
     <select style="font-size:40px;width:400px; height:100px;" name="Oper_Type" id="Oper_Type">
     </select>
-
-    <button style="font-size:40px;width:400px; height:100px;" onclick="login('')">
+    <button style="font-size:40px;width:300px; height:100px;" onclick="login('')">
         登录
     </button>
 
+    <button style="font-size:40px;width:200px; height:100px;" onclick="reload()">
+        刷新
+    </button>
     <br>
-
     <input id="account" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="手机号或id" value="" />
     <input id="password" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="密码" value="" />
     <button style="font-size:40px;width:400px; height:100px;" onclick="addAccount()">
         添加账号
     </button>
     <br>
+
+    <select style="font-size:40px;width:400px; height:100px;" name="getUserTokenSelect" id="getUserTokenSelect">
+    </select>
+    <button style="font-size:40px;width:300px; height:100px;" onclick="getUserToken()">
+        更新TOKEN
+    </button>
+    <br>
+
     <select style="font-size:40px;width:300px; height:100px;" name="deleteAccount" id="deleteAccount">
         <option selected="selected" value="">请选择</option>
     </select>
@@ -34,7 +41,6 @@
         删除账号
     </button>
     <br>
-
     <button style="font-size:40px;width:300px; height:100px;" onclick="pullAnimal()">
         拉动物
     </button>
@@ -55,13 +61,10 @@
     <button style="font-size:40px;width:400px; height:100px;" onclick="stopPullAnimal()">
         关闭动物定时器
     </button> -->
-
-
     <br>
     <select style="font-size:40px;width:180px; height:100px;" name="cancelFamilyRob" id="cancelFamilyRob">
         <option selected="selected" value="">全部</option>
     </select>
-
     <select style="font-size:40px;width:250px; height:100px;" name="cancelFamilyRobFlag" id="cancelFamilyRobFlag">
         <option value="">个人</option>
         <option selected="selected" value="">选择公会</option>
@@ -71,55 +74,45 @@
         取消拉动物
     </button>
     <br>
-
     <select style="font-size:40px;width:180px; height:100px;" name="setPullRowsSelect" id="setPullRowsSelect">
         <option selected="selected" value="">全部</option>
     </select>
 
-    <select style="font-size:40px;width:250px; height:100px;" name="setPullRowsSelectFamily" id="setPullRowsSelectFamily">
+    <select style="font-size:40px;width:250px; height:100px;" name="setPullRowsSelectFamily"
+        id="setPullRowsSelectFamily">
         <option selected="selected" value="">选择公会</option>
     </select>
-
     <button style="font-size:40px;width:330px; height:100px;" onclick="setPullRows()">
         设置动物规则
     </button>
-
     <select style="font-size:40px;width:180px; height:100px;" name="setPullRows" id="setPullRows">
         <option value="1,2,3,4,5,6">拉1-6</option>
         <option selected="selected" value="0">不拉</option>
         <option value="1,2,3">拉123</option>
         <option value="4,5,6">拉456</option>
     </select>
-
     <!-- <input style="font-size:40px;width:200px; height:100px;" type="text" value="1,2,3,4,5,6" id="setPullRows" class="textClass" name="textName"> -->
     <br>
-
-    <select style="font-size:40px;width:250px; height:100px;" name="setPullRowsSelectFamily1" id="setPullRowsSelectFamily1">
+    <select style="font-size:40px;width:250px; height:100px;" name="setPullRowsSelectFamily1"
+        id="setPullRowsSelectFamily1">
         <option selected="selected" value="">选择公会</option>
     </select>
-
     <select style="font-size:40px;width:250px; height:100px;" name="setFamilyCount" id="setFamilyCount">
         <option selected="selected" value="1995">转2000</option>
         <option value="795">转800</option>
         <option value="-1">不转</option>
     </select>
-
     <button style="font-size:40px;width:300px; height:100px;" onclick="setFamilyCount()">
         设置转盘
     </button>
     <br>
-
-
     <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="startDrawStatus()">
         开启摇一摇状态
     </button>
-
     <button style="font-size:40px;width:400px; height:100px;" onclick="stopDrawStatus()">
         关闭摇一摇状态
     </button> -->
-
     <br>
-
     <select style="font-size:40px;width:180px; height:100px;" name="boxUidsSelect" id="boxUidsSelect">
         <option selected="selected" value="">请选择</option>
     </select>
@@ -133,18 +126,14 @@
     <button style="font-size:40px;width:250px; height:100px;" onclick="getBox(2)">
         抓别人宝箱
     </button>
-<!-- 
+    <!-- 
     <button style="font-size:40px;width:280px; height:100px;" onclick="getBox(1)">
         抓自己宝箱(未开发)
     </button> -->
-
     <br>
-
     <select style="font-size:40px;width:180px; height:100px;" name="Oper_Candy" id="Oper_Candy">
         <option selected="selected" value="">请选择</option>
     </select>
-
-
     <select style="font-size:40px;width:180px; height:100px;" name="BCSelect" id="BCSelect">
         <option value="1">普通</option>
         <option value="2">稀有</option>
@@ -156,46 +145,32 @@
     <button style="font-size:40px;width:250px; height:100px;" onclick="hitCandy()">
         打糖果
     </button>
-
     <br>
-
     <select style="font-size:40px;width:250px; height:100px;" name="attackBossUsers" id="attackBossUsers">
-        <option selected="selected" value="">默认牛号</option>
+        <option selected="selected" value="all">全部</option>
     </select>
     <!-- attackBoss -->
-
     <button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss()">
         打500-800血龙
     </button>
-
     <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss1()">
         蜜打龙
     </button> -->
-
     <br>
-
     <!-- singleBossAttack -->
-
-
     <select style="font-size:40px;width:250px; height:100px;" name="SelectMyBoss" id="SelectMyBoss">
         <option selected="" value="">全部(除大号)</option>
         <option selected="" value="outsystem">外部账号</option>
         <option selected="selected" value="system">系统账号</option>
-
     </select>
-
     <select style="font-size:40px;width:250px; height:100px;" name="attackMyBossMode" id="attackMyBossMode">
         <option selected="selected" value="4400">打4400血</option>
         <option value="4200">打4200血</option>
     </select>
-
     <button style="font-size:40px;width:300px; height:100px;" onclick="attackMyBoss()">
         打自己龙
     </button>
-
-
     <br>
-
     <select style="font-size:40px;width:250px; height:100px;" name="SingleBossSelect" id="SingleBossSelect">
         <option selected="" value="outsystem">外部账号</option>
         <option selected="" value="0">小号</option>
@@ -211,15 +186,10 @@
     <button style="font-size:40px;width:400px; height:100px;" onclick="singleBossAttack()">
         把龙打到600血
     </button>
-
-
-
-
     <br>
     <select style="font-size:40px;width:200px; height:100px;" name="PiecePrizeSelect" id="PiecePrizeSelect">
         <option selected="selected" value="">全部</option>
     </select>
-
     <select style="font-size:40px;width:150px; height:100px;" name="SetPieceAmount" id="SetPieceAmount">
         <option value="1">1</option>
         <option value="2">2</option>
@@ -232,136 +202,96 @@
         <option value="9">9</option>
         <option selected="selected" value="10">10</option>
     </select>
-
     <button style="font-size:40px;width:400px; height:100px;" onclick="setPiece()">
         领取拼图奖励
     </button>
-
     <!-- allBeachHelp -->
     <br>
-
     <button style="font-size:40px;width:700px; height:100px;" onclick="allBeachHelp()">
         海滩互相助力[同时更新公会id]
     </button>
     <br>
-
     <select style="font-size:40px;width:200px; height:100px;" name="BeachHelpSelect" id="BeachHelpSelect">
         <option selected="selected" value="">请选择</option>
     </select>
-
     <button style="font-size:40px;width:400px; height:100px;" onclick="beachHelp()">
         海浪铲子助力
     </button>
-
-
     <br>
-
     <select style="font-size:40px;width:150px; height:100px;" name="UseShovelFrom" id="UseShovelFrom">
         <option selected="selected" value="">全部</option>
     </select>
-
     <select style="font-size:40px;width:150px; height:100px;" name="UseShovelTo" id="UseShovelTo">
         <option selected="selected" value="">自己</option>
         <option value="all">全部</option>
     </select>
-
     <button style="font-size:40px;width:400px; height:100px;" onclick="useShovel()">
         使用铲子
     </button>
-
-
     <br>
-
     <select style="font-size:40px;width:150px; height:100px;" name="GetBeachLineRewardsH" id="GetBeachLineRewardsH">
         <option selected="selected" value="">全部</option>
     </select>
-
     <button style="font-size:40px;width:400px; height:100px;" onclick="getBeachLineRewards()">
         领取海滩奖励
     </button>
-
     <br>
-
     <button style="font-size:40px;width:300px; height:100px;" onclick="openSteamBox()">
         一键领取汤圆
     </button>
-
     <select style="font-size:40px;width:150px; height:100px;" name="addFirewoodOps" id="addFirewoodOps">
         <option selected="selected" value="0">全部</option>
     </select>
-
     <select style="font-size:40px;width:150px; height:100px;" name="FirewoodQuality" id="FirewoodQuality">
         <option selected="selected" value="0">全部</option>
         <option value="1">普通</option>
         <option value="2">稀有</option>
         <option value="3">传奇</option>
     </select>
-
     <button style="font-size:40px;width:200px; height:100px;" onclick="addFirewood()">
         汤圆助力
     </button>
-
     <br>
-
     <select style="font-size:40px;width:250px; height:100px;" name="exchangeRiceCake" id="exchangeRiceCake">
         <option selected="selected" value="">全部</option>
     </select>
     <button style="font-size:40px;width:500px; height:100px;" onclick="exchangeRiceCake()">
         领取汤圆/骰子/海滩/小岛寻宝奖励
     </button>
-
     <br>
-
-
     <!-- <select style="font-size:40px;width:250px; height:100px;" name="userMingingItem" id="userMingingItem">
         <option selected="selected" value="">选择</option>
     </select>
     <button style="font-size:40px;width:500px; height:100px;" onclick="userMingingItem()">
         挖矿5000分(不好用)
     </button>
-
     <br>
-
     <br> -->
-
-
     <select style="font-size:40px;width:250px; height:100px;" name="getMiningScoreReward" id="getMiningScoreReward">
         <option selected="selected" value="">选择</option>
     </select>
     <button style="font-size:40px;width:500px; height:100px;" onclick="getMiningScoreReward()">
         领取挖矿奖励
     </button>
-
     <br>
-    
     <button style="font-size:40px;width:400px; height:100px;" onclick="checkToken()">
         检测账号状态
     </button>
-
     <br>
-
     <button style="font-size:40px;width:400px; height:100px;" onclick="loginByWechat()">
         微信登录
     </button>
-
     <button style="font-size:40px;width:400px; height:100px;" onclick="loginByQQ()">
         QQ登录
     </button>
-
     <br>
-
     <select style="font-size:40px;width:400px; height:100px;" name="Oper_Boss" id="Oper_Boss">
         <option selected="selected" value="">全部</option>
     </select>
-
     <button style="font-size:40px;width:400px; height:100px;" onclick="getFreeBossCannon()">
         领取免费龙炮弹
     </button>
-
-
-
     <br>
-
     <select style="font-size:40px;width:200px; height:100px;" name="Oper_Dice" id="Oper_Dice">
         <option selected="selected" value="">全部</option>
     </select>
@@ -371,11 +301,7 @@
     <button style="font-size:40px;width:400px; height:100px;" onclick="throwDice()">
         扔骰子
     </button>
-
-
-
     <br>
-
     <select style="font-size:40px;width:120px; height:100px;" name="Oper_Mail" id="Oper_Mail">
         <option selected="selected" value="">全部</option>
     </select>
@@ -396,8 +322,7 @@
         <option value="福利礼包">福利礼包</option>
         <option value="邮件能量">邮件能量</option>
     </select>
-    <input id="mailAmount" style="font-size:40px;width:100px; height:100px;" type="text" placeholder="次数"
-        value="20" />
+    <input id="mailAmount" style="font-size:40px;width:100px; height:100px;" type="text" placeholder="次数" value="20" />
 
     <button style="font-size:40px;width:200px; height:100px;" onclick="getMailPrize()">
         领取邮件
@@ -481,7 +406,8 @@
         <option value="4">4倍</option>
         <option selected="selected" value="5">5倍</option>
     </select>
-    <input id="drawAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="摇次数" value="159" />
+    <input id="drawAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="摇次数"
+        value="159" />
 
     <button style="font-size:40px;width:200px; height:100px;" onclick="draw()">
         转盘
@@ -518,7 +444,8 @@
         <option selected="selected" value="">全部</option>
     </select>
 
-    <input id="playLuckyWheelAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="使用值" value="600" />
+    <input id="playLuckyWheelAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="使用值"
+        value="600" />
 
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="playLuckyWheel()">
@@ -550,7 +477,7 @@
 
 
     <br>
-    
+
 
     <select style="font-size:40px;width:200px; height:100px;" name="unlockWorker" id="unlockWorker">
         <option selected="selected" value="">全部</option>
@@ -564,6 +491,20 @@
 
     <select style="font-size:40px;width:200px; height:100px;" name="buildUpUsers" id="buildUpUsers">
         <option selected="selected" value="">请选择</option>
+    </select>
+
+    <select style="font-size:40px;width:150px; height:100px;" name="buildUpAmount" id="buildUpAmount">
+        <option value="1">过岛次数</option>
+        <option selected="selected" value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
     </select>
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="buildUp()">
@@ -630,10 +571,16 @@
     </button>
 
     <br>
-    
+    <select style="font-size:40px;width:400px; height:100px;" name="getUserTokenSelect2" id="getUserTokenSelect2">
+    </select>
+    <button style="font-size:40px;width:300px; height:100px;" onclick="getUserToken2()">
+        更新TOKEN
+    </button>
+    <br>
 
-    
-    
+
+
+
 
 
 
@@ -645,11 +592,11 @@
         restart = function () {
             var r = confirm("重启程序是否继续？")
             if (r == true) {
-            $.get(APIURL + "/restart", function (data) {
-                alert(data)
-                window.status = "1";
-            });
-        }
+                $.get(APIURL + "/restart", function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
         }
 
         startSteamBoxStatus = function () {
@@ -685,20 +632,66 @@
             });
         }
 
+        getUserToken = function () {
+            var UID = $("#getUserTokenSelect option:selected").val();
+            var r = confirm("是否更新token？")
+            if (r == true) {
+                $.get(APIURL + "/getPassword?id=" + UID, function (data) {
+                    var password = data;
+                    const timestamp = new Date().getTime();
+                    $.get("https://login.11h5.com/account/api.php?c=login&d=auth&uid=" + UID + "&password=" + password + "&ver=" + timestamp, function (data) {
+                        var jsarr = JSON.parse(data);
+                        var token = jsarr.token;
+                        console.log("token is ", token);
+                        if (token != null && token != "") {
+                            $.get(APIURL + "/update?id=" + UID + "&token=" + token, function (data) {
+                                alert(data)
+                                window.status = "1";
+                            });
+                        } else {
+                            alert(jsarr.info)
+                        }
+                    });
+                });
+            }
+        }
+
+        getUserToken2 = function () {
+            var UID = $("#getUserTokenSelect2 option:selected").val();
+            var r = confirm("是否更新token？")
+            if (r == true) {
+                $.get(APIURL + "/getPassword?id=" + UID, function (data) {
+                    var password = data;
+                    const timestamp = new Date().getTime();
+                    $.get("https://login.11h5.com/account/api.php?c=login&d=auth&uid=" + UID + "&password=" + password + "&ver=" + timestamp, function (data) {
+                        var jsarr = JSON.parse(data);
+                        var token = jsarr.token;
+                        console.log("token is ", token);
+                        if (token != null && token != "") {
+                            $.get(APIURL + "/update?id=" + UID + "&token=" + token, function (data) {
+                                alert(data)
+                                window.status = "1";
+                            });
+                        } else {
+                            alert(jsarr.info)
+                        }
+                    });
+                });
+            }
+        }
+
         familySign = function () {
-
             var UID = $("#familySignSelect option:selected").val();
-
             var r = confirm("公会签到是否继续")
             if (r == true) {
-                $.get(APIURL + "/familySign?id="+UID, function (data) {
+                $.get(APIURL + "/familySign?id=" + UID, function (data) {
                     alert(data)
                     window.status = "1";
                 });
             }
         }
 
-        openSteamBox = function(){
+        openSteamBox = function () {
             var r = confirm("领取汤圆是否继续")
             if (r == true) {
                 $.get(APIURL + "/openSteamBox", function (data) {
@@ -717,13 +710,12 @@
         }
 
         getBox = function (flag) {
-
             var r = confirm("getBox是否继续")
             if (r == true) {
                 var boxUID = $("#boxUidsSelect option:selected").val();
                 var boxQuality = $("#BCSelect2 option:selected").val();
                 var boxAmount = document.getElementById("boxAmount");
-                $.get(APIURL + "/diamond?id=" + boxUID + "&quality=" + boxQuality + "&amount=" + boxAmount.value + "&flag="+flag, function (data) {
+                $.get(APIURL + "/diamond?id=" + boxUID + "&quality=" + boxQuality + "&amount=" + boxAmount.value + "&flag=" + flag, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -804,20 +796,20 @@
 
         // setPullRowsCount
 
-        setFamilyCount = function(){
+        setFamilyCount = function () {
             var familyId = $("#setPullRowsSelectFamily1 option:selected").val();
             var setFamilyCount = $("#setFamilyCount option:selected").val();
-            $.get(APIURL + "/setFamilyCount?input="+setFamilyCount+"&familyId="+familyId, function (data) {
+            $.get(APIURL + "/setFamilyCount?input=" + setFamilyCount + "&familyId=" + familyId, function (data) {
                 alert(data)
                 window.status = "1";
             });
         }
-        setPullRows = function(){
+        setPullRows = function () {
             var id = $("#setPullRowsSelect option:selected").val();
             var familyId = $("#setPullRowsSelectFamily option:selected").val();
 
             var value = document.getElementById("setPullRows").value
-            $.get(APIURL + "/setPullRows?input="+value+"&id="+id+"&familyId="+familyId, function (data) {
+            $.get(APIURL + "/setPullRows?input=" + value + "&id=" + id + "&familyId=" + familyId, function (data) {
                 alert(data)
                 window.status = "1";
             });
@@ -862,7 +854,7 @@
             var r = confirm("打500-800龙是否继续")
             if (r == true) {
                 var id = $("#attackBossUsers option:selected").val();
-                $.get(APIURL + "/attackBoss?id="+id, function (data) {
+                $.get(APIURL + "/attackBoss?id=" + id, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -902,6 +894,10 @@
         }
 
 
+        reload = function () {
+            window.location.reload();
+        }
+
         login = function (id) {
             if (id == "") {
                 var str = $("#Oper_Type option:selected").val();
@@ -925,26 +921,26 @@
             }
         }
 
-        addAccount = function (){
+        addAccount = function () {
             var account = document.getElementById("account").value;
             var password = document.getElementById("password").value;
-            if (account==""){
+            if (account == "") {
                 alert("账号不能为空")
                 return
             }
-            if (password==""){
+            if (password == "") {
                 alert("密码不能为空")
                 return
             }
 
-            console.log("account is ",account)
-            console.log("password is ",password)
+            console.log("account is ", account)
+            console.log("password is ", password)
 
-            $.get(APIURL + "/addAccount?account=" + account+"&password="+password, function (data) {
-                    alert(data)
-                    window.location.href="";
-                    window.status = "1";
-                });
+            $.get(APIURL + "/addAccount?account=" + account + "&password=" + password, function (data) {
+                alert(data)
+                window.location.href = "";
+                window.status = "1";
+            });
         }
 
 
@@ -972,6 +968,7 @@
                 var amount = $("#PieceAmount option:selected").val();
 
 
+
                 $.get(APIURL + "/giftPiece?id=" + id + "&fromUid=" + fromUid + "&toUid=" + toUid + "&amount=" + amount, function (data) {
                     alert(data)
                     window.status = "1";
@@ -989,7 +986,7 @@
                 var familyId = $("#selectDrawFamily option:selected").val();
                 var drawMulti = $("#DrawSelect option:selected").val();
                 var drawAmount = document.getElementById("drawAmount");
-                $.get(APIURL + "/draw?id=" + id+"&familyId="+familyId + "&drawMulti=" + drawMulti + "&amount=" + drawAmount.value, function (data) {
+                $.get(APIURL + "/draw?id=" + id + "&familyId=" + familyId + "&drawMulti=" + drawMulti + "&amount=" + drawAmount.value, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -998,14 +995,14 @@
         }
 
 
-        
+
         cancelFamilyRob = function () {
             var r = confirm("cancelFamilyRob是否继续")
             if (r == true) {
                 var id = $("#cancelFamilyRob option:selected").val();
                 var flag = $("#cancelFamilyRobFlag option:selected").val();
 
-                $.get(APIURL + "/cancelFamilyRob?id=" + id+"&flag="+flag, function (data) {
+                $.get(APIURL + "/cancelFamilyRob?id=" + id + "&flag=" + flag, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1052,7 +1049,7 @@
 
         }
 
-        playLuckyWheel = function (){
+        playLuckyWheel = function () {
             var r = confirm("playLuckyWheel")
             if (r == true) {
                 var id = $("#playLuckyWheel option:selected").val();
@@ -1061,7 +1058,7 @@
                 var playLuckyWheelAmount = document.getElementById("playLuckyWheelAmount").value;
 
 
-                $.get(APIURL + "/playLuckyWheel?id=" + id+"&amount="+playLuckyWheelAmount, function (data) {
+                $.get(APIURL + "/playLuckyWheel?id=" + id + "&amount=" + playLuckyWheelAmount, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1083,15 +1080,15 @@
 
         }
 
-        
+
 
 
         buildUp = function () {
             var r = confirm("buildUp是否继续")
             if (r == true) {
                 var id = $("#buildUpUsers option:selected").val();
-
-                $.get(APIURL + "/buildUp?id=" + id, function (data) {
+                var amount = $("#buildUpAmount option:selected").val();
+                $.get(APIURL + "/buildUp?id=" + id + "&amount=" + amount, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1131,7 +1128,7 @@
                 var id = $("#getLabaPrize option:selected").val();
                 var flag = $("#labaSelect option:selected").val();
 
-                $.get(APIURL + "/getLabaPrize?id=" + id+"&flag="+flag, function (data) {
+                $.get(APIURL + "/getLabaPrize?id=" + id + "&flag=" + flag, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1150,7 +1147,7 @@
 
                 var quality = $("#FirewoodQuality option:selected").val();
 
-                $.get(APIURL + "/addFirewood?id=" + id+"&quality="+quality, function (data) {
+                $.get(APIURL + "/addFirewood?id=" + id + "&quality=" + quality, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1204,9 +1201,9 @@
 
         }
 
-        
 
-        
+
+
 
 
         setRunner = function () {
@@ -1269,7 +1266,7 @@
             if (r == true) {
                 var boxUID = $("#PiecePrizeSelect option:selected").val();
                 var amount = $("#SetPieceAmount option:selected").val();
-                $.get(APIURL + "/setPiece?id=" + boxUID+"&amount="+amount, function (data) {
+                $.get(APIURL + "/setPiece?id=" + boxUID + "&amount=" + amount, function (data) {
                     if (data == "SUCCESS") {
                         alert(data)
                     } else {
@@ -1301,7 +1298,7 @@
                 var familyId = $("#getMailPrizeFamilyId option:selected").val();
                 var title = $("#Oper_MailTitle option:selected").val();
                 var mailAmount = document.getElementById("mailAmount");
-                $.get(APIURL + "/getMailPrize?id=" + boxUID+"&familyId="+familyId+"&title="+title+"&amount="+mailAmount.value, function (data) {
+                $.get(APIURL + "/getMailPrize?id=" + boxUID + "&familyId=" + familyId + "&title=" + title + "&amount=" + mailAmount.value, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1370,73 +1367,73 @@
         //     });
         // }
 
-        queryfamilyId = function (){
+        queryfamilyId = function () {
             $.get(APIURL + "/queryfamilyId2", function (data) {
                 var jsarr = JSON.parse(data);
                 console.log(jsarr)
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
-                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6"){
-                        name="全拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
                     }
-                    if (jsarr[i]["pull_rows"] == "1,2,3"){
-                        name="拉123"
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
                     }
-                    if (jsarr[i]["pull_rows"] == "4,5,6"){
-                        name="拉456"
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
                     }
-                    tOption.text = jsarr[i]["id"]+"("+name+")";
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("setPullRowsSelectFamily").options.add(tOption);
-                   
+
                 }
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
-                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6"){
-                        name="全拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
                     }
-                    if (jsarr[i]["pull_rows"] == "1,2,3"){
-                        name="拉123"
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
                     }
-                    if (jsarr[i]["pull_rows"] == "4,5,6"){
-                        name="拉456"
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
                     }
-                    tOption.text = jsarr[i]["id"]+"("+name+")";
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("setPullRowsSelectFamily1").options.add(tOption);
                 }
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
-                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6"){
-                        name="全拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
                     }
-                    if (jsarr[i]["pull_rows"] == "1,2,3"){
-                        name="拉123"
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
                     }
-                    if (jsarr[i]["pull_rows"] == "4,5,6"){
-                        name="拉456"
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
                     }
-                    tOption.text = jsarr[i]["id"]+"("+name+")";
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("cancelFamilyRobFlag").options.add(tOption);
                 }
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
-                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6"){
-                        name="全拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
                     }
-                    if (jsarr[i]["pull_rows"] == "1,2,3"){
-                        name="拉123"
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
                     }
-                    if (jsarr[i]["pull_rows"] == "4,5,6"){
-                        name="拉456"
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
                     }
-                    tOption.text = jsarr[i]["id"]+"("+name+")";
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("selectDrawFamily").options.add(tOption);
                 }
@@ -1444,21 +1441,21 @@
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
-                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6"){
-                        name="全拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
                     }
-                    if (jsarr[i]["pull_rows"] == "1,2,3"){
-                        name="拉123"
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
                     }
-                    if (jsarr[i]["pull_rows"] == "4,5,6"){
-                        name="拉456"
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
                     }
-                    tOption.text = jsarr[i]["id"]+"("+name+")";
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("getMailPrizeFamilyId").options.add(tOption);
                 }
 
-                
+
             });
         }
 
@@ -1467,7 +1464,7 @@
                 var jsarr = JSON.parse(data);
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"]+"("+jsarr[i]["familyId"]+")";
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
 
@@ -1478,27 +1475,45 @@
                 }
 
                 for (var i = 0; i < jsarr.length; i++) {
+                    if (jsarr[i]["token"] == "") {
+                        var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("getUserTokenSelect").options.add(tOption);
+                    }
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                        var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("getUserTokenSelect2").options.add(tOption);
+                }
+
+                // 
+
+                for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("deleteAccount").options.add(tOption);
                 }
 
-                
-
                 for (var i = 0; i < jsarr.length; i++) {
-                    var tOption1 = document.createElement("Option");
-                    tOption1.text = jsarr[i]["name"];
-                    tOption1.selected = false;
-                    tOption1.value = jsarr[i]["id"];
-                    document.getElementById("boxUidsSelect").options.add(tOption1);
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("boxUidsSelect").options.add(tOption);
                 }
 
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("Oper_Candy").options.add(tOption);
@@ -1506,7 +1521,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("Oper_Boss").options.add(tOption);
@@ -1514,7 +1529,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("Oper_pieceFrom").options.add(tOption);
@@ -1522,7 +1537,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("Oper_pieceTo").options.add(tOption);
@@ -1530,7 +1545,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("Oper_Draw").options.add(tOption);
@@ -1538,7 +1553,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("Oper_Dice").options.add(tOption);
@@ -1546,7 +1561,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("Oper_Mail").options.add(tOption);
@@ -1554,7 +1569,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("Oper_BossPrize").options.add(tOption);
@@ -1562,7 +1577,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("PiecePrizeSelect").options.add(tOption);
@@ -1570,7 +1585,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
 
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
@@ -1579,7 +1594,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
 
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
@@ -1591,7 +1606,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("BeachHelpSelect").options.add(tOption);
@@ -1600,7 +1615,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("UseShovelFrom").options.add(tOption);
@@ -1609,7 +1624,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("UseShovelTo").options.add(tOption);
@@ -1617,7 +1632,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("GetBeachLineRewardsH").options.add(tOption);
@@ -1626,7 +1641,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("RunnerUsers").options.add(tOption);
@@ -1634,7 +1649,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("buildUpUsers").options.add(tOption);
@@ -1643,7 +1658,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("searchRiceCake").options.add(tOption);
@@ -1652,7 +1667,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("makeRiceCake").options.add(tOption);
@@ -1660,19 +1675,19 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("getLabaPrize").options.add(tOption);
                 }
 
-                
+
 
 
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
 
@@ -1684,7 +1699,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("exchangeRiceCake").options.add(tOption);
@@ -1692,14 +1707,14 @@
 
                 // for (var i = 0; i < jsarr.length; i++) {
                 //     var tOption = document.createElement("Option");
-                //     tOption.text = jsarr[i]["name"];
+                //     tOption.text = jsarr[i]["name"]+"("+jsarr[i]["familyId"]+")";
                 //     tOption.selected = false;
                 //     tOption.value = jsarr[i]["id"];
                 //     document.getElementById("userMingingItem").options.add(tOption);
                 // }
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("getMiningScoreReward").options.add(tOption);
@@ -1707,12 +1722,12 @@
 
 
 
-                
-                
+
+
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("familySignSelect").options.add(tOption);
@@ -1720,7 +1735,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("setPullRowsSelect").options.add(tOption);
@@ -1729,7 +1744,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("unlockWorker").options.add(tOption);
@@ -1737,7 +1752,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("cancelFamilyRob").options.add(tOption);
@@ -1746,7 +1761,7 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("searchFamily").options.add(tOption);
@@ -1754,17 +1769,17 @@
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("playLuckyWheel").options.add(tOption);
                 }
 
-                
+
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"];
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("familyReward").options.add(tOption);
@@ -1773,7 +1788,7 @@
                 // 
 
                 // 
-                
+
                 // exchangeRiceCake
 
 
