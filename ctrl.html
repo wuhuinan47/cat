@@ -8,7 +8,61 @@
     <meta http-equiv="Expires" content="0" />
     <title>猫来了辅助简易版</title>
 </head>
-
+<style>
+    /* body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(45deg, #f3f3f3, #ffffff);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    } */
+    
+    button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        transition-duration: 0.4s;
+        cursor: pointer;
+        border-radius: 12px;
+        box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+        margin: 10px;
+    }
+    
+    button:hover {
+        background-color: #45a049;
+    }
+    
+    input, select {
+        width: 200px;
+        padding: 12px 20px;
+        margin: 8px 0;
+        box-sizing: border-box;
+        border: 2px solid #ccc;
+        border-radius: 4px;
+        background-color: #f8f8f8;
+        font-size: 16px;
+    }
+    
+    @media only screen and (max-width: 600px) {
+        body {
+            flex-direction: column;
+        }
+    
+        input, select {
+            width: 100%;
+        }
+    
+        button {
+            width: 100%;
+        }
+    }
+    </style>
+    
 <body>
     <select style="font-size:40px;width:400px; height:100px;" name="Oper_Type" id="Oper_Type">
     </select>
@@ -278,12 +332,12 @@
         检测账号状态
     </button>
     <br>
-    <button style="font-size:40px;width:400px; height:100px;" onclick="loginByWechat()">
+    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="loginByWechat()">
         微信登录
     </button>
     <button style="font-size:40px;width:400px; height:100px;" onclick="loginByQQ()">
         QQ登录
-    </button>
+    </button> -->
     <br>
     <select style="font-size:40px;width:400px; height:100px;" name="Oper_Boss" id="Oper_Boss">
         <option selected="selected" value="">全部</option>
@@ -577,11 +631,56 @@
         更新TOKEN
     </button>
     <br>
+    <br>
+    <br>
 
+    <h2>GET Parameter Form</h2>
+   
+    <form id="paramForm">
+      Cmd: 
+      <input style="font-size:40px; padding:20px;" type="text" id="cmd" name="cmd"><br>
+      Target: 
+      <input style="font-size:40px; padding:20px;" type="text" id="target" name="target"><br>
+      Key: 
+      <input style="font-size:40px; padding:20px;" type="text" id="key" name="key"><br>
+      Value: 
+      <input style="font-size:40px; padding:20px;" type="text" id="value" name="value"><br>
+      <input style="font-size:40px; padding:20px; width: 350px;" type="button" value="Add Parameter" onclick="addParameter()">
+    <!-- <button style="font-size:40px; padding:20px;" onclick="addParameter()">Add Parameter</button> -->
 
+    </form>
+    <button style="font-size:40px; padding:20px;" onclick="submitRequest()">Submit Request</button>
+    
+    <br>
 
+    <script>
+        let params = new URLSearchParams();
 
+function addParameter() {
+  let target = document.getElementById('target').value;
+  let cmd = document.getElementById('cmd').value;
+  let key = document.getElementById('key').value;
+  let value = document.getElementById('value').value;
+  
+  params.set('target', target);
+  params.set('cmd', cmd);
 
+  if (!params.has(key)) {
+    params.append(key, value);
+  }
+}
+
+function submitRequest() {
+  let url = APIURL+'/commonReq?' + params.toString();
+
+  fetch(url)
+    .then(response => response.text())
+    .then(data => console.log(data))
+    .catch((error) => {
+      console.error('Error:', error);
+    });
+}
+    </script>
 
 
     <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>

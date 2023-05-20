@@ -306,6 +306,7 @@ func main() {
 	http.HandleFunc("/familyReward", FamilyRewardH)
 	http.HandleFunc("/playLuckyWheel", PlayLuckyWheelH)
 	http.HandleFunc("/allBeachHelp", AllBeachHelpH)
+	http.HandleFunc("/commonReq", CommonReqH)
 
 	//
 
@@ -3826,6 +3827,29 @@ func AllBeachHelpH(w http.ResponseWriter, req *http.Request) {
 	AllBeachHelpGo()
 
 	io.WriteString(w, "执行中")
+}
+
+func CommonReqH(w http.ResponseWriter, req *http.Request) {
+	params := map[string]string{}
+	for k, v := range req.URL.Query() {
+		params[k] = v[0]
+	}
+	userOnline.Lock.RLock()
+	defer userOnline.Lock.RUnlock()
+	for _, u := range userOnline.Users {
+
+		// if params["go"] == "1" {
+		// 	if params["user_id"] == id {
+		// 		go func() {
+
+		// 		}()
+		// 	}
+		// }
+
+		data := CommonReq(u.ServerURL, u.ZoneToken, params)
+		xlog.Infof("%s ---> %v", u.Name, data)
+	}
+	io.WriteString(w, "执行完毕")
 }
 
 func AllBeachHelpGo() (err error) {
@@ -10012,4 +10036,20 @@ func wabao(uid, name, serverURL, token string) {
 		grids = append(grids, vvv)
 	}
 	xlog.Infof("[%v]miningItems is %v grids is %v", zoneToken, miningItems, grids)
+}
+
+// https://s147.11h5.com//game?cmd=reportChat&token=ildOn9WpalsMP9b3yfyoLyoA2gPwMGoZWjz&type=0&content=%E8%BF%99%E5%82%BB%E5%AD%90%EF%BC%8C%E5%8F%B7%E7%9C%9F%E5%A4%9A%EF%BC%8C%E5%8D%B4%E6%AF%8F%E4%B8%80%E4%B8%AA%E5%8F%B7%E6%95%A2%E5%BB%BA%E5%B2%9B&target=415835110&now=1684437279203
+func CommonReq(serverURL, zoneToken string, params map[string]string) (data xmap.M) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?token=%v&now=%v", serverURL, zoneToken, now)
+	for k, v := range params {
+		URL += fmt.Sprintf("&%v=%v", k, v)
+	}
+	xlog.Infof("CommonReq--->%v", URL)
+	if params["req"] == "GET" {
+		data, _ = xhttp.GetMap(URL)
+	} else {
+		data, _ = xhttp.PostMap(nil, URL)
+	}
+	return
 }
