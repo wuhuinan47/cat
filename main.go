@@ -111,8 +111,13 @@ func GetUser(uid string) *User {
 	user := userOnline.Users[uid]
 	defer func() {
 		userOnline.Lock.Unlock()
-		Pool.Exec(`update tokens set token=?,serverURL=?,zoneToken=?,familyId=? where id=?`, user.Token, user.ServerURL, user.ZoneToken, user.FamilyId, user.Uid)
+		if user != nil {
+			Pool.Exec(`update tokens set token=?,serverURL=?,zoneToken=?,familyId=? where id=?`, user.Token, user.ServerURL, user.ZoneToken, user.FamilyId, user.Uid)
+		}
 	}()
+	if user == nil {
+		return nil
+	}
 	if catdb.CheckZoneToken(user.ServerURL, user.ZoneToken) {
 		return user
 	}
@@ -301,6 +306,7 @@ func main() {
 	//
 	http.HandleFunc("/unlockWorker", UnlockWorkerH)
 	http.HandleFunc("/searchFamily", SearchFamilyH)
+	http.HandleFunc("/getUserInfo", GetUserInfoH)
 	http.HandleFunc("/cancelFamilyRob", cancelFamilyRobH)
 	http.HandleFunc("/getTodayAnimal", GetTodayAnimalsH)
 	http.HandleFunc("/familyReward", FamilyRewardH)
@@ -323,6 +329,7 @@ func main() {
 	http.HandleFunc("/wechatAPI/sendMsg", wechatapi.SendMsgH)
 
 	http.HandleFunc("/ctrl.html", IndexH)
+	http.HandleFunc("/userInfo.html", UserInfoH)
 	http.HandleFunc("/maolaile.html", MaolaileH)
 	http.HandleFunc("/cat_demo.html", CatDemoH)
 	// http.HandleFunc("/qqQrCode.png", QQQrCodeH)
@@ -560,6 +567,11 @@ func StaticServer(w http.ResponseWriter, r *http.Request) {
 
 func IndexH(w http.ResponseWriter, req *http.Request) {
 	t, _ := template.ParseFiles("ctrl.html")
+	t.Execute(w, nil)
+}
+
+func UserInfoH(w http.ResponseWriter, req *http.Request) {
+	t, _ := template.ParseFiles("userInfo.html")
 	t.Execute(w, nil)
 }
 
@@ -2029,6 +2041,25 @@ func BuildUpH(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, "SUCCESS")
 }
 
+func GetUserInfoH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	if id == "" {
+		io.WriteString(w, "FAIL")
+	}
+	user := GetUser(id)
+	if user != nil {
+		xlog.Infof("id:%v, name:%v, serverURL:%v, zoneToken:%v, token:%v", id, user.Name, user.ServerURL, user.ZoneToken, user.Token)
+		newZt, data := getEnterInfo1(id, user.Name, user.ServerURL, user.Token, user.ZoneToken)
+		if newZt != "" {
+			UpdateUser(id, user.ServerURL, newZt, user.Token)
+		}
+		io.WriteString(w, converter.JSON(data))
+	} else {
+		io.WriteString(w, "FAIL")
+	}
+
+}
+
 func SearchFamilyH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 
@@ -2252,19 +2283,18 @@ func beachRunner(id string) {
 								}
 							}
 						}
-						xlog.Infof("[%v][%v] gridsnum is :%v\n", name, uid, gridsnum)
+						xlog.Infof("[%v][%v] gridsnum is :%v myGridsnum %v otherGridsnum %v\n", name, uid, gridsnum, myGridsnum, otherGridsnum)
 
 						var myNeed, otherNeed = 0, 0
 						otherNeed = 5 - otherGridsnum
 						myNeed = 25 - myGridsnum - otherGridsnum
-
+						if otherNeed > 0 {
+							helpMeForBeach(uid, name)
+						}
 						for i := 1; i <= myNeed; i++ {
 							xlog.Infof("[%v]使用铲子x%v", name, i)
 							useShovel(serverURL, zoneToken, "")
 							time.Sleep(time.Millisecond * 100)
-						}
-						if otherNeed > 0 {
-							helpMeForBeach(uid, name)
 						}
 
 						if gridsnum == 25 {
@@ -3866,17 +3896,19 @@ func AllBeachHelpGo() (err error) {
 		if err != nil {
 			return
 		}
-		var helpCount, shovelHelpNum int
-		serverURL, zoneToken, familyId, helpCount, shovelHelpNum = enterWithBeachHelp(token, zoneToken)
+		var helpCount, shovelHelpNum, helpSeaCount, seaWaveHelpNum int
+		serverURL, zoneToken, familyId, helpCount, shovelHelpNum, helpSeaCount, seaWaveHelpNum = enterWithBeachHelp(token, zoneToken)
 		s[id] = xmap.M{
-			"token":         token,
-			"name":          name,
-			"serverURL":     serverURL,
-			"zoneToken":     zoneToken,
-			"familyId":      familyId,
-			"helpCount":     helpCount,
-			"shovelHelpNum": shovelHelpNum,
-			"whoshelpme":    []string{},
+			"token":          token,
+			"name":           name,
+			"serverURL":      serverURL,
+			"zoneToken":      zoneToken,
+			"familyId":       familyId,
+			"helpCount":      helpCount,
+			"shovelHelpNum":  shovelHelpNum,
+			"helpSeaCount":   helpSeaCount,
+			"seaWaveHelpNum": seaWaveHelpNum,
+			"whoshelpme":     []string{},
 		}
 	}
 
@@ -5106,7 +5138,7 @@ func othersSign() {
 		rows.Scan(&uid, &token, &name)
 		_, zoneToken, newToken := getSeverURLAndZoneTokenAndToken(token)
 		token = newToken
-		serverURL, zoneToken, familyId, helpInt, shovelHelpNum := enterWithBeachHelp(token, zoneToken)
+		serverURL, zoneToken, familyId, helpInt, shovelHelpNum, _, _ := enterWithBeachHelp(token, zoneToken)
 		if zoneToken == "" {
 			sendMsg(uid + ":" + name)
 			xlog.Infof("[ %v] token is invalid\n", uid)
@@ -5345,7 +5377,7 @@ func game(zoneToken string) (data xmap.M) {
 	return
 }
 
-func enterWithBeachHelp(token, oldZoneToken string) (serverURL, zoneToken, familyId string, helpInt, shovelHelpNum int) {
+func enterWithBeachHelp(token, oldZoneToken string) (serverURL, zoneToken, familyId string, helpInt, shovelHelpNum, helpSea, seaWaveHelpNum int) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	serverURL = getServerURL()
 	zoneToken = oldZoneToken
@@ -5359,24 +5391,38 @@ func enterWithBeachHelp(token, oldZoneToken string) (serverURL, zoneToken, famil
 	familyId = formData.Str("familyId")
 	helpUids := formData.ArrayStrDef([]string{}, "beachHelp/shovelHelp/helpUids")
 	helpInt = len(helpUids)
+	helpUids = formData.ArrayStrDef([]string{}, "beachHelp/seaWaveHelp/helpUids")
+	helpSea = len(helpUids)
 	shovelHelpNum = formData.IntDef(0, "beachHelp/shovelHelpNum")
+	seaWaveHelpNum = formData.IntDef(0, "beachHelp/seaWaveHelpNum")
 	Pool.Exec("update tokens set serverURL = ?, zoneToken = ?, familyId = ? where token = ?", serverURL, zoneToken, familyId, token)
 	return
 }
 
-func getEnterInfo(uid, name, serverURL, token, oldZoneToken, key string) (zoneToken string, info interface{}) {
-	// nokeys := []string{"mineList", "familyDayTask", "beach"}
-	// for _, v := range nokeys {
-	// 	if v == key {
-	// 		data := game(zoneToken)
-	// 		if data.Float64("error") == 10004 {
-	// 			break
-	// 		}
-	// 		info = data[key]
-	// 		return
-	// 	}
-	// }
+func getEnterInfo1(uid, name, serverURL, token, oldZoneToken string) (zoneToken string, formData map[string]interface{}) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := serverURL + "/zone?cmd=enter&token=" + token + "&yyb=0&inviteId=null&share_from=null&cp_shareId=null&now=" + now
+	formData = httpGetReturnJson(URL)
+	_, ok := formData["zoneToken"].(string)
+	if !ok {
+		xlog.Infof("[%v] token is invaild", name)
+		sendMsg(uid + ":" + name)
+		go func() {
+			time.Sleep(time.Second * 1)
+			GetUser(uid)
+		}()
+		return
+	}
 
+	zoneToken, ok = formData["zoneToken"].(string)
+	if !ok {
+		xlog.Infof("token:%v get zoneToken err", token)
+		return
+	}
+	return
+}
+
+func getEnterInfo(uid, name, serverURL, token, oldZoneToken, key string) (zoneToken string, info interface{}) {
 	data := game(zoneToken)
 	info, ok := data[key]
 	if ok {
@@ -5968,7 +6014,7 @@ func getGoldMineHelpList(serverURL, zoneToken string, quality float64) (data []m
 		if !ok {
 			break
 		}
-		if vv["quality"].(float64) == quality {
+		if vv["quality"].(float64) == quality || quality == 0 {
 			data = append(data, vv)
 		}
 	}
@@ -7119,7 +7165,7 @@ func getFriendsCandyTreeInfo(serverURL, zoneToken string, targetType float64) (u
 		if !ok {
 			break
 		}
-		if vv["quality"].(float64) == targetType {
+		if vv["quality"].(float64) == targetType || targetType == 0 {
 			uids = append(uids, int(vv["uid"].(float64)))
 		}
 	}

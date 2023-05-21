@@ -64,6 +64,20 @@
     </style>
     
 <body>
+    <br>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getServerLogs()">
+        查看服务器日志
+    </button>
+    <br>
+
+    <select style="font-size:40px;width:400px; height:100px;" name="getUserInfoSelect" id="getUserInfoSelect">
+    </select>
+    <button style="font-size:40px;width:350px; height:100px;" onclick="getUserInfo()">
+        查看用户信息
+    </button>
+    <br> 
+
     <select style="font-size:40px;width:400px; height:100px;" name="Oper_Type" id="Oper_Type">
     </select>
     <button style="font-size:40px;width:300px; height:100px;" onclick="login('')">
@@ -79,6 +93,7 @@
     <button style="font-size:40px;width:400px; height:100px;" onclick="addAccount()">
         添加账号
     </button>
+   
     <br>
 
     <select style="font-size:40px;width:400px; height:100px;" name="getUserTokenSelect" id="getUserTokenSelect">
@@ -104,7 +119,7 @@
     </button>
 
     <select style="font-size:40px;width:250px; height:100px;" name="familySignSelect" id="familySignSelect">
-        <option selected="selected" value="">请选择</option>
+        <option selected="selected" value="">全部</option>
     </select>
     <br>
 
@@ -128,23 +143,30 @@
         取消拉动物
     </button>
     <br>
-    <select style="font-size:40px;width:180px; height:100px;" name="setPullRowsSelect" id="setPullRowsSelect">
+    <select style="font-size:40px;width:160px; height:100px;" name="setPullRowsSelect" id="setPullRowsSelect">
         <option selected="selected" value="">全部</option>
     </select>
 
-    <select style="font-size:40px;width:250px; height:100px;" name="setPullRowsSelectFamily"
+    <select style="font-size:40px;width:220px; height:100px;" name="setPullRowsSelectFamily"
         id="setPullRowsSelectFamily">
         <option selected="selected" value="">选择公会</option>
     </select>
-    <button style="font-size:40px;width:330px; height:100px;" onclick="setPullRows()">
-        设置动物规则
-    </button>
-    <select style="font-size:40px;width:180px; height:100px;" name="setPullRows" id="setPullRows">
-        <option value="1,2,3,4,5,6">拉1-6</option>
+    
+    <select style="font-size:40px;width:160px; height:100px;" name="setPullRows" id="setPullRows">
+        <option value="1,2,3,4,5,6">全拉</option>
         <option selected="selected" value="0">不拉</option>
         <option value="1,2,3">拉123</option>
         <option value="4,5,6">拉456</option>
+        <option value="1">拉1</option>
+        <option value="2">拉2</option>
+        <option value="3">拉3</option>
+        <option value="4">拉4</option>
+        <option value="5">拉5</option>
+        <option value="6">拉6</option>
     </select>
+    <button style="font-size:40px;width:350px; height:100px;" onclick="setPullRows()">
+        设置动物规则
+    </button>
     <!-- <input style="font-size:40px;width:200px; height:100px;" type="text" value="1,2,3,4,5,6" id="setPullRows" class="textClass" name="textName"> -->
     <br>
     <select style="font-size:40px;width:250px; height:100px;" name="setPullRowsSelectFamily1"
@@ -173,11 +195,12 @@
     <select style="font-size:40px;width:180px; height:100px;" name="BCSelect2" id="BCSelect2">
         <option value="1">普通</option>
         <option value="2">稀有</option>
-        <option selected="selected" value="3">传奇</option>
+        <option value="3">传奇</option>
+        <option selected="selected" value="0">全部</option>
     </select>
-    <input id="boxAmount" style="font-size:40px;width:100px; height:100px;" type="text" placeholder="目标数量" value="3" />
+    <input id="boxAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="目标数量" value="300" />
 
-    <button style="font-size:40px;width:250px; height:100px;" onclick="getBox(2)">
+    <button style="font-size:40px;width:300px; height:100px;" onclick="getBox(2)">
         抓别人宝箱
     </button>
     <!-- 
@@ -191,10 +214,11 @@
     <select style="font-size:40px;width:180px; height:100px;" name="BCSelect" id="BCSelect">
         <option value="1">普通</option>
         <option value="2">稀有</option>
-        <option selected="selected" value="3">传奇</option>
+        <option value="3">传奇</option>
+        <option selected="selected" value="0">全部</option>
     </select>
-    <input id="candyAmount" style="font-size:40px;width:100px; height:100px;" type="text" placeholder="目标数量"
-        value="3" />
+    <input id="candyAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="目标数量"
+        value="300" />
 
     <button style="font-size:40px;width:250px; height:100px;" onclick="hitCandy()">
         打糖果
@@ -229,11 +253,11 @@
         <option selected="" value="outsystem">外部账号</option>
         <option selected="" value="0">小号</option>
         <option selected="selected" value="system">系统账号</option>
-        <option value="1">蜜龙组</option>
-        <option value="2">牛龙组</option>
-        <option value="3">龙组3</option>
-        <option value="4">笨蛋小峰组</option>
-        <option value="5">云颜辛巴组</option>
+        <!-- <option value="1">蜜龙组</option> -->
+        <!-- <option value="2">牛龙组</option> -->
+        <!-- <option value="3">龙组3</option> -->
+        <!-- <option value="4">笨蛋小峰组</option> -->
+        <!-- <option value="5">云颜辛巴组</option> -->
 
     </select>
 
@@ -290,7 +314,7 @@
         领取海滩奖励
     </button>
     <br>
-    <button style="font-size:40px;width:300px; height:100px;" onclick="openSteamBox()">
+    <button style="font-size:40px;width:350px; height:100px;" onclick="openSteamBox()">
         一键领取汤圆
     </button>
     <select style="font-size:40px;width:150px; height:100px;" name="addFirewoodOps" id="addFirewoodOps">
@@ -302,14 +326,14 @@
         <option value="2">稀有</option>
         <option value="3">传奇</option>
     </select>
-    <button style="font-size:40px;width:200px; height:100px;" onclick="addFirewood()">
+    <button style="font-size:40px;width:250px; height:100px;" onclick="addFirewood()">
         汤圆助力
     </button>
     <br>
-    <select style="font-size:40px;width:250px; height:100px;" name="exchangeRiceCake" id="exchangeRiceCake">
+    <select style="font-size:40px;width:200px; height:100px;" name="exchangeRiceCake" id="exchangeRiceCake">
         <option selected="selected" value="">全部</option>
     </select>
-    <button style="font-size:40px;width:500px; height:100px;" onclick="exchangeRiceCake()">
+    <button style="font-size:40px;width:700px; height:100px;" onclick="exchangeRiceCake()">
         领取汤圆/骰子/海滩/小岛寻宝奖励
     </button>
     <br>
@@ -356,7 +380,7 @@
         扔骰子
     </button>
     <br>
-    <select style="font-size:40px;width:120px; height:100px;" name="Oper_Mail" id="Oper_Mail">
+    <select style="font-size:40px;width:180px; height:100px;" name="Oper_Mail" id="Oper_Mail">
         <option selected="selected" value="">全部</option>
     </select>
 
@@ -365,7 +389,7 @@
         <option selected="selected" value="">选择公会</option>
     </select>
 
-    <select style="font-size:40px;width:420px; height:100px;" name="Oper_MailTitle" id="Oper_MailTitle">
+    <select style="font-size:40px;width:520px; height:100px;" name="Oper_MailTitle" id="Oper_MailTitle">
         <option value="">全部</option>
         <option value="煮汤圆成功开启">煮汤圆成功开启</option>
         <option value="煮汤圆成功开启(芝麻)">煮汤圆成功开启(芝麻)</option>
@@ -376,16 +400,16 @@
         <option value="福利礼包">福利礼包</option>
         <option value="邮件能量">邮件能量</option>
     </select>
-    <input id="mailAmount" style="font-size:40px;width:100px; height:100px;" type="text" placeholder="次数" value="20" />
+    <input id="mailAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="次数" value="80" />
 
-    <button style="font-size:40px;width:200px; height:100px;" onclick="getMailPrize()">
+    <button style="font-size:40px;width:250px; height:100px;" onclick="getMailPrize()">
         领取邮件
     </button>
 
 
     <br>
 
-    <select style="font-size:40px;width:200px; height:100px;" name="Oper_BossPrize" id="Oper_BossPrize">
+    <select style="font-size:40px;width:250px; height:100px;" name="Oper_BossPrize" id="Oper_BossPrize">
         <option selected="selected" value="">一键领取</option>
     </select>
 
@@ -396,16 +420,16 @@
     <br>
 
 
-    <select style="font-size:40px;width:150px; height:100px;" name="Oper_pieceFrom" id="Oper_pieceFrom">
+    <select style="font-size:40px;width:170px; height:100px;" name="Oper_pieceFrom" id="Oper_pieceFrom">
         <option selected="selected" value="">发送者</option>
     </select>
 
-    <select style="font-size:40px;width:150px; height:100px;" name="Oper_pieceTo" id="Oper_pieceTo">
+    <select style="font-size:40px;width:170px; height:100px;" name="Oper_pieceTo" id="Oper_pieceTo">
         <option selected="selected" value="">接受者</option>
     </select>
 
 
-    <select style="font-size:40px;width:150px; height:100px;" name="PieceSelect" id="PieceSelect">
+    <select style="font-size:40px;width:170px; height:100px;" name="PieceSelect" id="PieceSelect">
         <option selected="selected" value="">拼图几</option>
         <option value="1">1</option>
         <option value="2">2</option>
@@ -433,7 +457,7 @@
         <option value="10">10</option>
     </select>
 
-    <button style="font-size:40px;width:200px; height:100px;" onclick="giftPiece()">
+    <button style="font-size:40px;width:250px; height:100px;" onclick="giftPiece()">
         赠送拼图
     </button>
 
@@ -461,7 +485,7 @@
         <option selected="selected" value="5">5倍</option>
     </select>
     <input id="drawAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="摇次数"
-        value="159" />
+        value="399" />
 
     <button style="font-size:40px;width:200px; height:100px;" onclick="draw()">
         转盘
@@ -469,22 +493,17 @@
 
 
 
-    <br>
-
-    <button style="font-size:40px;width:400px; height:100px;" onclick="getServerLogs()">
-        查看服务器日志
-    </button>
-
-    <button style="font-size:40px;width:400px; height:100px;" onclick="delServerLogs()">
+ 
+    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="delServerLogs()">
         删除服务器日志
-    </button>
+    </button> -->
     <br>
 
     <select style="font-size:40px;width:200px; height:100px;" name="RunnerUsers" id="RunnerUsers">
         <option selected="selected" value="">全部</option>
     </select>
 
-    <select style="font-size:40px;width:200px; height:100px;" name="RunnerSelect" id="RunnerSelect">
+    <select style="font-size:40px;width:250px; height:100px;" name="RunnerSelect" id="RunnerSelect">
         <option selected="selected" value="1">海滩刷新</option>
     </select>
 
@@ -729,6 +748,11 @@ function submitRequest() {
                 alert(data)
                 window.status = "1";
             });
+        }
+
+        getUserInfo = function () {
+            var UID = $("#getUserInfoSelect option:selected").val();
+            window.open(APIURL + "/userInfo.html?id=" + UID)
         }
 
         getUserToken = function () {
@@ -1582,6 +1606,15 @@ function submitRequest() {
                     document.getElementById("getUserTokenSelect").options.add(tOption);
                     }
                 }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                        var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("getUserInfoSelect").options.add(tOption);
+                }
+
 
                 for (var i = 0; i < jsarr.length; i++) {
                         var tOption = document.createElement("Option");
