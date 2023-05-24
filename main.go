@@ -618,7 +618,11 @@ func DelServerLogsH(w http.ResponseWriter, req *http.Request) {
 
 func GetAllTokensH(w http.ResponseWriter, req *http.Request) {
 
+	isShow := req.URL.Query().Get("is_show")
 	SQL := "select id, name, familyId, token from tokens"
+	if isShow == "1" {
+		SQL = "select id, name, familyId, token from tokens where is_show = 1"
+	}
 
 	rows, err := Pool.Query(SQL)
 
