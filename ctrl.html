@@ -88,7 +88,7 @@
         刷新
     </button>
     <br>
-    <input id="account" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="手机号或id" value="" />
+    <input id="account" style="font-size:40px;width:300px; height:100px;" type="text" placeholder="手机号或id" value="" />
     <input id="password" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="密码" value="" />
     <button style="font-size:40px;width:400px; height:100px;" onclick="addAccount()">
         添加账号
@@ -98,8 +98,8 @@
 
     <select style="font-size:40px;width:400px; height:100px;" name="getUserTokenSelect" id="getUserTokenSelect">
     </select>
-    <button style="font-size:40px;width:300px; height:100px;" onclick="getUserToken()">
-        更新TOKEN
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getUserToken()">
+        账号掉线重连
     </button>
     <br>
 
@@ -334,17 +334,17 @@
         <option selected="selected" value="">全部</option>
     </select>
     <button style="font-size:40px;width:700px; height:100px;" onclick="exchangeRiceCake()">
-        领取汤圆/骰子/海滩/小岛寻宝奖励
+        领取汤圆/骰子/海滩/小岛/糖果奖励
     </button>
     <br>
-    <!-- <select style="font-size:40px;width:250px; height:100px;" name="userMingingItem" id="userMingingItem">
+    <select style="font-size:40px;width:250px; height:100px;" name="userMingingItem" id="userMingingItem">
         <option selected="selected" value="">选择</option>
     </select>
-    <button style="font-size:40px;width:500px; height:100px;" onclick="userMingingItem()">
-        挖矿5000分(不好用)
+    <button style="font-size:40px;width:600px; height:100px;" onclick="userMingingItem()">
+        挖矿5110分(不好用，慎用)
     </button>
     <br>
-    <br> -->
+    <br>
     <select style="font-size:40px;width:250px; height:100px;" name="getMiningScoreReward" id="getMiningScoreReward">
         <option selected="selected" value="">选择</option>
     </select>
@@ -646,8 +646,8 @@
     <br>
     <select style="font-size:40px;width:400px; height:100px;" name="getUserTokenSelect2" id="getUserTokenSelect2">
     </select>
-    <button style="font-size:40px;width:300px; height:100px;" onclick="getUserToken2()">
-        更新TOKEN
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getUserToken2()">
+        强制账号重连
     </button>
     <br>
     <br>
@@ -1927,13 +1927,13 @@ function submitRequest() {
                     document.getElementById("exchangeRiceCake").options.add(tOption);
                 }
 
-                // for (var i = 0; i < jsarr.length; i++) {
-                //     var tOption = document.createElement("Option");
-                //     tOption.text = jsarr[i]["name"]+"("+jsarr[i]["familyId"]+")";
-                //     tOption.selected = false;
-                //     tOption.value = jsarr[i]["id"];
-                //     document.getElementById("userMingingItem").options.add(tOption);
-                // }
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"]+"("+jsarr[i]["familyId"]+")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("userMingingItem").options.add(tOption);
+                }
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
                     tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";

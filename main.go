@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"math"
 	"math/big"
+	mathrand "math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -329,6 +330,7 @@ func main() {
 	http.HandleFunc("/wechatAPI/sendMsg", wechatapi.SendMsgH)
 
 	http.HandleFunc("/ctrl.html", IndexH)
+	http.HandleFunc("/favicon.ico", FaviconH)
 	http.HandleFunc("/userInfo.html", UserInfoH)
 	http.HandleFunc("/maolaile.html", MaolaileH)
 	http.HandleFunc("/cat_demo.html", CatDemoH)
@@ -568,6 +570,10 @@ func StaticServer(w http.ResponseWriter, r *http.Request) {
 func IndexH(w http.ResponseWriter, req *http.Request) {
 	t, _ := template.ParseFiles("ctrl.html")
 	t.Execute(w, nil)
+}
+
+func FaviconH(w http.ResponseWriter, req *http.Request) {
+	http.ServeFile(w, req, "/data/cat/favicon.ico")
 }
 
 func UserInfoH(w http.ResponseWriter, req *http.Request) {
@@ -1601,6 +1607,14 @@ func exchangeRiceCakeLogic(id string) {
 
 			}
 
+			for {
+				flag := candyExchangeAward(user.ServerURL, user.ZoneToken, v)
+				if !flag {
+					break
+				}
+				xlog.Infof("[%s]领取糖果奖励[%v]成功", name, v)
+
+			}
 		}
 	}
 }
@@ -2287,11 +2301,13 @@ func beachRunner(id string) {
 								}
 							}
 						}
-						xlog.Infof("[%v][%v] gridsnum is :%v myGridsnum %v otherGridsnum %v\n", name, uid, gridsnum, myGridsnum, otherGridsnum)
 
 						var myNeed, otherNeed = 0, 0
 						otherNeed = 5 - otherGridsnum
 						myNeed = 25 - myGridsnum - otherGridsnum
+
+						xlog.Infof("[%v][%v] 总共%v 自己已经使用%v还需要%v 别人已经%v还可以帮助%v\n", name, uid, gridsnum, myGridsnum, myNeed, otherGridsnum, otherNeed)
+
 						if otherNeed > 0 {
 							helpMeForBeach(uid, name)
 						}
@@ -2413,12 +2429,39 @@ func helpMeForBeach(toid, toname string) {
 		return
 	}
 	defer rows.Close()
+	helpUids := []string{}
 	for rows.Next() {
 		var uid, name, token, zoneToken string
 		rows.Scan(&uid, &name, &token, &zoneToken)
-		serverURL := getServerURL()
-		zoneToken, beachItems1 := getEnterInfo(uid, name, serverURL, token, zoneToken, "beachItems")
-		UpdateUser(uid, serverURL, zoneToken, token)
+		if uid != toid {
+			helpUids = append(helpUids, uid)
+		}
+		// serverURL := getServerURL()
+		// zoneToken, beachItems1 := getEnterInfo(uid, name, serverURL, token, zoneToken, "beachItems")
+		// UpdateUser(uid, serverURL, zoneToken, token)
+		// beachItems, ok := beachItems1.(map[string]interface{})
+		// if ok {
+		// 	chanzi, ok := beachItems["182"].(float64)
+		// 	if ok {
+		// 		if chanzi >= 5 {
+		// 			if toid != uid {
+		// 				for i := 1; i <= 5; i++ {
+		// 					xlog.Infof("[%v]为[%v]使用铲子x%v", name, toname, i)
+		// 					useShovel(serverURL, zoneToken, toid)
+		// 					time.Sleep(time.Millisecond * 100)
+		// 				}
+		// 				return
+		// 			}
+		// 		}
+		// 	}
+
+		// }
+
+	}
+	for _, uid := range helpUids {
+		user := GetUser(uid)
+		zoneToken, beachItems1 := getEnterInfo(uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "beachItems")
+		UpdateUser(uid, user.ServerURL, zoneToken, user.Token)
 		beachItems, ok := beachItems1.(map[string]interface{})
 		if ok {
 			chanzi, ok := beachItems["182"].(float64)
@@ -2426,8 +2469,8 @@ func helpMeForBeach(toid, toname string) {
 				if chanzi >= 5 {
 					if toid != uid {
 						for i := 1; i <= 5; i++ {
-							xlog.Infof("[%v]为[%v]使用铲子x%v", name, toname, i)
-							useShovel(serverURL, zoneToken, toid)
+							xlog.Infof("[%v]为[%v]使用铲子x%v", user.Name, toname, i)
+							useShovel(user.ServerURL, zoneToken, toid)
 							time.Sleep(time.Millisecond * 100)
 						}
 						return
@@ -2436,7 +2479,6 @@ func helpMeForBeach(toid, toname string) {
 			}
 
 		}
-
 	}
 }
 
@@ -2525,8 +2567,17 @@ func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	user := GetUser(uid)
+	var miningActivityId1, miningGroupId1 interface{}
+	user.ZoneToken, miningActivityId1 = getEnterInfo(id, name, user.ServerURL, user.Token, user.ZoneToken, "miningActivityId")
+	user.ZoneToken, miningGroupId1 = getEnterInfo(id, name, user.ServerURL, user.Token, user.ZoneToken, "miningGroupId")
+	miningActivityId := fmt.Sprintf("%v", miningActivityId1)
+	miningGroupId := fmt.Sprintf("%v", miningGroupId1)
 	xlog.Infof("[%v]开始挖矿", name)
-	useMiningItem5000(name, user.ServerURL, user.ZoneToken)
+	// useMiningItem5000(name, user.ServerURL, user.ZoneToken)
+	UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
+	userOnline.Lock.Lock()
+	useMiningItem5110(name, user.ServerURL, user.ZoneToken, miningActivityId, miningGroupId)
+	userOnline.Lock.Unlock()
 	xlog.Infof("[%v]挖矿结束", name)
 	io.WriteString(w, "SUCCESS")
 }
@@ -4137,36 +4188,48 @@ func HitCandyH(w http.ResponseWriter, req *http.Request) {
 	serverURL, zoneToken := user.ServerURL, user.ZoneToken
 
 	uids := getFriendsCandyTreeInfo(serverURL, zoneToken, v2)
+	uids = append(uids, int(decimal.RequireFromString(id).IntPart()))
 	time.Sleep(time.Second * 1)
 
 	var targetAmount float64
 
 	for _, v := range uids {
 		// posList
-		getCandyTreeInfo(serverURL, zoneToken, v)
+		posList := getCandyTreeInfo(serverURL, zoneToken, v)
 		time.Sleep(time.Second * 1)
-
 		testList := []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+		mathrand.Shuffle(len(testList), func(i, j int) {
+			testList[i], testList[j] = testList[j], testList[i]
+		})
+		l := len(posList)
+		i := 0
+		if l > 3 || int(decimal.RequireFromString(id).IntPart()) == v {
+			xlog.Infof("开始打糖果树:%v", testList)
+			for _, v4 := range testList {
+				if i == l {
+					break
+				}
 
-		for _, v4 := range testList {
+				if v3 == targetAmount {
+					return
+				}
 
-			if v3 == targetAmount {
-				return
+				flag := hitCandyTree(serverURL, zoneToken, v, v4)
+				i++
+				time.Sleep(time.Second * 1)
+				// if flag == "err" {
+				// 	break
+				// }
+
+				if flag == "true" {
+					xlog.Infof("打到糖果+1")
+					targetAmount += 1
+					break
+				} else {
+					xlog.Infof("没打到糖果，继续 %v", flag)
+				}
+
 			}
-
-			time.Sleep(time.Second * 2)
-
-			flag := hitCandyTree(serverURL, zoneToken, v, v4)
-
-			if flag == "err" {
-				break
-			}
-
-			if flag == "true" {
-				targetAmount += 1
-				break
-			}
-
 		}
 
 	}
@@ -7197,13 +7260,13 @@ func getCandyTreeInfo(serverURL, zoneToken string, opUid interface{}) (posList [
 
 	for _, v := range candyBoxes {
 		vv, ok := v.(map[string]interface{})
-
 		if !ok {
 			break
 		}
-		posList = append(posList, vv["pos"].(float64))
+		if _, ok = vv["hitUid"].(float64); ok {
+			posList = append(posList, vv["pos"].(float64))
+		}
 	}
-
 	return
 }
 
@@ -8514,6 +8577,16 @@ func goldMineExchangeAll() {
 func goldMineExchange(serverURL, zoneToken string, id int64) bool {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=goldMineExchange&token=%v&id=%v&now=%v", serverURL, zoneToken, id, now)
+	formData := httpGetReturnJson(URL)
+	if _, ok := formData["error"]; ok {
+		return false
+	}
+	return true
+}
+
+func candyExchangeAward(serverURL, zoneToken string, id int64) bool {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=candyExchangeAward&token=%v&id=%v&now=%v", serverURL, zoneToken, id, now)
 	formData := httpGetReturnJson(URL)
 	if _, ok := formData["error"]; ok {
 		return false
@@ -9996,6 +10069,27 @@ func formatItemName(key string) (name string) {
 }
 
 // https://s147.11h5.com//game?cmd=getMiningScoreReward&token=ild_n_kINUD6mj_vz9RdSuutJaqmoGgxTz7&now=1678856320313
+
+// {"flag":1,"miningActivityId":1368,"miningGroupId":37,"score":0}
+// 挖矿活动id：1369 挖矿分组id：36
+func useMiningItem5110(name, serverURL, zoneToken, miningActivityId, miningGroupId string) {
+	filename := miningActivityId + "-" + miningGroupId + ".json"
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return
+	}
+	// 解析json
+	var result [][]string
+	err = json.Unmarshal(data, &result)
+	if err != nil {
+		return
+	}
+	for _, v := range result {
+		flag := useMiningItem(serverURL, zoneToken, v[0], v[1], v[2])
+		xlog.Infof("[%v]挖矿itemId:%v,row:%v,column:%v,结果:%v", name, v[0], v[1], v[2], flag)
+		time.Sleep(time.Millisecond * 500)
+	}
+}
 
 func useMiningItem5000(name, serverURL, zoneToken string) {
 	data, err := ioutil.ReadFile("useMiningItem.json")
