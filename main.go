@@ -308,6 +308,8 @@ func main() {
 	http.HandleFunc("/unlockWorker", UnlockWorkerH)
 	http.HandleFunc("/searchFamily", SearchFamilyH)
 	http.HandleFunc("/getUserInfo", GetUserInfoH)
+	http.HandleFunc("/getFamilyEnergy", GetFamilyEnergyH)
+
 	http.HandleFunc("/cancelFamilyRob", cancelFamilyRobH)
 	http.HandleFunc("/getTodayAnimal", GetTodayAnimalsH)
 	http.HandleFunc("/familyReward", FamilyRewardH)
@@ -332,6 +334,8 @@ func main() {
 	http.HandleFunc("/ctrl.html", IndexH)
 	http.HandleFunc("/favicon.ico", FaviconH)
 	http.HandleFunc("/userInfo.html", UserInfoH)
+	http.HandleFunc("/familyEnergy.html", FamilyEnergyH)
+
 	http.HandleFunc("/maolaile.html", MaolaileH)
 	http.HandleFunc("/cat_demo.html", CatDemoH)
 	// http.HandleFunc("/qqQrCode.png", QQQrCodeH)
@@ -574,6 +578,11 @@ func IndexH(w http.ResponseWriter, req *http.Request) {
 
 func FaviconH(w http.ResponseWriter, req *http.Request) {
 	http.ServeFile(w, req, "/data/cat/favicon.ico")
+}
+
+func FamilyEnergyH(w http.ResponseWriter, req *http.Request) {
+	t, _ := template.ParseFiles("familyEnergy.html")
+	t.Execute(w, nil)
 }
 
 func UserInfoH(w http.ResponseWriter, req *http.Request) {
@@ -2057,6 +2066,34 @@ func BuildUpH(w http.ResponseWriter, req *http.Request) {
 	}
 
 	io.WriteString(w, "SUCCESS")
+}
+
+func GetFamilyEnergyH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	if id == "" {
+		io.WriteString(w, "FAIL")
+	}
+	sql := `select id from tokens where familyId = ?`
+	rows, err := Pool.Query(sql, id)
+	if err != nil {
+		io.WriteString(w, "FAIL")
+	}
+	defer rows.Close()
+	ids := []string{}
+	for rows.Next() {
+		var uid string
+		rows.Scan(&uid)
+		ids = append(ids, uid)
+	}
+	d := xmap.M{}
+	for _, userID := range ids {
+		user := GetUser(userID)
+		data := game(user.ZoneToken)
+		energy := data.Int64Def(0, "energy")
+		dayDraw := data.Int64Def(0, "elevenEnergy")
+		d[user.Name+"("+userID+")"] = fmt.Sprintf("每日摇能量:%d,可用能量:%d", dayDraw, energy)
+	}
+	io.WriteString(w, converter.JSON(d))
 }
 
 func GetUserInfoH(w http.ResponseWriter, req *http.Request) {
@@ -4040,108 +4077,8 @@ func RestartH(w http.ResponseWriter, req *http.Request) {
 }
 
 func CheckTokenH(w http.ResponseWriter, req *http.Request) {
-	// go func() {
-	// id := req.URL.Query().Get("id")
-	// SQL := "select id, token, name, password from tokens"
-	// if id == "null" {
-	// 	SQL = "select id, token, name, password from tokens where token=''"
-	// } else if id != "" {
-	// 	SQL = "select id, token, name, password from tokens where id=" + id
-	// }
-
-	// rows, err := Pool.Query(SQL)
-
-	// if err != nil {
-	// 	return
-	// }
-
-	// defer rows.Close()
-
-	// var groupconcat1, groupconcat2, groupconcat3 string
-
-	// Pool.Exec("update config set conf_value = 0 where conf_key = 'isRunDone'")
-
-	// for rows.Next() {
-	// 	var id, token, name, password string
-	// 	rows.Scan(&id, &token, &name, &password)
-
-	// 	serverURL := getServerURL()
-
-	// 	if password != "" {
-	// 		token = loginByPassword(id, password)
-	// 		Pool.Exec("update tokens set token = ? where id = ?", token, id)
-	// 	}
-
-	// 	zoneToken, firewood, flag, riceCake := getZoneToken_1(serverURL, token)
-
-	// 	upgradeWheel := upgradeWheel(serverURL, zoneToken)
-	// 	xlog.Infof("[%v]upgradeWheel is %v\n", name, upgradeWheel)
-
-	// 	var riceCakeStr string
-	// 	for k, v := range riceCake {
-	// 		riceCakeStr += fmt.Sprintf("[%v:%v]", formatItemName(k), v)
-	// 	}
-
-	// 	if zoneToken == "" {
-	// 		Pool.Exec("update tokens set token = '' where id = ?", id)
-
-	// 		groupconcat1 += "["
-	// 		groupconcat1 += name
-	// 		groupconcat1 += "]"
-	// 		groupconcat1 += ":"
-	// 		groupconcat1 += "失效"
-	// 		groupconcat1 += "/"
-
-	// 		sendMsg(id + ":" + name)
-	// 	} else {
-
-	// 		xlog.Infof("[%v]助力能量箱子", name)
-	// 		helpEraseGift(serverURL, zoneToken)
-	// 		_, mailEnergyCount := getMailListByCakeID(serverURL, zoneToken, "", "2")
-
-	// 		// groupconcat2 += name
-	// 		// groupconcat2 += ":"
-	// 		// groupconcat2 += fmt.Sprintf("%v->mail->%v;firewood->%v", flag, mailEnergyCount, firewood)
-	// 		// groupconcat2 += "/"
-
-	// 		if flag {
-	// 			groupconcat2 += name
-	// 			groupconcat2 += ":"
-	// 			groupconcat2 += fmt.Sprintf("[%v]-mail-[%v]firewood-[%v]", flag, mailEnergyCount, firewood)
-	// 			groupconcat2 += "/"
-	// 		} else {
-	// 			groupconcat3 += name
-	// 			groupconcat3 += ":"
-	// 			groupconcat3 += fmt.Sprintf("[%v]-mail-[%v]firewood-[%v]", flag, mailEnergyCount, firewood)
-	// 			groupconcat3 += "/"
-	// 		}
-
-	// 	}
-
-	// 	// time.Sleep(time.Millisecond * 100)
-
-	// }
-
-	// Pool.Exec("update config set conf_value = 1 where conf_key = 'isRunDone'")
-
-	// if runnerStatus("checkPiece") == "1" && runnerStatus("isRunDone") == "1" {
-	// 	go checkPiece()
-	// }
-	// // if groupconcat1 == "" {
-	// // 	if runnerStatus("checkPiece") == "1" {
-	// // 		go checkPiece()
-	// // 	}
-	// // }
-
-	// mapList := map[string]interface{}{"data1": groupconcat1, "data2": groupconcat2, "data3": groupconcat3}
-	// jsonBytes, err := json.Marshal(mapList)
-	// if err != nil {
-	// 	io.WriteString(w, "FAIL")
-	// 	return
-	// }
-
-	// io.WriteString(w, string(jsonBytes))
-	io.WriteString(w, "暂停此功能")
+	go RunnerCheckTokenGoLogic()
+	io.WriteString(w, "执行中可查看日志")
 }
 
 func GetFreeBossCannonH(w http.ResponseWriter, req *http.Request) {
@@ -8843,20 +8780,20 @@ func RunnerSteamBox() (err error) {
 		rows.Scan(&uid, &uname, &utoken)
 		user := GetUser(uid)
 		serverURL, zoneToken := user.ServerURL, user.ZoneToken
-		uids, helpUids := getSteamBoxHelpList(serverURL, zoneToken, 2)
-		for _, v := range uids {
-			fuid := fmt.Sprintf("%v", v)
-			addFirewood(serverURL, zoneToken, fuid)
-			xlog.Infof("[%v]给[%v]添加柴火", uname, fuid)
-		}
-		for _, v := range helpUids {
-			fuid := fmt.Sprintf("%v", v)
-			openSteamBox(serverURL, zoneToken, fuid)
-			xlog.Infof("[%v]给[%v]打开汤圆", uname, v)
+		// uids, helpUids := getSteamBoxHelpList(serverURL, zoneToken, 2)
+		// for _, v := range uids {
+		// 	fuid := fmt.Sprintf("%v", v)
+		// 	addFirewood(serverURL, zoneToken, fuid)
+		// 	xlog.Infof("[%v]给[%v]添加柴火", uname, fuid)
+		// }
+		// for _, v := range helpUids {
+		// 	fuid := fmt.Sprintf("%v", v)
+		// 	openSteamBox(serverURL, zoneToken, fuid)
+		// 	xlog.Infof("[%v]给[%v]打开汤圆", uname, v)
 
-		}
+		// }
 
-		uids, helpUids = getSteamBoxHelpList(serverURL, zoneToken, 3)
+		uids, helpUids := getSteamBoxHelpList(serverURL, zoneToken, 3)
 		for _, v := range uids {
 			fuid := fmt.Sprintf("%v", v)
 			addFirewood(serverURL, zoneToken, fuid)
@@ -9430,13 +9367,17 @@ func RunnerFamilySignGo() (err error) {
 }
 
 func RunnerCheckTokenGo() (err error) {
-	if runnerStatus("checkTokenStatus") == "0" {
-		return
-	}
-
 	minute := time.Now().Minute()
 
 	if minute != 33 {
+		return
+	}
+	RunnerCheckTokenGoLogic()
+	return
+}
+
+func RunnerCheckTokenGoLogic() (err error) {
+	if runnerStatus("checkTokenStatus") == "0" {
 		return
 	}
 	SQL := "select id from tokens"
@@ -9458,6 +9399,21 @@ func RunnerCheckTokenGo() (err error) {
 			xlog.Infof("[%v] getFamilySignPrize[%v]", user.Name, i)
 		}
 		followCompanion_1(user.ServerURL, user.ZoneToken, 3)
+		taskIDs := getDayTasksInfo(user.ServerURL, user.ZoneToken)
+		xlog.Infof("[%v]领取日常任务奖励:%v", user.Name, taskIDs)
+		for _, taskID := range taskIDs {
+			// time.Sleep(time.Millisecond * 100)
+			getDayTaskAward(user.ServerURL, user.ZoneToken, taskID)
+		}
+		user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
+		UpdateUser(id, user.ServerURL, user.ZoneToken, user.Token)
+		if user.FamilyDayTask == nil {
+			continue
+		}
+		for k := range user.FamilyDayTask.(map[string]interface{}) {
+			getFamilyDayTaskPrize(user.ServerURL, user.ZoneToken, k)
+			xlog.Infof("[%v]领取公会任务奖励[%v]", user.Name, k)
+		}
 	}
 	RunnerBeach()
 

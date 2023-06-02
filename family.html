@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>JSON数据</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border: 2px solid black;
+      padding: 20px;
+      font-size: 48px;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    @media only screen and (max-width: 600px) {
+      td {
+        font-size: 32px;
+        white-space: normal;
+        overflow: auto;
+        max-height: 100px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>JSON 数据解析</h1>
+  <table id="jsonTable">
+    <tr>
+      <th>用户id</th>
+      <th>日能量</th>
+    </tr>
+  </table>
+
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script>
+        var url = document.location;
+     var APIURL = url["protocol"] + "//" + url["host"]
+     var url = window.location.href;
+  var paramsIndex = url.indexOf('?');
+  if (paramsIndex !== -1) {
+    var paramsString = url.slice(paramsIndex + 1);
+    var paramsArray = paramsString.split('&');
+    for (var i = 0; i < paramsArray.length; i++) {
+      var param = paramsArray[i].split('=');
+      if (param[0] === 'id') {
+        var id = param[1];
+        console.log(id); // 打印参数 id 的值
+        break;
+      }
+    }
+  }
+      console.log(id); // 打印参数 id 的值
+                $.get(APIURL + "/getFamilyEnergy?id="+id, function (data) {
+                  var data = JSON.parse(data);
+                  var translateMap = {
+      "uid": "用户ID",
+      "nickname": "昵称",
+      "createTime": "创建时间",
+      "gold": "金币",
+      "totalGold": "总金币",
+      "energy": "能量",
+      "star": "星星",
+      "monthVipEndTime": "月VIP结束时间",
+      "mineGold": "挖掘金币",
+      "pieceList": "碎片列表",
+      "pieceActivityId": "碎片活动ID",
+      "sendPieceTimes": "发送碎片次数",
+      "getIslandPrizeList": "获取岛屿奖品列表",
+      "dayDraw": "每日摇能量",
+      "dayAttack": "每日攻击",
+      "daySteal": "每日偷取",
+      "dayFriendEnergy": "每日好友能量",
+      "summonBossTimes": "召唤Boss次数",
+      "summonBossStone": "召唤Boss石头",
+      "bossCannon": "Boss炮",
+      "lastDrawCompanionTime": "上次抽取伙伴时间",
+      "followCompanion": "关注的伙伴",
+      "inviteReduceCompanionCdTimes": "邀请减少伙伴冷却次数",
+      "isGetInviteBossPrize": "是否获得邀请Boss奖品",
+      "dayTasks": "每日任务",
+      "codeGift": "礼物码",
+      "giftBox": "礼物盒",
+      "getIslandEnergyList": "获取岛屿能量列表",
+      "getPiecePrizeTimes": "获取碎片奖励次数",
+      "friendCount": "好友数量",
+      "isGetFreeBossCannon": "是否获得免费Boss炮",
+      "candyTree": "糖果树",
+      "clamp": "夹子",
+      "timeMachine": "时光机",
+      "goldMine": "金矿",
+      "isGetFreeClamp": "是否获得免费夹子",
+      "elevenEnergy": "十一点能量",
+      "elevenEnergyPrizeFlag": "十一点能量奖励标志",
+      "elevenRecharge": "十一点充值",
+      "elevenRechargePrizeFlag": "十一点充值奖励标志",
+      "familyMedal": "公会勋章",
+      "familyCoin": "公会金币",
+      "familyId": "公会ID",
+      "familyDayTask": "公会每日任务",
+      "familyShopTimes": "公会商店次数",
+      "isFamilySign": "是否公会签到",
+      "animal": "动物",
+      "familyRobTaskList": "公会抢夺任务列表",
+      "firewood": "柴火",
+      "labaActivityId": "拉霸活动ID",
+      "laba": "拉霸",
+      "labaBowl": "拉霸碗",
+      "wheelUpgradeItem": "转盘升级道具",
+      "wheelLevel": "转盘等级",
+      "playLuckyWheelNumDaily": "每日转动幸运转盘次数",
+      "beachItems": "沙滩道具",
+      "beach": "沙滩",
+      "beachHelp": "沙滩帮助",
+      "drawGetMineItemTimes": "抽取矿石道具次数",
+      "drawGetMineItemProgress": "抽取矿石道具进度",
+      "miningActivityId": "挖矿活动ID",
+      "miningGroupId": "挖矿分组ID",
+      "rankRewardFlag": "排行榜奖励标志",
+      "miningItems": "挖矿道具",
+      "mine": "矿场",
+      "miningHelp": "挖矿帮助",
+      "miningScoreRewardIndex": "挖矿积分奖励索引",
+      "lastMiningActivityInfo": "上次挖矿活动信息",
+      "now": "当前时间",
+      "island": "岛屿",
+      "drawPrizeList": "抽奖奖励列表",
+      "mineCapacity": "矿石容量",
+      "buildPrice": "建造价格"
+    };
+
+
+
+    var table = document.getElementById("jsonTable");
+
+    // 定义表示时间的字段数组
+    var timeFields = ["createTime", "monthVipEndTime", "lastDrawCompanionTime", "now"];
+
+    for (var key in data) {
+      if (data.hasOwnProperty(key)) {
+        if (translateMap[key] ==null){
+          continue;
+        }
+
+        var row = table.insertRow(-1);
+        var cell1 = row.insertCell(0);
+        var cell2 = row.insertCell(1);
+        cell1.innerHTML = translateMap[key] ? translateMap[key] : key;
+
+        // 根据字段进行特殊处理
+        if (timeFields.includes(key)) {
+          // 如果字段在时间字段数组中，将其解析为时间
+          var timestamp = parseInt(data[key]);
+          var date = new Date(timestamp);
+          cell2.innerHTML = date.toISOString();
+        } else if (translateMap[key] === "昵称") {
+          // 如果字段代表名字，进行 URL 解码
+          var decodedValue = decodeURIComponent(data[key]);
+          cell2.innerHTML = decodedValue;
+        } else if (key === "pieceList" || key === "getIslandPrizeList" || key === "dayTasks" || key === "getIslandEnergyList") {
+          // 对于特定的字段，将其值解析为 JSON
+          // try {
+          //   var jsonValue = JSON.parse(data[key]);
+          //   cell2.innerHTML = JSON.stringify(jsonValue);
+          // } catch (error) {
+          //   // 解析失败，直接显示原始值
+          //   cell2.innerHTML = data[key];
+          // }
+          cell2.innerHTML = JSON.stringify(data[key]);
+
+        } else {
+          // 其他情况直接显示原始值
+          // cell2.innerHTML = data[key];
+          cell2.innerHTML = JSON.stringify(data[key]);
+
+        }
+      }
+    }
+                });
+    
+
+
+
+  </script>
+</body>
+
+</html>

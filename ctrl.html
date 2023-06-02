@@ -69,6 +69,15 @@
     <button style="font-size:40px;width:400px; height:100px;" onclick="getServerLogs()">
         查看服务器日志
     </button>
+
+    <br>
+
+    <select style="font-size:40px;width:400px; height:100px;" name="getFamilyEnergySelect" id="getFamilyEnergySelect">
+    </select>
+    <button style="font-size:40px;width:350px; height:100px;" onclick="getFamilyEnergy()">
+        查看公会能量
+    </button>
+    <br> 
     <br>
 
     <select style="font-size:40px;width:400px; height:100px;" name="getUserInfoSelect" id="getUserInfoSelect">
@@ -753,6 +762,10 @@ function submitRequest() {
         getUserInfo = function () {
             var UID = $("#getUserInfoSelect option:selected").val();
             window.open(APIURL + "/userInfo.html?id=" + UID)
+        }
+        getFamilyEnergy = function () {
+            var UID = $("#getFamilyEnergySelect option:selected").val();
+            window.open(APIURL + "/familyEnergy.html?id=" + UID)
         }
 
         getUserToken = function () {
@@ -1667,6 +1680,43 @@ function submitRequest() {
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("getMailPrizeFamilyId").options.add(tOption);
                 }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1") {
+                        name = "拉1"
+                    }
+                    if (jsarr[i]["pull_rows"] == "2") {
+                        name = "拉2"
+                    }
+                    if (jsarr[i]["pull_rows"] == "3") {
+                        name = "拉3"
+                    } 
+                    if (jsarr[i]["pull_rows"] == "4") {
+                        name = "拉4"
+                    }
+                    if (jsarr[i]["pull_rows"] == "5") {
+                        name = "拉5"
+                    }
+                    if (jsarr[i]["pull_rows"] == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("getFamilyEnergySelect").options.add(tOption);
+                }
+
+                // 
 
 
             });
