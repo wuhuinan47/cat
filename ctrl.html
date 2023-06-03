@@ -349,8 +349,9 @@
     <select style="font-size:40px;width:250px; height:100px;" name="userMingingItem" id="userMingingItem">
         <option selected="selected" value="">选择</option>
     </select>
+    <input id="userMingingItemQuantity" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="挖矿次数" value="10" />
     <button style="font-size:40px;width:600px; height:100px;" onclick="userMingingItem()">
-        挖矿5110分(不好用，慎用)
+        挖矿5110分(挖矿次数0=使用模板)
     </button>
     <br>
     <br>
@@ -413,6 +414,9 @@
 
     <button style="font-size:40px;width:250px; height:100px;" onclick="getMailPrize()">
         领取邮件
+    </button>
+    <button style="font-size:40px;width:250px; height:100px;" onclick="doneUserPiece()">
+        整理拼图
     </button>
 
 
@@ -673,10 +677,11 @@
       <input style="font-size:40px; padding:20px;" type="text" id="key" name="key"><br>
       Value: 
       <input style="font-size:40px; padding:20px;" type="text" id="value" name="value"><br>
-      <input style="font-size:40px; padding:20px; width: 350px;" type="button" value="Add Parameter" onclick="addParameter()">
-    <!-- <button style="font-size:40px; padding:20px;" onclick="addParameter()">Add Parameter</button> -->
+      <!-- <input style="font-size:40px; padding:20px; width: 350px;" type="button" value="Add Parameter" onclick="addParameter()"> -->
 
     </form>
+    <button style="font-size:40px; padding:20px;" onclick="addParameter()">Add Parameter</button>
+
     <button style="font-size:40px; padding:20px;" onclick="submitRequest()">Submit Request</button>
     
     <br>
@@ -695,6 +700,7 @@ function addParameter() {
 
   if (!params.has(key)) {
     params.append(key, value);
+    alert('添加成功');
   }
 }
 
@@ -707,6 +713,7 @@ function submitRequest() {
     .catch((error) => {
       console.error('Error:', error);
     });
+    alert('请求成功');
 }
     </script>
 
@@ -1313,8 +1320,8 @@ function submitRequest() {
             var r = confirm("userMingingItem是否继续")
             if (r == true) {
                 var id = $("#userMingingItem option:selected").val();
-
-                $.get(APIURL + "/useMiningItem5000?id=" + id, function (data) {
+                var quantity = document.getElementById("userMingingItemQuantity").value;
+                $.get(APIURL + "/useMiningItem5000?id=" + id+"&quantity="+quantity, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1439,10 +1446,22 @@ function submitRequest() {
                     window.status = "1";
                 });
             }
-
-
-
         }
+
+        doneUserPiece = function () {
+            var r = confirm("整理拼图是否继续")
+            if (r == true) {
+                var boxUID = $("#Oper_Mail option:selected").val();
+                var familyId = $("#getMailPrizeFamilyId option:selected").val();
+                var title = $("#Oper_MailTitle option:selected").val();
+                var mailAmount = document.getElementById("mailAmount");
+                $.get(APIURL + "/doneUserPiece?id=" + boxUID + "&familyId=" + familyId + "&title=" + title + "&amount=" + mailAmount.value, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+        }
+
 
         getBossPrize = function () {
             var r = confirm("getBossPrize是否继续")

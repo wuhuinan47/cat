@@ -316,6 +316,7 @@ func main() {
 	http.HandleFunc("/playLuckyWheel", PlayLuckyWheelH)
 	http.HandleFunc("/allBeachHelp", AllBeachHelpH)
 	http.HandleFunc("/commonReq", CommonReqH)
+	http.HandleFunc("/doneUserPiece", DoneUserPieceH)
 
 	//
 
@@ -2597,6 +2598,9 @@ func QueryfamilyId2H(w http.ResponseWriter, req *http.Request) {
 
 func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
+	quantity1 := req.URL.Query().Get("quantity")
+	quantity, _ := strconv.ParseFloat(quantity1, 64)
+	// doUseMiningItem
 	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
 	var uid, name, token string
 	err := Pool.QueryRow(SQL).Scan(&uid, &name, &token)
@@ -2613,10 +2617,27 @@ func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
 	// useMiningItem5000(name, user.ServerURL, user.ZoneToken)
 	UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
 	userOnline.Lock.Lock()
-	useMiningItem5110(name, user.ServerURL, user.ZoneToken, miningActivityId, miningGroupId)
+	result := &UseMiningWin{}
+	if quantity > 0 {
+		for i := 0; i < int(quantity); i++ {
+			flag := result.doUseMiningItem(user)
+			if !flag {
+				break
+			}
+		}
+	} else {
+		useMiningItem5110(name, user.ServerURL, user.ZoneToken, miningActivityId, miningGroupId)
+	}
 	userOnline.Lock.Unlock()
+	if quantity > 0 {
+		UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
+	}
 	xlog.Infof("[%v]挖矿结束", name)
-	io.WriteString(w, "SUCCESS")
+	s := fmt.Sprintf("消耗了%v个鱼叉,%v个火箭,%v个水雷,获得了%v矿山,%v鱼叉,%v火箭,%v水雷", result.UseItem184, result.UseItem185, result.UseItem186, result.Score, result.WinItem184, result.WinItem185, result.WinItem186)
+	if !result.GoOn {
+		s = "前面请手动挖到倒数第二层！下次再处理这个逻辑！"
+	}
+	io.WriteString(w, s)
 }
 
 func GetMiningScoreRewardH(w http.ResponseWriter, req *http.Request) {
@@ -2640,6 +2661,33 @@ func GetMiningScoreRewardH(w http.ResponseWriter, req *http.Request) {
 	xlog.Infof("[%v]领取挖矿奖励结束", name)
 	io.WriteString(w, "SUCCESS")
 
+}
+
+func DoneUserPieceH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	if id == "" {
+		familyId := req.URL.Query().Get("familyId")
+		SQL := fmt.Sprintf("select id from tokens where familyId = %v", familyId)
+		rows, err := Pool.Query(SQL)
+		if err != nil {
+			return
+		}
+		defer rows.Close()
+		userIDs := []string{}
+		for rows.Next() {
+			var uid string
+			rows.Scan(&uid)
+			userIDs = append(userIDs, uid)
+		}
+		go func() {
+			for _, uid := range userIDs {
+				doneUserPiece(uid)
+			}
+		}()
+	} else {
+		result := doneUserPiece(id)
+		io.WriteString(w, result)
+	}
 }
 
 func DrawH(w http.ResponseWriter, req *http.Request) {
@@ -3958,19 +4006,27 @@ func CommonReqH(w http.ResponseWriter, req *http.Request) {
 	}
 	userOnline.Lock.RLock()
 	defer userOnline.Lock.RUnlock()
+
+	cmd := params["cmd"]
 	for _, u := range userOnline.Users {
-
-		// if params["go"] == "1" {
-		// 	if params["user_id"] == id {
-		// 		go func() {
-
-		// 		}()
-		// 	}
-		// }
-
 		data := CommonReq(u.ServerURL, u.ZoneToken, params)
-		xlog.Infof("%s ---> %v", u.Name, data)
+		if cmd == "getApplyList" {
+			applyList := data.ArrayMapDef([]xmap.M{}, "applyList")
+			for _, v := range applyList {
+				p := map[string]string{
+					"cmd":  "confirmFriend",
+					"fuid": fmt.Sprintf("%v", v.Int64("uid")),
+				}
+				CommonReq(u.ServerURL, u.ZoneToken, p)
+				xlog.Infof("%v confirmFriend %v ", u.Name, v.Str("nickname"))
+				time.Sleep(time.Millisecond * 100)
+			}
+		}
+
+		time.Sleep(time.Millisecond * 100)
+		xlog.Infof("CommonReqH %s ---> %v", u.Name, data)
 	}
+
 	io.WriteString(w, "执行完毕")
 }
 
@@ -7258,10 +7314,15 @@ func getFreeBossCannon(serverURL, zoneToken string) {
 }
 
 // 赠送拼图
-func giftPiece(serverURL, zoneToken, id, targetUid string) {
+func giftPiece(serverURL, zoneToken, id, targetUid string) bool {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := fmt.Sprintf("%v/game?cmd=giftPiece&token=%v&id=%v&targetUid=%v&now=%v", serverURL, zoneToken, id, targetUid, now)
-	httpGetReturnJson(url)
+	formData := httpGetReturnJson(url)
+	if _, ok := formData["error"]; ok {
+		xlog.Infof("giftPiece error:%v\n", formData)
+		return false
+	}
+	return true
 }
 
 // 扔骰子
@@ -9508,6 +9569,22 @@ func PlayLuckyWheelGo() (err error) {
 func InitPullRows() (err error) {
 	Pool.Exec("update tokens set pull_rows = '1,2,3,4,5,6'")
 	_, err = Pool.Exec("update tokens set pull_rows = '1,2,3' where familyId=1945")
+
+	sql := `select id from tokens`
+	rows, err := Pool.Query(sql)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+	userIDs := []string{}
+	for rows.Next() {
+		var id string
+		rows.Scan(&id)
+		userIDs = append(userIDs, id)
+	}
+	for _, uid := range userIDs {
+		doneUserPiece(uid)
+	}
 	return
 }
 
@@ -9859,6 +9936,114 @@ func helpEraseGift(serverURL, zoneToken string) {
 	}
 }
 
+func doneUserPiece(userID string) (result string) {
+	user := GetUser(userID)
+	var getPiecePrizeTimes1 interface{}
+	user.ZoneToken, getPiecePrizeTimes1 = getEnterInfo(userID, user.Name, user.ServerURL, user.Token, user.ZoneToken, "getPiecePrizeTimes")
+	UpdateUser(userID, user.ServerURL, user.ZoneToken, user.Token)
+	getPiecePrizeTimes := getPiecePrizeTimes1.(float64)
+	needGetPiecePrizeTimes := 10 - getPiecePrizeTimes
+	if needGetPiecePrizeTimes > 0 {
+		friendUserIDs := getFriendsUserIDs(userID, user.ServerURL, user.ZoneToken)
+		pieceList := getPieceListNew(user.ServerURL, user.ZoneToken)
+		pieceIDs := []string{"1", "2", "3", "4", "5", "6", "7", "8", "9"}
+		for _, pieceID := range pieceIDs {
+			piece := pieceList.Map(pieceID)
+			if piece == nil {
+				piece = xmap.M{
+					"count": 0,
+					"set":   0,
+				}
+			}
+			count := piece.Float64("count")
+			set := piece.Float64("set")
+			total := count + set
+			if total >= needGetPiecePrizeTimes {
+				continue
+			}
+			need := needGetPiecePrizeTimes - total
+			xlog.Infof("%v 需要拼图%v %v个", user.Name, pieceID, need)
+			for _, friendUserID := range friendUserIDs {
+				friendUser := GetUser(friendUserID)
+				if friendUser == nil {
+					continue
+				}
+				var fGetPiecePrizeTimes1 interface{}
+				friendUser.ZoneToken, fGetPiecePrizeTimes1 = getEnterInfo(friendUserID, friendUser.Name, friendUser.ServerURL, friendUser.Token, friendUser.ZoneToken, "getPiecePrizeTimes")
+				UpdateUser(friendUserID, friendUser.ServerURL, friendUser.ZoneToken, friendUser.Token)
+				fGetPiecePrizeTimes := fGetPiecePrizeTimes1.(float64)
+				fNeedGetPiecePrizeTimes := 10 - fGetPiecePrizeTimes
+				fPieceList := getPieceListNew(friendUser.ServerURL, friendUser.ZoneToken)
+				fPiece := fPieceList.Map(pieceID)
+				if fPiece == nil {
+					continue
+				}
+				fCount := fPiece.Float64("count")
+				fSet := fPiece.Float64("set")
+				fTotal := fCount + fSet
+				if fTotal < fNeedGetPiecePrizeTimes {
+					continue
+				}
+				// 计算减去需要的，剩下的捐给uesr
+				canDonate := fTotal - fNeedGetPiecePrizeTimes
+				if canDonate > 0 {
+					if canDonate > need {
+						canDonate = need
+					}
+					// 捐给user
+					for i := 0; i < int(canDonate); i++ {
+						flag := giftPiece(friendUser.ServerURL, friendUser.ZoneToken, pieceID, userID)
+						if flag {
+							xlog.Infof("%s 捐给 %s 一个 拼图%s", friendUser.Name, user.Name, pieceID)
+							need--
+						} else {
+							return
+						}
+					}
+				}
+				if need <= 0 {
+					break
+				}
+			}
+			if need == 0 {
+				result += fmt.Sprintf("%v 需要拼图%v 完成\n", user.Name, pieceID)
+				xlog.Infof("%v 需要拼图%v 完成", user.Name, pieceID)
+			} else {
+				xlog.Infof("%v 需要拼图%v 未完成", user.Name, pieceID)
+				result += fmt.Sprintf("%v 需要拼图%v 未完成\n", user.Name, pieceID)
+			}
+		}
+
+	}
+	return
+}
+
+func getPieceListNew(serverURL, zoneToken string) (pieceList xmap.M) {
+	params := map[string]string{
+		"cmd": "getPieceList",
+	}
+	data := CommonReq(serverURL, zoneToken, params)
+	pieceList = data.MapDef(xmap.M{}, "pieceList")
+	return
+}
+
+func getFriendsUserIDs(userID, serverURL, zoneToken string) (userIDs []string) {
+	params := map[string]string{
+		"cmd": "friendsRank",
+	}
+	data := CommonReq(serverURL, zoneToken, params)
+	friends := data.ArrayMapDef([]xmap.M{}, "friends")
+	for _, v := range friends {
+		uid1 := v.Int64("uid")
+		uid := fmt.Sprintf("%d", uid1)
+		if uid == userID {
+			continue
+		}
+		userIDs = append(userIDs, uid)
+	}
+	return
+}
+
 func friendsRank(serverURL, zoneToken string) (uids []string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=friendsRank&token=%v&now=%v", serverURL, zoneToken, now)
@@ -10041,7 +10226,7 @@ func useMiningItem5110(name, serverURL, zoneToken, miningActivityId, miningGroup
 		return
 	}
 	for _, v := range result {
-		flag := useMiningItem(serverURL, zoneToken, v[0], v[1], v[2])
+		flag, _, _, _, _ := useMiningItem(serverURL, zoneToken, v[0], v[1], v[2])
 		xlog.Infof("[%v]挖矿itemId:%v,row:%v,column:%v,结果:%v", name, v[0], v[1], v[2], flag)
 		time.Sleep(time.Millisecond * 500)
 	}
@@ -10059,17 +10244,39 @@ func useMiningItem5000(name, serverURL, zoneToken string) {
 		return
 	}
 	for _, v := range result {
-		flag := useMiningItem(serverURL, zoneToken, v[0], v[1], v[2])
+		flag, _, _, _, _ := useMiningItem(serverURL, zoneToken, v[0], v[1], v[2])
 		xlog.Infof("[%v]挖矿itemId:%v,row:%v,column:%v,结果:%v", name, v[0], v[1], v[2], flag)
 	}
 }
 
-func useMiningItem(serverURL, zoneToken, itemId, row, column string) bool {
+func useMiningItem(serverURL, zoneToken, itemId, row, column string) (flag bool, score, item184, item185, item186 float64) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=useMiningItem&token=%v&itemId=%v&row=%v&column=%v&now=%v", serverURL, zoneToken, itemId, row, column, now)
 	form := httpGetReturnJson(URL)
-	_, ok := form["getItem"].(map[string]interface{})
-	return ok
+	getItem, ok := form["getItem"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	flag = true
+
+	score1, ok := getItem["187"].(float64)
+	if ok {
+		score += score1
+	}
+	item1841, ok := getItem["184"].(float64)
+	if ok {
+		item184 += item1841
+	}
+	item1851, ok := getItem["185"].(float64)
+	if ok {
+		item185 += item1851
+	}
+	item1861, ok := getItem["186"].(float64)
+	if ok {
+		item186 += item1861
+	}
+
+	return
 }
 
 func getMiningScoreReward(serverURL, zoneToken string) bool {
@@ -10145,11 +10352,539 @@ func CommonReq(serverURL, zoneToken string, params map[string]string) (data xmap
 	for k, v := range params {
 		URL += fmt.Sprintf("&%v=%v", k, v)
 	}
-	xlog.Infof("CommonReq--->%v", URL)
 	if params["req"] == "GET" {
 		data, _ = xhttp.GetMap(URL)
 	} else {
 		data, _ = xhttp.PostMap(nil, URL)
 	}
 	return
+}
+
+type UseMiningWin struct {
+	Score      float64
+	UseItem184 float64
+	UseItem185 float64
+	UseItem186 float64
+	WinItem184 float64
+	WinItem185 float64
+	WinItem186 float64
+	GoOn       bool
+}
+
+func (result *UseMiningWin) doUseMiningItem(user *User) (flag bool) {
+	var mine1 interface{}
+	user.ZoneToken, mine1 = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "mine")
+	mine := mine1.(map[string]interface{})
+	grids1 := mine["grids"].([]interface{})
+	var grids [][]float64
+	for _, v := range grids1 {
+		vv := v.([]interface{})
+		vvv := []float64{}
+		for _, v2 := range vv {
+			vvv = append(vvv, v2.(float64))
+		}
+		grids = append(grids, vvv)
+	}
+	line := mine["line"].(float64)
+	xlog.Infof("grids is %v line is %v", grids, line)
+
+	lastTwo := grids[len(grids)-2]
+	canGoOn := false
+	for _, v := range lastTwo {
+		if v == -1 {
+			canGoOn = true
+		}
+	}
+	if !canGoOn {
+		return
+	}
+	result.GoOn = true
+
+	canUse, rewards := getCanUseRange(grids)
+	fmt.Println(converter.JSON(canUse))
+	fmt.Println(converter.JSON(rewards))
+	// 统计reward奖励
+	item184Key, item185Key, item186Key, finalKey, win := doneRewards(rewards)
+	fmt.Println(item184Key, item185Key, item186Key, finalKey)
+	final := win[finalKey]
+	if final == nil {
+		return
+	}
+	useTimes := final["useTimes"]
+	score := final["score"]
+	item184 := final["item184"]
+	item185 := final["item185"]
+	item186 := final["item186"]
+	l := strings.Split(finalKey, "-")
+
+	var nowSocre, nowItem184, nowItem185, nowItem186 float64
+
+	for i := 1; i <= int(useTimes); i++ {
+		var score1, item1841, item1851, item1861 float64
+		flag, score1, item1841, item1851, item1861 = useMiningItem(user.ServerURL, user.ZoneToken, l[0], l[2], l[1])
+		xlog.Infof("%s [%v] 使用了%s %s-%s 获得了 矿山:%v 鱼叉:%v 火箭:%v 水雷:%v", user.Name, flag, l[0], l[1], l[2], score1, item1841, item1851, item1861)
+		if !flag {
+			return
+		}
+
+		switch l[0] {
+		case "184":
+			result.UseItem184 += 1
+		case "185":
+			result.UseItem185 += 1
+		case "186":
+			result.UseItem186 += 1
+		}
+
+		nowSocre += score1
+		nowItem184 += item1841
+		nowItem185 += item1851
+		nowItem186 += item1861
+
+		if score == nowSocre && item184 == nowItem184 && item185 == nowItem185 && item186 == nowItem186 {
+			break
+		}
+	}
+	xlog.Infof("%s 目标矿山:%v 获得矿山:%v", user.Name, score, nowSocre)
+	xlog.Infof("%s 目标鱼叉:%v 获得鱼叉:%v", user.Name, item184, nowItem184)
+	xlog.Infof("%s 目标火箭:%v 获得火箭:%v", user.Name, item185, nowItem185)
+	xlog.Infof("%s 目标水雷:%v 获得水雷:%v", user.Name, item186, nowItem186)
+	result.Score += score
+	result.WinItem184 += item184
+	result.WinItem185 += item185
+	result.WinItem186 += item186
+	return
+}
+
+// -1=空 0和2=可挖 1=石头(挖2次) 3=5分 4=10分 5=20分 6=鱼叉(单独格子,遇到石头需要2次) 7=火箭(整个column,遇到石头需要2次) 8=水雷(3*3)
+// row=纵向0-7 column=横向0-4 itemId=道具id 184=鱼叉 185=火箭 186=水雷
+// 挖掘范围是
+
+func getCanUseRange(grids [][]float64) (canUse map[int64][][]float64, rewards map[string][]float64) {
+
+	//	鱼叉除了-1 都可以挖
+	//	火箭只能作用在 -1
+	//	水雷只能作用在 -1
+	// 根据上面这个逻辑，计算出倒数1-2层 可以作用的列表
+	length := len(grids)
+	lastThree := grids[length-3]
+	lastTwo := grids[length-2]
+	lastOne := grids[length-1]
+	// []float64{column,row}
+	canUse = map[int64][][]float64{
+		184: {},
+		185: {},
+		186: {},
+	}
+
+	rewards = map[string][]float64{}
+	// 复制lastTwo到新的数组
+
+	for i, v := range lastTwo {
+		if v == -1 {
+			canUse[184] = append(canUse[184], []float64{float64(i), 7})
+			key184 := fmt.Sprintf("%v-%v-%v", 184, i, 7)
+			rewards[key184] = []float64{lastOne[i]}
+			canUse[185] = append(canUse[185], []float64{float64(i), 6})
+
+			// 根据i分裂lastTwo为左右两个数组,并且不包含i
+			// 复制lastTwo到新的数组,不要改变lastTwo的值
+			new1 := make([]float64, len(lastTwo))
+			copy(new1, lastTwo)
+			left := new1[0:i]
+			right := new1[i+1:]
+			new := append(left, right...)
+			// 从左边开始找到第一个不是-1的
+			key185 := fmt.Sprintf("%v-%v-%v", 185, i, 6)
+			rewards[key185] = new
+			canUse[186] = append(canUse[185], []float64{float64(i), 6})
+
+			// 根据i 上下左右左上左下右上右下 8个格子 上下分别是lastThree和lastOne 左右是lastTwo
+			// 左上
+			new2 := []float64{}
+			switch i {
+			case 0:
+				new2 = append(new2, lastThree[0])
+				new2 = append(new2, lastThree[1])
+				new2 = append(new2, lastTwo[1])
+				new2 = append(new2, lastOne[0])
+				new2 = append(new2, lastOne[1])
+			case 1:
+				new2 = append(new2, lastThree[0])
+				new2 = append(new2, lastThree[1])
+				new2 = append(new2, lastThree[2])
+				new2 = append(new2, lastTwo[0])
+				new2 = append(new2, lastTwo[2])
+				new2 = append(new2, lastOne[0])
+				new2 = append(new2, lastOne[1])
+				new2 = append(new2, lastOne[2])
+			case 2:
+				new2 = append(new2, lastThree[1])
+				new2 = append(new2, lastThree[2])
+				new2 = append(new2, lastThree[3])
+				new2 = append(new2, lastTwo[1])
+				new2 = append(new2, lastTwo[3])
+				new2 = append(new2, lastOne[1])
+				new2 = append(new2, lastOne[2])
+				new2 = append(new2, lastOne[3])
+			case 3:
+				new2 = append(new2, lastThree[2])
+				new2 = append(new2, lastThree[3])
+				new2 = append(new2, lastThree[4])
+				new2 = append(new2, lastTwo[2])
+				new2 = append(new2, lastTwo[4])
+				new2 = append(new2, lastOne[2])
+				new2 = append(new2, lastOne[3])
+				new2 = append(new2, lastOne[4])
+			case 4:
+				new2 = append(new2, lastThree[3])
+				new2 = append(new2, lastThree[4])
+				new2 = append(new2, lastThree[5])
+				new2 = append(new2, lastTwo[3])
+				new2 = append(new2, lastTwo[5])
+				new2 = append(new2, lastOne[3])
+				new2 = append(new2, lastOne[4])
+				new2 = append(new2, lastOne[5])
+			case 5:
+				new2 = append(new2, lastThree[4])
+				new2 = append(new2, lastThree[5])
+				new2 = append(new2, lastThree[6])
+				new2 = append(new2, lastTwo[4])
+				new2 = append(new2, lastTwo[6])
+				new2 = append(new2, lastOne[4])
+				new2 = append(new2, lastOne[5])
+				new2 = append(new2, lastOne[6])
+			case 6:
+				new2 = append(new2, lastThree[5])
+				new2 = append(new2, lastThree[6])
+				new2 = append(new2, lastTwo[5])
+				new2 = append(new2, lastOne[5])
+				new2 = append(new2, lastOne[6])
+			}
+			key186 := fmt.Sprintf("%v-%v-%v", 186, i, 6)
+			rewards[key186] = new2
+
+		} else {
+			if lastThree[i] == -1 {
+				canUse[184] = append(canUse[184], []float64{float64(i), 6})
+				key184 := fmt.Sprintf("%v-%v-%v", 184, i, 6)
+				rewards[key184] = []float64{v}
+			}
+		}
+	}
+
+	// for i, v := range lastOne {
+	// 	if v != -1 {
+	// 		if lastTwo[i] == -1 {
+	// 			canUse[184] = append(canUse[184], []float64{float64(i), 7})
+	// 			key184 := fmt.Sprintf("%v-%v-%v", 184, i, 7)
+	// 			rewards[key184] = []float64{v}
+	// 		} else {
+	// 			xlog.Infof("lastTwo %v i %v", lastTwo, i)
+	// 		}
+
+	// 	}
+	// }
+
+	return
+
+}
+
+func doneRewards(rewards map[string][]float64) (item184Key, item185Key, item186Key, finalKey string, win map[string]map[string]float64) {
+	// []float64 中 -1=空 0和2=可挖 1=石头(挖2次) 3=5分 4=10分 5=20分 6=鱼叉(单独格子,遇到石头需要2次) 7=火箭(整个column,遇到石头需要2次) 8=水雷(3*3)
+	win = make(map[string]map[string]float64)
+	for k, v := range rewards {
+		var score float64
+		var item184 float64
+		var item185 float64
+		var item186 float64
+
+		var useTimes float64
+
+		// 找到1的数量
+
+		for _, v2 := range v {
+			if v2 == 3 {
+				score += 5
+			}
+			if v2 == 4 {
+				score += 10
+			}
+			if v2 == 5 {
+				score += 20
+			}
+			if v2 == 6 {
+				item184++
+			}
+			if v2 == 7 {
+				item185++
+			}
+			if v2 == 8 {
+				item186++
+			}
+			if v2 == 1 {
+				useTimes++
+			}
+		}
+
+		if strings.Contains(k, "185") || strings.Contains(k, "184") {
+			if useTimes > 0 {
+				useTimes = useTimes + 1
+			} else {
+				useTimes = 1
+			}
+		} else {
+			useTimes = 1
+
+		}
+		win[k] = map[string]float64{
+			"score":    score,
+			"item184":  item184,
+			"item185":  item185,
+			"item186":  item186,
+			"useTimes": useTimes,
+		}
+
+		// 找到184最优
+		if strings.Contains(k, "184") {
+			last := win[item184Key]
+			if last == nil {
+
+				item184Key = k
+			} else {
+				if last["score"] < score {
+					if score == 5 {
+						if last["item184"] == 0 && last["item185"] == 0 && last["item186"] == 0 {
+							item184Key = k
+						} else {
+							if last["item184"] < item184 {
+								item184Key = k
+							} else {
+								if last["item185"] < item185 {
+									item184Key = k
+								} else {
+									if last["item186"] < item186 {
+										item184Key = k
+									}
+								}
+							}
+						}
+
+					} else {
+						item184Key = k
+					}
+				} else {
+					if last["score"] == score {
+						if score == 0 {
+							l := strings.Split(k, "-")
+							length := len(l)
+							if l[length-1] == "7" {
+								lastL := strings.Split(item184Key, "-")
+								lastLength := len(lastL)
+								if lastL[lastLength-1] == "7" {
+									if last["item184"] < item184 {
+										item184Key = k
+									} else {
+										if last["item185"] < item185 {
+											item184Key = k
+										} else {
+											if last["item186"] < item186 {
+												item184Key = k
+											}
+										}
+									}
+								} else {
+									item184Key = k
+								}
+							} else {
+								if last["item184"] < item184 {
+									item184Key = k
+								} else {
+									if last["item185"] < item185 {
+										item184Key = k
+									} else {
+										if last["item186"] < item186 {
+											item184Key = k
+										}
+									}
+								}
+
+							}
+						} else {
+							if last["item184"] < item184 {
+								item184Key = k
+							} else {
+								if last["item185"] < item185 {
+									item184Key = k
+								} else {
+									if last["item186"] < item186 {
+										item184Key = k
+									}
+								}
+							}
+						}
+
+					} else {
+						if last["score"] == 5 {
+
+							if last["item184"] < item184 {
+								item184Key = k
+							} else {
+								if last["item185"] < item185 {
+									item184Key = k
+								} else {
+									if last["item186"] < item186 {
+										item184Key = k
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		// 找到185最优
+		if strings.Contains(k, "185") {
+			last := win[item185Key]
+			if last == nil {
+				item185Key = k
+			} else {
+				if last["score"] < score {
+					item185Key = k
+				} else {
+					if last["score"] == score {
+						if last["item184"] < item184 {
+							item185Key = k
+						} else {
+							if last["item185"] < item185 {
+								item185Key = k
+							} else {
+								if last["item186"] < item186 {
+									item185Key = k
+								}
+							}
+
+						}
+
+					}
+				}
+
+			}
+		}
+		// 找到186最优
+		if strings.Contains(k, "186") {
+			last := win[item186Key]
+			if last == nil {
+				item186Key = k
+			} else {
+				if last["score"] < score {
+					item186Key = k
+				} else {
+					if last["score"] == score {
+						if last["item184"] < item184 {
+							item186Key = k
+						} else {
+							if last["item185"] < item185 {
+								item186Key = k
+							} else {
+								if last["item186"] < item186 {
+									item186Key = k
+								}
+							}
+
+						}
+
+					}
+				}
+			}
+		}
+
+	}
+
+	// 找到最优
+	m184 := win[item184Key]
+	m185 := win[item185Key]
+	m186 := win[item186Key]
+
+	score184 := m184["score"]
+	score185 := m185["score"]
+	score186 := m186["score"]
+	item184 := m184["item184"] + m184["item185"] + m184["item186"]
+	item185 := m185["item184"] + m185["item185"] + m185["item186"]
+	item186 := m186["item184"] + m186["item185"] + m186["item186"]
+
+	if score184 == score185 && score185 == score186 {
+		if item184 == item185 && item185 == item186 {
+			finalKey = item184Key
+		} else {
+			if item184 > item185 {
+				if item184 > item186 {
+					finalKey = item184Key
+				} else {
+					finalKey = item186Key
+				}
+			} else {
+				if item185 > item186 {
+					finalKey = item185Key
+				} else {
+					finalKey = item186Key
+				}
+			}
+		}
+	} else {
+		if score184 > score185 {
+			finalKey = item184Key
+			if score184 > score186 {
+				finalKey = item184Key
+			} else if score186 > 20 {
+				finalKey = item186Key
+			}
+		} else {
+			if score185 > score186 {
+				if score185 >= 20 {
+					finalKey = item185Key
+				} else {
+					if win[item185Key]["item185"] > 0 {
+						has1 := false
+						for _, v := range rewards[item185Key] {
+							if v == 1 {
+								has1 = true
+								break
+							}
+						}
+						if !has1 {
+							finalKey = item185Key
+						} else {
+							finalKey = item184Key
+						}
+					} else {
+						finalKey = item184Key
+					}
+				}
+			} else if score185 == score186 {
+				if score185 >= 20 {
+					finalKey = item185Key
+				} else {
+					if score186 > 20 {
+						finalKey = item186Key
+					} else if score185 >= 20 {
+						finalKey = item185Key
+					} else {
+						finalKey = item184Key
+					}
+				}
+			} else {
+				if score186 > 20 {
+					finalKey = item186Key
+				} else if score185 >= 20 {
+					finalKey = item185Key
+				} else {
+					finalKey = item184Key
+				}
+			}
+		}
+	}
+
+	return
+
 }
