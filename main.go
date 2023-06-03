@@ -9125,7 +9125,7 @@ func RunnerDraw() (err error) {
 
 	}
 
-	if hour == 1 || hour == 3 || hour == 8 || hour == 11 || hour == 14 || hour == 17 || hour == 20 || hour == 22 {
+	if hour == 0 || hour == 1 || hour == 3 || hour == 8 || hour == 11 || hour == 14 || hour == 17 || hour == 20 || hour == 22 {
 		xlog.Infof("start draw")
 		SQL := "select id, name, token, familyId from tokens where draw_status = 1"
 
@@ -9619,7 +9619,10 @@ func InitTodayAnimal() (err error) {
 		_, err = Pool.Exec("update tokens set init_animals = ?, all_animals = null where id = ?", ToJSON(animal), uuid)
 	}
 
-	exchangeRiceCakeLogic("")
+	if runnerStatus("exchangeRiceCakeStatus") == "1" {
+		exchangeRiceCakeLogic("")
+	}
+
 	return
 }
 

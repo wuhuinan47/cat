@@ -636,6 +636,15 @@
     </button>
     <br>
 
+    <!-- startExchangeRiceCakeStatus -->
+    <button style="font-size:40px;width:400px; height:100px;" onclick="startExchangeRiceCakeStatus()">
+        开启每日汤圆/钻石等活动领取
+    </button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="stopExchangeRiceCakeStatus()">
+        关闭每日汤圆/钻石等活动领取
+    </button>
+
+    <br>
     <button style="font-size:40px;width:400px; height:100px;" onclick="startSteamBoxStatus()">
         开启汤圆定时器
     </button>
@@ -731,6 +740,20 @@ function submitRequest() {
                     window.status = "1";
                 });
             }
+        }
+
+        startExchangeRiceCakeStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=exchangeRiceCakeStatus&confValue=1", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        stopExchangeRiceCakeStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=exchangeRiceCakeStatus&confValue=0", function (data) {
+                alert(data)
+                window.status = "1";
+            });
         }
 
         startSteamBoxStatus = function () {
