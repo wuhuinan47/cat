@@ -1962,9 +1962,11 @@ func addFirewoodLogic(id string, quality float64) {
 		for _, v := range uids {
 			fuid := fmt.Sprintf("%v", v)
 			if !addFirewood(user.ServerURL, user.ZoneToken, fuid) {
+				xlog.Infof("[%v]给[%v]添加柴火失败！！！", name, v)
+
 				break
 			}
-			xlog.Infof("[%v]给[%v]添加柴火", name, v)
+			xlog.Infof("[%v]给[%v]添加柴火成功", name, v)
 		}
 		for _, v := range helpUids {
 			fuid := fmt.Sprintf("%v", v)
@@ -2087,6 +2089,14 @@ func GetFamilyEnergyH(w http.ResponseWriter, req *http.Request) {
 		ids = append(ids, uid)
 	}
 	d := xmap.M{}
+	var maxDraw float64
+	Pool.QueryRow("select conf_value from config where conf_key = ?", "family_draw_"+id).Scan(&maxDraw)
+	if maxDraw > 0 {
+		maxDraw += 5
+	} else {
+		maxDraw = 0
+	}
+	d["1日摇能量设置"] = maxDraw
 	for _, userID := range ids {
 		user := GetUser(userID)
 		data := game(user.ZoneToken)
@@ -2094,6 +2104,7 @@ func GetFamilyEnergyH(w http.ResponseWriter, req *http.Request) {
 		dayDraw := data.Int64Def(0, "elevenEnergy")
 		d[user.Name+"("+userID+")"] = fmt.Sprintf("每日摇能量:%d,可用能量:%d", dayDraw, energy)
 	}
+
 	io.WriteString(w, converter.JSON(d))
 }
 
@@ -2608,11 +2619,11 @@ func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	user := GetUser(uid)
-	var miningActivityId1, miningGroupId1 interface{}
-	user.ZoneToken, miningActivityId1 = getEnterInfo(id, name, user.ServerURL, user.Token, user.ZoneToken, "miningActivityId")
-	user.ZoneToken, miningGroupId1 = getEnterInfo(id, name, user.ServerURL, user.Token, user.ZoneToken, "miningGroupId")
-	miningActivityId := fmt.Sprintf("%v", miningActivityId1)
-	miningGroupId := fmt.Sprintf("%v", miningGroupId1)
+	// var miningActivityId1, miningGroupId1 interface{}
+	// user.ZoneToken, miningActivityId1 = getEnterInfo(id, name, user.ServerURL, user.Token, user.ZoneToken, "miningActivityId")
+	// user.ZoneToken, miningGroupId1 = getEnterInfo(id, name, user.ServerURL, user.Token, user.ZoneToken, "miningGroupId")
+	// miningActivityId := fmt.Sprintf("%v", miningActivityId1)
+	// miningGroupId := fmt.Sprintf("%v", miningGroupId1)
 	xlog.Infof("[%v]开始挖矿", name)
 	// useMiningItem5000(name, user.ServerURL, user.ZoneToken)
 	UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
@@ -2625,9 +2636,10 @@ func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
 				break
 			}
 		}
-	} else {
-		useMiningItem5110(name, user.ServerURL, user.ZoneToken, miningActivityId, miningGroupId)
 	}
+	// else {
+	// 	useMiningItem5110(name, user.ServerURL, user.ZoneToken, miningActivityId, miningGroupId)
+	// }
 	userOnline.Lock.Unlock()
 	if quantity > 0 {
 		UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
@@ -2642,23 +2654,41 @@ func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
 
 func GetMiningScoreRewardH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
-	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
-	var uid, name, token string
-	err := Pool.QueryRow(SQL).Scan(&uid, &name, &token)
-	if err != nil {
-		return
-	}
-	user := GetUser(uid)
-	serverURL, zoneToken := user.ServerURL, user.ZoneToken
-	xlog.Infof("[%v]开始领取挖矿奖励", name)
-	for {
-		if !getMiningScoreReward(serverURL, zoneToken) {
-			break
-		}
 
-		xlog.Infof("[%v]继续领取挖矿奖励", name)
+	if id != "" {
+		SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
+		var uid, name, token string
+		err := Pool.QueryRow(SQL).Scan(&uid, &name, &token)
+		if err != nil {
+			return
+		}
+		user := GetUser(uid)
+		serverURL, zoneToken := user.ServerURL, user.ZoneToken
+		xlog.Infof("[%v]开始领取挖矿奖励", name)
+		for {
+			if !getMiningScoreReward(serverURL, zoneToken) {
+				break
+			}
+
+			xlog.Infof("[%v]继续领取挖矿奖励", name)
+		}
+		xlog.Infof("[%v]领取挖矿奖励结束", name)
+	} else {
+		userOnline.Lock.RLock()
+		defer userOnline.Lock.RUnlock()
+
+		for _, u := range userOnline.Users {
+			xlog.Infof("[%v]开始领取挖矿奖励", u.Name)
+			for {
+				if !getMiningScoreReward(u.ServerURL, u.ZoneToken) {
+					break
+				}
+
+				xlog.Infof("[%v]继续领取挖矿奖励", u.Name)
+			}
+		}
 	}
-	xlog.Infof("[%v]领取挖矿奖励结束", name)
+
 	io.WriteString(w, "SUCCESS")
 
 }
@@ -8487,10 +8517,12 @@ func getSteamBoxHelpList(serverURL, zoneToken string, quality float64) (uids []f
 func addFirewood(serverURL, zoneToken, fuid string) bool {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=addFirewood&token=%v&fuid=%v&now=%v", serverURL, zoneToken, fuid, now)
-	httpGetReturnJson(URL)
-	// _, ok := formData["error"]
+	formData := httpGetReturnJson(URL)
+	error, ok := formData["error"]
+	if ok && error.(float64) == 433 {
+		return false
+	}
 	return true
-
 }
 
 func familyChat(serverURL, zoneToken string) {
@@ -8857,8 +8889,11 @@ func RunnerSteamBox() (err error) {
 		uids, helpUids := getSteamBoxHelpList(serverURL, zoneToken, 3)
 		for _, v := range uids {
 			fuid := fmt.Sprintf("%v", v)
-			addFirewood(serverURL, zoneToken, fuid)
-			xlog.Infof("[%v]给[%v]添加柴火", uname, fuid)
+			if !addFirewood(serverURL, zoneToken, fuid) {
+				xlog.Infof("[%v]给[%v]添加柴火失败！！！", uname, fuid)
+				break
+			}
+			xlog.Infof("[%v]给[%v]添加柴火成功", uname, fuid)
 		}
 		for _, v := range helpUids {
 			fuid := fmt.Sprintf("%v", v)
@@ -8873,8 +8908,11 @@ func RunnerSteamBox() (err error) {
 		uids, _ := getSteamBoxHelpList(serverURL, zoneToken, 0)
 		for _, v2 := range uids {
 			fuid := fmt.Sprintf("%v", v2)
-			addFirewood(serverURL, zoneToken, fuid)
-			xlog.Infof("[%v]给[%v]添加柴火", v[1], fuid)
+			if !addFirewood(serverURL, zoneToken, fuid) {
+				xlog.Infof("[%v]给[%v]添加柴火失败！！！", v[1], fuid)
+				break
+			}
+			xlog.Infof("[%v]给[%v]添加柴火成功", v[1], fuid)
 		}
 	}
 	return
@@ -9313,14 +9351,21 @@ func RunnerPullAnimal() (err error) {
 		return
 	}
 
-	hour := time.Now().Hour()
+	// 如果是周日不用啦动物
+	now := time.Now()
+	if now.Weekday() == time.Sunday {
+		xlog.Infof("周日不用啦动物")
+		return
+	}
 
-	if hour >= 7 && hour <= 22 {
-		xlog.Infof("5秒后开始拉动物...")
+	hour := now.Hour()
 
-		for i := 1; i <= 5; i++ {
+	if hour >= 7 && hour <= 23 {
+		xlog.Infof("2秒后开始拉动物...")
+
+		for i := 1; i <= 2; i++ {
 			time.Sleep(time.Second * 1)
-			xlog.Infof("%v秒后开始拉动物...", 5-i)
+			xlog.Infof("%v秒后开始拉动物...", 2-i)
 		}
 
 		xlog.Infof("现在开始拉动物")
@@ -9521,6 +9566,9 @@ func AttackBossGo() (err error) {
 }
 
 func PlayLuckyWheelGo() (err error) {
+	if runnerStatus("PlayLuckyWheelGo") != "1" {
+		return
+	}
 	amount := 100
 	sql := "select id, name, token,zoneToken from tokens"
 	rows, err := Pool.Query(sql)

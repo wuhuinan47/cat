@@ -349,14 +349,14 @@
     <select style="font-size:40px;width:250px; height:100px;" name="userMingingItem" id="userMingingItem">
         <option selected="selected" value="">选择</option>
     </select>
-    <input id="userMingingItemQuantity" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="挖矿次数" value="10" />
-    <button style="font-size:40px;width:600px; height:100px;" onclick="userMingingItem()">
-        挖矿5110分(挖矿次数0=使用模板)
+    <input id="userMingingItemQuantity" style="font-size:40px;width:250px; height:100px;" type="text" placeholder="挖矿次数" value="100" />
+    <button style="font-size:40px;width:300px; height:100px;" onclick="userMingingItem()">
+        深海挖矿
     </button>
     <br>
     <br>
     <select style="font-size:40px;width:250px; height:100px;" name="getMiningScoreReward" id="getMiningScoreReward">
-        <option selected="selected" value="">选择</option>
+        <option selected="selected" value="">全部</option>
     </select>
     <button style="font-size:40px;width:500px; height:100px;" onclick="getMiningScoreReward()">
         领取挖矿奖励
@@ -637,12 +637,20 @@
     <br>
 
     <!-- startExchangeRiceCakeStatus -->
+    <button style="font-size:40px;width:400px; height:100px;" onclick="startPlayLuckyWheelGo()">
+        开启每日幸运夺宝100次领取
+    </button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="stopPlayLuckyWheelGo()">
+        关闭每日幸运夺宝100次领取
+    </button>
+    <br>
     <button style="font-size:40px;width:400px; height:100px;" onclick="startExchangeRiceCakeStatus()">
         开启每日汤圆/钻石等活动领取
     </button>
     <button style="font-size:40px;width:400px; height:100px;" onclick="stopExchangeRiceCakeStatus()">
         关闭每日汤圆/钻石等活动领取
     </button>
+
 
     <br>
     <button style="font-size:40px;width:400px; height:100px;" onclick="startSteamBoxStatus()">
@@ -740,6 +748,21 @@ function submitRequest() {
                     window.status = "1";
                 });
             }
+        }
+
+        // 
+        startPlayLuckyWheelGo = function () {
+            $.get(APIURL + "/setConfig?confKey=PlayLuckyWheelGo&confValue=1", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        stopPlayLuckyWheelGo = function () {
+            $.get(APIURL + "/setConfig?confKey=PlayLuckyWheelGo&confValue=0", function (data) {
+                alert(data)
+                window.status = "1";
+            });
         }
 
         startExchangeRiceCakeStatus = function () {

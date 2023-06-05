@@ -1,0 +1,2089 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>猫来了辅助简易版</title>
+</head>
+<style>
+    button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        transition-duration: 0.4s;
+        cursor: pointer;
+        border-radius: 12px;
+        box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+        margin: 10px;
+    }
+    
+    button:hover {
+        background-color: #45a049;
+    }
+    
+    input, select {
+        width: 200px;
+        padding: 12px 20px;
+        margin: 8px 0;
+        box-sizing: border-box;
+        border: 2px solid #ccc;
+        border-radius: 4px;
+        background-color: #f8f8f8;
+        font-size: 16px;
+    }
+    
+    @media only screen and (max-width: 600px) {
+        body {
+            flex-direction: column;
+        }
+    
+        input, select {
+            width: 100%;
+        }
+    
+        button {
+            width: 100%;
+        }
+    }
+    </style>
+    
+<body>
+    <br>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getServerLogs()">
+        查看服务器日志
+    </button>
+
+    <br>
+
+    <select style="font-size:40px;width:400px; height:100px;" name="getFamilyEnergySelect" id="getFamilyEnergySelect">
+    </select>
+    <button style="font-size:40px;width:350px; height:100px;" onclick="getFamilyEnergy()">
+        查看公会能量
+    </button>
+    <br> 
+    <br>
+
+    <select style="font-size:40px;width:400px; height:100px;" name="getUserInfoSelect" id="getUserInfoSelect">
+    </select>
+    <button style="font-size:40px;width:350px; height:100px;" onclick="getUserInfo()">
+        查看用户信息
+    </button>
+    <br> 
+
+    <select style="font-size:40px;width:400px; height:100px;" name="Oper_Type" id="Oper_Type">
+    </select>
+    <button style="font-size:40px;width:300px; height:100px;" onclick="login('')">
+        登录
+    </button>
+
+    <button style="font-size:40px;width:200px; height:100px;" onclick="reload()">
+        刷新
+    </button>
+    <br>
+    <input id="account" style="font-size:40px;width:300px; height:100px;" type="text" placeholder="手机号或id" value="" />
+    <input id="password" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="密码" value="" />
+    <button style="font-size:40px;width:400px; height:100px;" onclick="addAccount()">
+        添加账号
+    </button>
+   
+    <br>
+
+    <select style="font-size:40px;width:400px; height:100px;" name="getUserTokenSelect" id="getUserTokenSelect">
+    </select>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getUserToken()">
+        账号掉线重连
+    </button>
+    <br>
+
+    <select style="font-size:40px;width:300px; height:100px;" name="deleteAccount" id="deleteAccount">
+        <option selected="selected" value="">请选择</option>
+    </select>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="deleteAccount()">
+        删除账号
+    </button>
+    <br>
+    <button style="font-size:40px;width:300px; height:100px;" onclick="pullAnimal()">
+        拉动物
+    </button>
+
+    <button style="font-size:40px;width:300px; height:100px;" onclick="familySign()">
+        公会签到
+    </button>
+
+    <select style="font-size:40px;width:250px; height:100px;" name="familySignSelect" id="familySignSelect">
+        <option selected="selected" value="">全部</option>
+    </select>
+    <br>
+
+    <br>
+    <select style="font-size:40px;width:180px; height:100px;" name="cancelFamilyRob" id="cancelFamilyRob">
+        <option selected="selected" value="">全部</option>
+    </select>
+    <select style="font-size:40px;width:250px; height:100px;" name="cancelFamilyRobFlag" id="cancelFamilyRobFlag">
+        <option value="">个人</option>
+        <option selected="selected" value="">选择公会</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="cancelFamilyRob()">
+        取消拉动物
+    </button>
+    <br>
+    <select style="font-size:40px;width:160px; height:100px;" name="setPullRowsSelect" id="setPullRowsSelect">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <select style="font-size:40px;width:220px; height:100px;" name="setPullRowsSelectFamily"
+        id="setPullRowsSelectFamily">
+        <option selected="selected" value="">选择公会</option>
+    </select>
+    
+    <select style="font-size:40px;width:160px; height:100px;" name="setPullRows" id="setPullRows">
+        <option value="1,2,3,4,5,6">全拉</option>
+        <option selected="selected" value="0">不拉</option>
+        <option value="1,2,3">拉123</option>
+        <option value="4,5,6">拉456</option>
+        <option value="1">拉1</option>
+        <option value="2">拉2</option>
+        <option value="3">拉3</option>
+        <option value="4">拉4</option>
+        <option value="5">拉5</option>
+        <option value="6">拉6</option>
+    </select>
+    <button style="font-size:40px;width:350px; height:100px;" onclick="setPullRows()">
+        设置动物规则
+    </button>
+    <br>
+    <select style="font-size:40px;width:250px; height:100px;" name="setPullRowsSelectFamily1"
+        id="setPullRowsSelectFamily1">
+        <option selected="selected" value="">选择公会</option>
+    </select>
+    <select style="font-size:40px;width:250px; height:100px;" name="setFamilyCount" id="setFamilyCount">
+        <option selected="selected" value="1995">转2000</option>
+        <option value="795">转800</option>
+        <option value="-1">不转</option>
+    </select>
+    <button style="font-size:40px;width:300px; height:100px;" onclick="setFamilyCount()">
+        设置转盘
+    </button>
+    <br>
+    
+    <br>
+    <select style="font-size:40px;width:180px; height:100px;" name="boxUidsSelect" id="boxUidsSelect">
+        <option selected="selected" value="">请选择</option>
+    </select>
+    <select style="font-size:40px;width:180px; height:100px;" name="BCSelect2" id="BCSelect2">
+        <option value="1">普通</option>
+        <option value="2">稀有</option>
+        <option value="3">传奇</option>
+        <option selected="selected" value="0">全部</option>
+    </select>
+    <input id="boxAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="目标数量" value="300" />
+
+    <button style="font-size:40px;width:300px; height:100px;" onclick="getBox(2)">
+        抓宝箱
+    </button>
+    
+    <br>
+    <select style="font-size:40px;width:180px; height:100px;" name="Oper_Candy" id="Oper_Candy">
+        <option selected="selected" value="">请选择</option>
+    </select>
+    <select style="font-size:40px;width:180px; height:100px;" name="BCSelect" id="BCSelect">
+        <option value="1">普通</option>
+        <option value="2">稀有</option>
+        <option value="3">传奇</option>
+        <option selected="selected" value="0">全部</option>
+    </select>
+    <input id="candyAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="目标数量"
+        value="300" />
+
+    <button style="font-size:40px;width:250px; height:100px;" onclick="hitCandy()">
+        打糖果
+    </button>
+    <br>
+    <select style="font-size:40px;width:250px; height:100px;" name="attackBossUsers" id="attackBossUsers">
+        <option selected="selected" value="all">全部</option>
+    </select>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss()">
+        打500-800血龙
+    </button>
+    
+    <br>
+    <select style="font-size:40px;width:250px; height:100px;" name="SelectMyBoss" id="SelectMyBoss">
+        <option selected="" value="">全部(除大号)</option>
+        <option selected="" value="outsystem">外部账号</option>
+        <option selected="selected" value="system">系统账号</option>
+    </select>
+    <select style="font-size:40px;width:250px; height:100px;" name="attackMyBossMode" id="attackMyBossMode">
+        <option selected="selected" value="4400">打4400血</option>
+        <option value="4200">打4200血</option>
+    </select>
+    <button style="font-size:40px;width:300px; height:100px;" onclick="attackMyBoss()">
+        打自己龙
+    </button>
+    <br>
+    <select style="font-size:40px;width:250px; height:100px;" name="SingleBossSelect" id="SingleBossSelect">
+        <option selected="" value="outsystem">外部账号</option>
+        <option selected="" value="0">小号</option>
+        <option selected="selected" value="system">系统账号</option>
+
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="singleBossAttack()">
+        把龙打到600血
+    </button>
+    <br>
+    <select style="font-size:40px;width:200px; height:100px;" name="PiecePrizeSelect" id="PiecePrizeSelect">
+        <option selected="selected" value="">全部</option>
+    </select>
+    <select style="font-size:40px;width:150px; height:100px;" name="SetPieceAmount" id="SetPieceAmount">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option selected="selected" value="10">10</option>
+    </select>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="setPiece()">
+        领取拼图奖励
+    </button>
+    <br>
+    <button style="font-size:40px;width:700px; height:100px;" onclick="allBeachHelp()">
+        海滩互相助力[同时更新公会id]
+    </button>
+    <br>
+    <select style="font-size:40px;width:200px; height:100px;" name="BeachHelpSelect" id="BeachHelpSelect">
+        <option selected="selected" value="">请选择</option>
+    </select>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="beachHelp()">
+        海浪铲子助力
+    </button>
+    <br>
+    <select style="font-size:40px;width:150px; height:100px;" name="UseShovelFrom" id="UseShovelFrom">
+        <option selected="selected" value="">全部</option>
+    </select>
+    <select style="font-size:40px;width:150px; height:100px;" name="UseShovelTo" id="UseShovelTo">
+        <option selected="selected" value="">自己</option>
+        <option value="all">全部</option>
+    </select>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="useShovel()">
+        使用铲子
+    </button>
+    <br>
+    <select style="font-size:40px;width:150px; height:100px;" name="GetBeachLineRewardsH" id="GetBeachLineRewardsH">
+        <option selected="selected" value="">全部</option>
+    </select>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getBeachLineRewards()">
+        领取海滩奖励
+    </button>
+    <br>
+    <button style="font-size:40px;width:350px; height:100px;" onclick="openSteamBox()">
+        一键领取汤圆
+    </button>
+    <select style="font-size:40px;width:150px; height:100px;" name="addFirewoodOps" id="addFirewoodOps">
+        <option selected="selected" value="0">全部</option>
+    </select>
+    <select style="font-size:40px;width:150px; height:100px;" name="FirewoodQuality" id="FirewoodQuality">
+        <option selected="selected" value="0">全部</option>
+        <option value="1">普通</option>
+        <option value="2">稀有</option>
+        <option value="3">传奇</option>
+    </select>
+    <button style="font-size:40px;width:250px; height:100px;" onclick="addFirewood()">
+        汤圆助力
+    </button>
+    <br>
+    <select style="font-size:40px;width:200px; height:100px;" name="exchangeRiceCake" id="exchangeRiceCake">
+        <option selected="selected" value="">全部</option>
+    </select>
+    <button style="font-size:40px;width:700px; height:100px;" onclick="exchangeRiceCake()">
+        领取汤圆/骰子/海滩/小岛/糖果奖励
+    </button>
+    <br>
+    <select style="font-size:40px;width:250px; height:100px;" name="getMiningScoreReward" id="getMiningScoreReward">
+        <option selected="selected" value="">全部</option>
+    </select>
+    <button style="font-size:40px;width:500px; height:100px;" onclick="getMiningScoreReward()">
+        领取挖矿奖励
+    </button>
+    <br>
+    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="checkToken()">
+        检测账号状态
+    </button> -->
+    <br>
+    
+    <br>
+    <select style="font-size:40px;width:400px; height:100px;" name="Oper_Boss" id="Oper_Boss">
+        <option selected="selected" value="">全部</option>
+    </select>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getFreeBossCannon()">
+        领取免费龙炮弹
+    </button>
+    <br>
+    <select style="font-size:40px;width:200px; height:100px;" name="Oper_Dice" id="Oper_Dice">
+        <option selected="selected" value="">全部</option>
+    </select>
+    <input id="diceAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="目标数量"
+        value="40" />
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="throwDice()">
+        扔骰子
+    </button>
+    <br>
+    <select style="font-size:40px;width:180px; height:100px;" name="Oper_Mail" id="Oper_Mail">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <select style="font-size:40px;width:250px; height:100px;" name="getMailPrizeFamilyId" id="getMailPrizeFamilyId">
+        <option value="">个人</option>
+        <option selected="selected" value="">选择公会</option>
+    </select>
+
+    <select style="font-size:40px;width:520px; height:100px;" name="Oper_MailTitle" id="Oper_MailTitle">
+        <option value="">全部</option>
+        <option value="煮汤圆成功开启">煮汤圆成功开启</option>
+        <option value="煮汤圆成功开启(芝麻)">煮汤圆成功开启(芝麻)</option>
+        <option value="煮汤圆成功开启(花生)">煮汤圆成功开启(花生)</option>
+        <option value="煮汤圆成功开启(抹茶)">煮汤圆成功开启(抹茶)</option>
+        <option value="煮汤圆成功开启(紫薯)">煮汤圆成功开启(紫薯)</option>
+        <option selected="selected" value="煮汤圆成功开启(草莓)">煮汤圆成功开启(草莓)</option>
+        <option value="福利礼包">福利礼包</option>
+        <option value="邮件能量">邮件能量</option>
+    </select>
+    <input id="mailAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="次数" value="80" />
+
+    <button style="font-size:40px;width:250px; height:100px;" onclick="getMailPrize()">
+        领取邮件
+    </button>
+    <button style="font-size:40px;width:250px; height:100px;" onclick="doneUserPiece()">
+        整理拼图
+    </button>
+
+
+    <br>
+
+    <select style="font-size:40px;width:250px; height:100px;" name="Oper_BossPrize" id="Oper_BossPrize">
+        <option selected="selected" value="">一键领取</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getBossPrize()">
+        领取龙奖励
+    </button>
+
+    <br>
+
+
+    <select style="font-size:40px;width:170px; height:100px;" name="Oper_pieceFrom" id="Oper_pieceFrom">
+        <option selected="selected" value="">发送者</option>
+    </select>
+
+    <select style="font-size:40px;width:170px; height:100px;" name="Oper_pieceTo" id="Oper_pieceTo">
+        <option selected="selected" value="">接受者</option>
+    </select>
+
+
+    <select style="font-size:40px;width:170px; height:100px;" name="PieceSelect" id="PieceSelect">
+        <option selected="selected" value="">拼图几</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+    </select>
+
+
+    <select style="font-size:40px;width:150px; height:100px;" name="PieceAmount" id="PieceAmount">
+        <option selected="selected" value="">数量</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+    </select>
+
+    <button style="font-size:40px;width:250px; height:100px;" onclick="giftPiece()">
+        赠送拼图
+    </button>
+
+
+
+
+
+    <br>
+
+    <select style="font-size:40px;width:150px; height:100px;" name="Oper_Draw" id="Oper_Draw">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <select style="font-size:40px;width:250px; height:100px;" name="selectDrawFamily" id="selectDrawFamily">
+        <option value="">个人</option>
+        <option selected="selected" value="">选择公会</option>
+    </select>
+
+
+    <select style="font-size:40px;width:150px; height:100px;" name="DrawSelect" id="DrawSelect">
+        <option value="1">1倍</option>
+        <option value="2">2倍</option>
+        <option value="3">3倍</option>
+        <option value="4">4倍</option>
+        <option selected="selected" value="5">5倍</option>
+    </select>
+    <input id="drawAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="摇次数"
+        value="399" />
+
+    <button style="font-size:40px;width:200px; height:100px;" onclick="draw()">
+        转盘
+    </button>
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="RunnerUsers" id="RunnerUsers">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <select style="font-size:40px;width:250px; height:100px;" name="RunnerSelect" id="RunnerSelect">
+        <option selected="selected" value="1">海滩刷新</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="setRunner()">
+        设置定时器
+    </button>
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="playLuckyWheel" id="playLuckyWheel">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <input id="playLuckyWheelAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="使用值"
+        value="600" />
+
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="playLuckyWheel()">
+        幸运夺宝
+    </button>
+
+    <br>
+
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="searchFamily" id="searchFamily">
+        <option selected="selected" value="">请选择</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="searchFamily()">
+        查看公会信息
+    </button>
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="familyReward" id="familyReward">
+        <option selected="selected" value="0">全部</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="familyReward()">
+        周六公会奖励
+    </button>
+
+
+    <br>
+
+
+    <select style="font-size:40px;width:200px; height:100px;" name="unlockWorker" id="unlockWorker">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="unlockWorker()">
+        解锁工人
+    </button>
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="buildUpUsers" id="buildUpUsers">
+        <option selected="selected" value="">请选择</option>
+    </select>
+
+    <select style="font-size:40px;width:150px; height:100px;" name="buildUpAmount" id="buildUpAmount">
+        <option value="1">过岛次数</option>
+        <option selected="selected" value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="buildUp()">
+        过岛(25下)
+    </button>
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="searchRiceCake" id="searchRiceCake">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="searchRiceCake()">
+        整理汤圆数量
+    </button>
+
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="makeRiceCake" id="makeRiceCake">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="makeRiceCake()">
+        领取汤圆数量
+    </button>
+
+    <br>
+
+    <select style="font-size:40px;width:200px; height:100px;" name="getLabaPrize" id="getLabaPrize">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <select style="font-size:40px;width:350px; height:100px;" name="labaSelect" id="labaSelect">
+        <option value="1">能量助力</option>
+        <option value="2">刷新水果</option>
+        <option value="3">领光水果奖励</option>
+        <option selected="selected" value="0">领取水果奖励</option>
+    </select>
+
+    <button style="font-size:40px;width:300px; height:100px;" onclick="getLabaPrize()">
+        点击确认
+    </button>
+    <br>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="startPlayLuckyWheelGo()">
+        开启每日幸运夺宝100次领取
+    </button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="stopPlayLuckyWheelGo()">
+        关闭每日幸运夺宝100次领取
+    </button>
+    <br>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="startExchangeRiceCakeStatus()">
+        开启每日汤圆/钻石等活动领取
+    </button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="stopExchangeRiceCakeStatus()">
+        关闭每日汤圆/钻石等活动领取
+    </button>
+
+
+    <br>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="startSteamBoxStatus()">
+        开启汤圆定时器
+    </button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="stopSteamBoxStatus()">
+        关闭汤圆定时器
+    </button>
+
+    <br>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="startBeachStatus()">
+        开启沙滩定时器
+    </button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="stopBeachStatus()">
+        关闭沙滩定时器
+    </button>
+    <br>
+    <button style="font-size:40px;width:300px; height:100px;" onclick="restart()">
+        重启程序
+    </button>
+
+    <br>
+    <select style="font-size:40px;width:400px; height:100px;" name="getUserTokenSelect2" id="getUserTokenSelect2">
+    </select>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="getUserToken2()">
+        强制账号重连
+    </button>
+    <br>
+    <br>
+    <br>
+
+    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+
+    <script type="text/javascript">
+        window.status = "1";
+
+        restart = function () {
+            var r = confirm("重启程序是否继续？")
+            if (r == true) {
+                $.get(APIURL + "/restart", function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+        }
+
+        // 
+        startPlayLuckyWheelGo = function () {
+            $.get(APIURL + "/setConfig?confKey=PlayLuckyWheelGo&confValue=1", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        stopPlayLuckyWheelGo = function () {
+            $.get(APIURL + "/setConfig?confKey=PlayLuckyWheelGo&confValue=0", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        startExchangeRiceCakeStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=exchangeRiceCakeStatus&confValue=1", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        stopExchangeRiceCakeStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=exchangeRiceCakeStatus&confValue=0", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        startSteamBoxStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=steamBoxStatus&confValue=1", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        stopSteamBoxStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=steamBoxStatus&confValue=0", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+        startBeachStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=beachStatus&confValue=1", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        stopBeachStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=beachStatus&confValue=0", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+        pullAnimal = function () {
+            $.get(APIURL + "/pullAnimal", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        getUserInfo = function () {
+            var UID = $("#getUserInfoSelect option:selected").val();
+            window.open(APIURL + "/userInfo.html?id=" + UID)
+        }
+        getFamilyEnergy = function () {
+            var UID = $("#getFamilyEnergySelect option:selected").val();
+            window.open(APIURL + "/familyEnergy.html?id=" + UID)
+        }
+
+        getUserToken = function () {
+            var UID = $("#getUserTokenSelect option:selected").val();
+            var r = confirm("是否更新token？")
+            if (r == true) {
+                $.get(APIURL + "/getPassword?id=" + UID, function (data) {
+                    var password = data;
+                    const timestamp = new Date().getTime();
+                    $.get("https://login.11h5.com/account/api.php?c=login&d=auth&uid=" + UID + "&password=" + password + "&ver=" + timestamp, function (data) {
+                        var jsarr = JSON.parse(data);
+                        var token = jsarr.token;
+                        console.log("token is ", token);
+                        if (token != null && token != "") {
+                            $.get(APIURL + "/update?id=" + UID + "&token=" + token, function (data) {
+                                alert(data)
+                                window.status = "1";
+                            });
+                        } else {
+                            alert(jsarr.info)
+                        }
+                    });
+                });
+            }
+        }
+
+        getUserToken2 = function () {
+            var UID = $("#getUserTokenSelect2 option:selected").val();
+            var r = confirm("是否更新token？")
+            if (r == true) {
+                $.get(APIURL + "/getPassword?id=" + UID, function (data) {
+                    var password = data;
+                    const timestamp = new Date().getTime();
+                    $.get("https://login.11h5.com/account/api.php?c=login&d=auth&uid=" + UID + "&password=" + password + "&ver=" + timestamp, function (data) {
+                        var jsarr = JSON.parse(data);
+                        var token = jsarr.token;
+                        console.log("token is ", token);
+                        if (token != null && token != "") {
+                            $.get(APIURL + "/update?id=" + UID + "&token=" + token, function (data) {
+                                alert(data)
+                                window.status = "1";
+                            });
+                        } else {
+                            alert(jsarr.info)
+                        }
+                    });
+                });
+            }
+        }
+
+        familySign = function () {
+            var UID = $("#familySignSelect option:selected").val();
+            var r = confirm("公会签到是否继续")
+            if (r == true) {
+                $.get(APIURL + "/familySign?id=" + UID, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+        }
+
+        openSteamBox = function () {
+            var r = confirm("领取汤圆是否继续")
+            if (r == true) {
+                $.get(APIURL + "/openSteamBox", function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+        }
+
+
+        getSignPrize = function () {
+            $.get(APIURL + "/getSignPrize", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        getBox = function (flag) {
+            var r = confirm("getBox是否继续")
+            if (r == true) {
+                var boxUID = $("#boxUidsSelect option:selected").val();
+                var boxQuality = $("#BCSelect2 option:selected").val();
+                var boxAmount = document.getElementById("boxAmount");
+                $.get(APIURL + "/diamond?id=" + boxUID + "&quality=" + boxQuality + "&amount=" + boxAmount.value + "&flag=" + flag, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
+        }
+
+        hitCandy = function () {
+            var r = confirm("hitCandy是否继续")
+            if (r == true) {
+                var boxUID = $("#Oper_Candy option:selected").val();
+                var boxQuality = $("#BCSelect option:selected").val();
+
+                var boxAmount = document.getElementById("candyAmount");
+                $.get(APIURL + "/hitCandy?id=" + boxUID + "&quality=" + boxQuality + "&amount=" + boxAmount.value, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
+        }
+
+
+        useShovel = function () {
+            var r = confirm("useShovel是否继续")
+            if (r == true) {
+                var UseShovelFrom = $("#UseShovelFrom option:selected").val();
+                var UseShovelTo = $("#UseShovelTo option:selected").val();
+
+                $.get(APIURL + "/useShovel?id=" + UseShovelFrom + "&toid=" + UseShovelTo, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+        }
+
+        getBeachLineRewards = function () {
+
+            var r = confirm("getBeachLineRewards是否继续")
+            if (r == true) {
+                var GetBeachLineRewardsH = $("#GetBeachLineRewardsH option:selected").val();
+
+                $.get(APIURL + "/getBeachLineRewards?id=" + GetBeachLineRewardsH, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
+        }
+
+
+        loginByWechat = function () {
+            $.get(APIURL + "/loginByQrcode?id=1", function (data) {
+                // alert(data)
+                window.status = "1";
+                window.open(data);
+            });
+        }
+
+        loginByQQ = function () {
+            $.get(APIURL + "/loginByQrcode?id=4", function (data) {
+                // alert(data)
+                window.status = "1";
+                window.open(data);
+            });
+        }
+
+
+        startPullAnimal = function () {
+            $.get(APIURL + "/setConfig?confKey=pullAnimalGoStatus&confValue=1", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        // setPullRowsCount
+
+        setFamilyCount = function () {
+            var familyId = $("#setPullRowsSelectFamily1 option:selected").val();
+            var setFamilyCount = $("#setFamilyCount option:selected").val();
+            $.get(APIURL + "/setFamilyCount?input=" + setFamilyCount + "&familyId=" + familyId, function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+        setPullRows = function () {
+            var id = $("#setPullRowsSelect option:selected").val();
+            var familyId = $("#setPullRowsSelectFamily option:selected").val();
+
+            var value = document.getElementById("setPullRows").value
+            $.get(APIURL + "/setPullRows?input=" + value + "&id=" + id + "&familyId=" + familyId, function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        stopPullAnimal = function () {
+            $.get(APIURL + "/setConfig?confKey=pullAnimalGoStatus&confValue=0", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        startDrawStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=drawStatus&confValue=1", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        stopDrawStatus = function () {
+            $.get(APIURL + "/setConfig?confKey=drawStatus&confValue=0", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+
+        checkToken = function () {
+
+            var r = confirm("checkToken是否继续")
+            if (r == true) {
+                $.get(APIURL + "/checkToken", function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
+        }
+
+        attackBoss = function () {
+            var r = confirm("打500-800龙是否继续")
+            if (r == true) {
+                var id = $("#attackBossUsers option:selected").val();
+                $.get(APIURL + "/attackBoss?id=" + id, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        attackBoss1 = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                $.get(APIURL + "/attackBoss?id=309392050", function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+        sonAttackBoss = function () {
+            $.get(APIURL + "/sonAttackBoss", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+
+        oneSonAttackBoss = function (id) {
+            var r = confirm("是否继续")
+            if (r == true) {
+                $.get(APIURL + "/oneSonAttackBoss?id=" + id, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+        reload = function () {
+            window.location.reload();
+        }
+
+        login = function (id) {
+            if (id == "") {
+                var str = $("#Oper_Type option:selected").val();
+                id = str
+            }
+            // window.location.href = APIURL+"/login?id="+id;
+            window.open(APIURL + "/login?id=" + id)
+        }
+
+        // deleteAccount
+        deleteAccount = function (id) {
+            var str = $("#deleteAccount option:selected").val();
+            id = str
+            // window.location.href = APIURL+"/login?id="+id;
+            var r = confirm("是否继续")
+            if (r == true) {
+                $.get(APIURL + "/deleteAccount?id=" + id, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+        }
+
+        addAccount = function () {
+            var account = document.getElementById("account").value;
+            var password = document.getElementById("password").value;
+            if (account == "") {
+                alert("账号不能为空")
+                return
+            }
+            if (password == "") {
+                alert("密码不能为空")
+                return
+            }
+
+            console.log("account is ", account)
+            console.log("password is ", password)
+
+            $.get(APIURL + "/addAccount?account=" + account + "&password=" + password, function (data) {
+                alert(data)
+                window.location.href = "";
+                window.status = "1";
+            });
+        }
+
+
+        getFreeBossCannon = function (id) {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var id = $("#Oper_Boss option:selected").val();
+                $.get(APIURL + "/getFreeBossCannon?id=" + id, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
+        }
+
+
+
+        giftPiece = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var fromUid = $("#Oper_pieceFrom option:selected").val();
+                var toUid = $("#Oper_pieceTo option:selected").val();
+                var id = $("#PieceSelect option:selected").val();
+                var amount = $("#PieceAmount option:selected").val();
+
+
+
+                $.get(APIURL + "/giftPiece?id=" + id + "&fromUid=" + fromUid + "&toUid=" + toUid + "&amount=" + amount, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
+        }
+        // 
+
+        draw = function () {
+            var r = confirm("是否继续")
+            if (r == true) {
+                var id = $("#Oper_Draw option:selected").val();
+                var familyId = $("#selectDrawFamily option:selected").val();
+                var drawMulti = $("#DrawSelect option:selected").val();
+                var drawAmount = document.getElementById("drawAmount");
+                $.get(APIURL + "/draw?id=" + id + "&familyId=" + familyId + "&drawMulti=" + drawMulti + "&amount=" + drawAmount.value, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+
+        cancelFamilyRob = function () {
+            var r = confirm("cancelFamilyRob是否继续")
+            if (r == true) {
+                var id = $("#cancelFamilyRob option:selected").val();
+                var flag = $("#cancelFamilyRobFlag option:selected").val();
+
+                $.get(APIURL + "/cancelFamilyRob?id=" + id + "&flag=" + flag, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        unlockWorker = function () {
+            var r = confirm("unlockWorker是否继续")
+            if (r == true) {
+                var id = $("#unlockWorker option:selected").val();
+                $.get(APIURL + "/unlockWorker?id=" + id, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        searchFamily = function () {
+            // unlockWorker
+
+            var r = confirm("searchFamily")
+            if (r == true) {
+                var id = $("#searchFamily option:selected").val();
+
+                $.get(APIURL + "/searchFamily?id=" + id, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        allBeachHelp = function () {
+            // unlockWorker
+            var r = confirm("allBeachHelp")
+            if (r == true) {
+                $.get(APIURL + "/allBeachHelp", function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        playLuckyWheel = function () {
+            var r = confirm("playLuckyWheel")
+            if (r == true) {
+                var id = $("#playLuckyWheel option:selected").val();
+
+                // playLuckyWheelAmount
+                var playLuckyWheelAmount = document.getElementById("playLuckyWheelAmount").value;
+
+
+                $.get(APIURL + "/playLuckyWheel?id=" + id + "&amount=" + playLuckyWheelAmount, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+        }
+
+        familyReward = function () {
+            // unlockWorker
+
+            var r = confirm("familyReward")
+            if (r == true) {
+                var id = $("#familyReward option:selected").val();
+
+                $.get(APIURL + "/familyReward?id=" + id, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+
+
+        buildUp = function () {
+            var r = confirm("buildUp是否继续")
+            if (r == true) {
+                var id = $("#buildUpUsers option:selected").val();
+                var amount = $("#buildUpAmount option:selected").val();
+                $.get(APIURL + "/buildUp?id=" + id + "&amount=" + amount, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        searchRiceCake = function () {
+            var r = confirm("searchRiceCake是否继续")
+            if (r == true) {
+                var id = $("#searchRiceCake option:selected").val();
+
+                $.get(APIURL + "/searchRiceCake?id=" + id, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        makeRiceCake = function () {
+            var r = confirm("makeRiceCake是否继续")
+            if (r == true) {
+                var id = $("#makeRiceCake option:selected").val();
+
+                $.get(APIURL + "/makeRiceCake?id=" + id, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        getLabaPrize = function () {
+            var r = confirm("getLabaPrize是否继续")
+            if (r == true) {
+                var id = $("#getLabaPrize option:selected").val();
+                var flag = $("#labaSelect option:selected").val();
+
+                $.get(APIURL + "/getLabaPrize?id=" + id + "&flag=" + flag, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+
+        addFirewood = function () {
+            // buildUpUsers
+
+            var r = confirm("addFirewood是否继续")
+            if (r == true) {
+                var id = $("#addFirewoodOps option:selected").val();
+
+                var quality = $("#FirewoodQuality option:selected").val();
+
+                $.get(APIURL + "/addFirewood?id=" + id + "&quality=" + quality, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+        exchangeRiceCake = function () {
+            // buildUpUsers
+
+            var r = confirm("exchangeRiceCake是否继续")
+            if (r == true) {
+                var id = $("#exchangeRiceCake option:selected").val();
+
+                $.get(APIURL + "/exchangeRiceCake?id=" + id, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        getMiningScoreReward = function () {
+            // buildUpUsers
+
+            var r = confirm("getMiningScoreReward是否继续")
+            if (r == true) {
+                var id = $("#getMiningScoreReward option:selected").val();
+
+                $.get(APIURL + "/getMiningScoreReward?id=" + id, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+
+
+
+
+        setRunner = function () {
+            var r = confirm("setRunner是否继续")
+            if (r == true) {
+                var id = $("#RunnerUsers option:selected").val();
+                var drawMulti = $("#RunnerSelect option:selected").val();
+
+                $.get(APIURL + "/setRunner?id=" + id + "&key=" + drawMulti, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+        attackMyBoss = function () {
+            var r = confirm("attackMyBoss是否继续")
+            if (r == true) {
+                var boxUID = $("#SelectMyBoss option:selected").val();
+                var mode = $("#attackMyBossMode option:selected").val();
+
+                $.get(APIURL + "/attackMyBoss?id=" + boxUID + "&mode=" + mode, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+        }
+
+
+        throwDice = function () {
+            var r = confirm("throwDice是否继续")
+            if (r == true) {
+                var boxUID = $("#Oper_Dice option:selected").val();
+                var boxAmount = document.getElementById("diceAmount");
+                $.get(APIURL + "/throwDice?id=" + boxUID + "&amount=" + boxAmount.value, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+        }
+
+
+        singleBossAttack = function () {
+            var r = confirm("singleBossAttack是否继续")
+            if (r == true) {
+                var boxUID = $("#SingleBossSelect option:selected").val();
+                $.get(APIURL + "/singleBossAttack?id=" + boxUID, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
+        }
+
+        setPiece = function () {
+            var r = confirm("setPiece是否继续")
+            if (r == true) {
+                var boxUID = $("#PiecePrizeSelect option:selected").val();
+                var amount = $("#SetPieceAmount option:selected").val();
+                $.get(APIURL + "/setPiece?id=" + boxUID + "&amount=" + amount, function (data) {
+                    if (data == "SUCCESS") {
+                        alert(data)
+                    } else {
+                        window.open(data);
+                    }
+                    window.status = "1";
+                });
+            }
+
+        }
+
+
+        beachHelp = function () {
+            var r = confirm("beachHelp是否继续")
+            if (r == true) {
+                var boxUID = $("#BeachHelpSelect option:selected").val();
+                $.get(APIURL + "/beachHelp?id=" + boxUID, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
+        getMailPrize = function () {
+            var r = confirm("getMailPrize是否继续")
+            if (r == true) {
+                var boxUID = $("#Oper_Mail option:selected").val();
+                var familyId = $("#getMailPrizeFamilyId option:selected").val();
+                var title = $("#Oper_MailTitle option:selected").val();
+                var mailAmount = document.getElementById("mailAmount");
+                $.get(APIURL + "/getMailPrize?id=" + boxUID + "&familyId=" + familyId + "&title=" + title + "&amount=" + mailAmount.value, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+        }
+
+        doneUserPiece = function () {
+            var r = confirm("整理拼图是否继续")
+            if (r == true) {
+                var boxUID = $("#Oper_Mail option:selected").val();
+                var familyId = $("#getMailPrizeFamilyId option:selected").val();
+                var title = $("#Oper_MailTitle option:selected").val();
+                var mailAmount = document.getElementById("mailAmount");
+                $.get(APIURL + "/doneUserPiece?id=" + boxUID + "&familyId=" + familyId + "&title=" + title + "&amount=" + mailAmount.value, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+        }
+
+
+        getBossPrize = function () {
+            var r = confirm("getBossPrize是否继续")
+            if (r == true) {
+                var boxUID = $("#Oper_BossPrize option:selected").val();
+                $.get(APIURL + "/getBossPrize?id=" + boxUID, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
+        }
+
+
+        getServerLogs = function () {
+            window.open(APIURL + "/getServerLogs");
+        }
+
+        delServerLogs = function () {
+            $.get(APIURL + "/delServerLogs", function (data) {
+                alert(data)
+                window.status = "1";
+            });
+        }
+
+        // queryfamilyId = function (){
+        //     $.get(APIURL + "/queryfamilyId", function (data) {
+        //         var jsarr = JSON.parse(data);
+        //         console.log(jsarr)
+        //         for (var i = 0; i < jsarr.length; i++) {
+        //             var tOption = document.createElement("Option");
+        //             tOption.text = jsarr[i];
+        //             tOption.value = jsarr[i];
+        //             document.getElementById("setPullRowsSelectFamily").options.add(tOption);
+        //         }
+        //         for (var i = 0; i < jsarr.length; i++) {
+        //             var tOption = document.createElement("Option");
+        //             tOption.text = jsarr[i];
+        //             tOption.value = jsarr[i];
+        //             document.getElementById("setPullRowsSelectFamily1").options.add(tOption);
+        //         }
+
+        //         for (var i = 0; i < jsarr.length; i++) {
+        //             var tOption = document.createElement("Option");
+        //             tOption.text = jsarr[i];
+        //             tOption.value = jsarr[i];
+        //             document.getElementById("cancelFamilyRobFlag").options.add(tOption);
+        //         }
+
+        //         for (var i = 0; i < jsarr.length; i++) {
+        //             var tOption = document.createElement("Option");
+        //             tOption.text = jsarr[i];
+        //             tOption.value = jsarr[i];
+        //             document.getElementById("selectDrawFamily").options.add(tOption);
+        //         }
+
+        //     });
+        // }
+
+        queryfamilyId = function () {
+            $.get(APIURL + "/queryfamilyId2", function (data) {
+                var jsarr = JSON.parse(data);
+                console.log(jsarr)
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1") {
+                        name = "拉1"
+                    }
+                    if (jsarr[i]["pull_rows"] == "2") {
+                        name = "拉2"
+                    }
+                    if (jsarr[i]["pull_rows"] == "3") {
+                        name = "拉3"
+                    } 
+                    if (jsarr[i]["pull_rows"] == "4") {
+                        name = "拉4"
+                    }
+                    if (jsarr[i]["pull_rows"] == "5") {
+                        name = "拉5"
+                    }
+                    if (jsarr[i]["pull_rows"] == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("setPullRowsSelectFamily").options.add(tOption);
+
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1") {
+                        name = "拉1"
+                    }
+                    if (jsarr[i]["pull_rows"] == "2") {
+                        name = "拉2"
+                    }
+                    if (jsarr[i]["pull_rows"] == "3") {
+                        name = "拉3"
+                    } 
+                    if (jsarr[i]["pull_rows"] == "4") {
+                        name = "拉4"
+                    }
+                    if (jsarr[i]["pull_rows"] == "5") {
+                        name = "拉5"
+                    }
+                    if (jsarr[i]["pull_rows"] == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("setPullRowsSelectFamily1").options.add(tOption);
+                }
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1") {
+                        name = "拉1"
+                    }
+                    if (jsarr[i]["pull_rows"] == "2") {
+                        name = "拉2"
+                    }
+                    if (jsarr[i]["pull_rows"] == "3") {
+                        name = "拉3"
+                    } 
+                    if (jsarr[i]["pull_rows"] == "4") {
+                        name = "拉4"
+                    }
+                    if (jsarr[i]["pull_rows"] == "5") {
+                        name = "拉5"
+                    }
+                    if (jsarr[i]["pull_rows"] == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("cancelFamilyRobFlag").options.add(tOption);
+                }
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1") {
+                        name = "拉1"
+                    }
+                    if (jsarr[i]["pull_rows"] == "2") {
+                        name = "拉2"
+                    }
+                    if (jsarr[i]["pull_rows"] == "3") {
+                        name = "拉3"
+                    } 
+                    if (jsarr[i]["pull_rows"] == "4") {
+                        name = "拉4"
+                    }
+                    if (jsarr[i]["pull_rows"] == "5") {
+                        name = "拉5"
+                    }
+                    if (jsarr[i]["pull_rows"] == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("selectDrawFamily").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1") {
+                        name = "拉1"
+                    }
+                    if (jsarr[i]["pull_rows"] == "2") {
+                        name = "拉2"
+                    }
+                    if (jsarr[i]["pull_rows"] == "3") {
+                        name = "拉3"
+                    } 
+                    if (jsarr[i]["pull_rows"] == "4") {
+                        name = "拉4"
+                    }
+                    if (jsarr[i]["pull_rows"] == "5") {
+                        name = "拉5"
+                    }
+                    if (jsarr[i]["pull_rows"] == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("getMailPrizeFamilyId").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1") {
+                        name = "拉1"
+                    }
+                    if (jsarr[i]["pull_rows"] == "2") {
+                        name = "拉2"
+                    }
+                    if (jsarr[i]["pull_rows"] == "3") {
+                        name = "拉3"
+                    } 
+                    if (jsarr[i]["pull_rows"] == "4") {
+                        name = "拉4"
+                    }
+                    if (jsarr[i]["pull_rows"] == "5") {
+                        name = "拉5"
+                    }
+                    if (jsarr[i]["pull_rows"] == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("getFamilyEnergySelect").options.add(tOption);
+                }
+
+                // 
+
+
+            });
+        }
+
+        getAllTokens = function () {
+            $.get(APIURL + "/getAllTokens", function (data) {
+                var jsarr = JSON.parse(data);
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+
+                    if (jsarr[i]["id"] == "302691822") {
+                        tOption.selected = true;
+                    }
+                    document.getElementById("Oper_Type").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    if (jsarr[i]["token"] == "") {
+                        var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("getUserTokenSelect").options.add(tOption);
+                    }
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                        var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("getUserInfoSelect").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                        var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("getUserTokenSelect2").options.add(tOption);
+                }
+
+                // 
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("deleteAccount").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("boxUidsSelect").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_Candy").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_Boss").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_pieceFrom").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_pieceTo").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_Draw").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_Dice").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_Mail").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_BossPrize").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("PiecePrizeSelect").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("SelectMyBoss").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("attackBossUsers").options.add(tOption);
+                }
+
+                // 
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("BeachHelpSelect").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("UseShovelFrom").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("UseShovelTo").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("GetBeachLineRewardsH").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("RunnerUsers").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("buildUpUsers").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("searchRiceCake").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("makeRiceCake").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("getLabaPrize").options.add(tOption);
+                }
+
+
+
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+
+                    // if (jsarr[i]["id"] == "302691822") {
+                    //     tOption.selected = true;
+                    // }
+                    document.getElementById("addFirewoodOps").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("exchangeRiceCake").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("getMiningScoreReward").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("familySignSelect").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("setPullRowsSelect").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("unlockWorker").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("cancelFamilyRob").options.add(tOption);
+                }
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("searchFamily").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("playLuckyWheel").options.add(tOption);
+                }
+
+
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("familyReward").options.add(tOption);
+                }
+
+                // 
+
+                // 
+
+                // exchangeRiceCake
+
+
+
+                window.status = "1";
+            });
+        }
+
+
+
+        // 
+
+
+        // 
+
+
+        // 
+
+        // 
+
+        toubi = function () {
+            $.get("http://192.168.1.13:21000/print?command=1", function () {
+                window.status = "1";
+            });
+        }
+
+        you = function () {
+            $.get("http://192.168.1.13:21000/print?command=2", function () {
+                window.status = "1";
+            });
+        }
+
+        youstop = function () {
+            $.get("http://192.168.1.13:21000/print?command=3", function () {
+                window.status = "1";
+            });
+        }
+
+        hou = function () {
+            $.get("http://192.168.1.13:21000/print?command=4", function () {
+                window.status = "1";
+            });
+        }
+
+        houstop = function () {
+            $.get("http://192.168.1.13:21000/print?command=5", function () {
+                window.status = "1";
+            });
+        }
+
+        third = function () {
+            $.get("http://192.168.1.13:21000/print?command=6", function () {
+                window.status = "1";
+            });
+        }
+
+        thirdstop = function () {
+            $.get("http://192.168.1.13:21000/print?command=7", function () {
+                window.status = "1";
+            });
+        }
+
+        gopen = function (i) {
+            if (window.status != "1") {
+                return;
+            }
+            window.status = "0";
+            $.get("http://8.134.19.98:8888/open/" + i, function () {
+                window.status = "1";
+            });
+        }
+
+        gclose = function (i) {
+            if (window.status != "1") {
+                return;
+            }
+            window.status = "0";
+            $.get("http://8.134.19.98:8888/close/" + i, function () {
+                window.status = "1";
+            });
+        }
+
+        var url = document.location;
+
+        var APIURL = url["protocol"] + "//" + url["host"]
+
+        getAllTokens();
+        queryfamilyId();
+
+    </script>
+
+
+</body>
+
+</html>
