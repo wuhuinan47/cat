@@ -1652,8 +1652,7 @@ func SearchRiceCakeH(w http.ResponseWriter, req *http.Request) {
 		UpdateUser(uid, serverURL, zoneToken, token)
 
 		xlog.Infof("a:%v,b:%v,c:%v,d:%v,e:%v\n", a, b, c, d, e)
-		contentStr += name + "\n" + old + "\n" + new + "\n" + needs + "\n"
-
+		contentStr += name + "\n" + "当前有：" + old + "\n" + "邮件有：" + new + "\n" + "最优领取数量：" + needs + "\n"
 	}
 	io.WriteString(w, contentStr)
 }
@@ -1956,8 +1955,10 @@ func addFirewoodLogic(id string, quality float64) {
 	for rows.Next() {
 		var uid, name, token string
 		rows.Scan(&uid, &name, &token)
+		if uid == "302691822" && id == "system" && quality == 0 {
+			continue
+		}
 		user := GetUser(uid)
-
 		uids, helpUids := getSteamBoxHelpList(user.ServerURL, user.ZoneToken, quality)
 		for _, v := range uids {
 			fuid := fmt.Sprintf("%v", v)
