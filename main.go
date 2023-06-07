@@ -355,7 +355,7 @@ func main() {
 
 	running := true
 	{
-		go runner.NamedRunnerWithSeconds("RunnerPullAnimal", 1800, &running, RunnerPullAnimal)
+		go runner.NamedRunnerWithSeconds("RunnerPullAnimal", 900, &running, RunnerPullAnimal)
 		go runner.NamedRunnerWithSeconds("RunnerDraw", 3700, &running, RunnerDraw)
 		go runner.NamedRunnerWithSeconds("RunnerSteamBox", 1900, &running, RunnerSteamBox)
 		go runner.NamedRunnerWithSeconds("RunnerBeach", 21600, &running, RunnerBeach)
@@ -2820,14 +2820,7 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 
 			// zoneToken, familyDayTask := getEnterInfo(uid, name, serverURL, token, "familyDayTask")
 
-			familyDayTask, ok := familyDayTask.(map[string]interface{})
-
-			if ok {
-				for k := range familyDayTask {
-					getFamilyDayTaskPrize(serverURL, zoneToken, k)
-					xlog.Infof("[%v]领取公会任务奖励[%v]", name, k)
-				}
-			}
+			getFamilyTaskPrizeLogic(familyDayTask, serverURL, zoneToken, name)
 
 		}()
 	}
@@ -2921,10 +2914,8 @@ func drawAll(intDrawMulti, intAmount int) {
 				return
 			}
 
-			for k := range goFamilyDayTask.(map[string]interface{}) {
-				getFamilyDayTaskPrize(goServerURL, goZoneToken, k)
-				xlog.Infof("[%v]领取公会任务奖励[%v]", goName, k)
-			}
+			getFamilyTaskPrizeLogic(goFamilyDayTask, goServerURL, goZoneToken, goName)
+
 		} else {
 			go func() {
 				xlog.Infof("---------------------------[%v]开始转盘[intDrawMulti:%v][intAmount:%v]---------------------------", goName, intDrawMulti, intAmount)
@@ -2977,10 +2968,7 @@ func drawAll(intDrawMulti, intAmount int) {
 					return
 				}
 
-				for k := range goFamilyDayTask.(map[string]interface{}) {
-					getFamilyDayTaskPrize(goServerURL, goZoneToken, k)
-					xlog.Infof("[%v]领取公会任务奖励[%v]", goName, k)
-				}
+				getFamilyTaskPrizeLogic(goFamilyDayTask, goServerURL, goZoneToken, goName)
 
 			}()
 		}
@@ -3055,14 +3043,7 @@ func DrawH1(s *web.Session) web.Result {
 
 		// zoneToken, familyDayTask := getEnterInfo(uid, name, serverURL, token, "familyDayTask")
 
-		familyDayTask, ok := familyDayTask.(map[string]interface{})
-
-		if ok {
-			for k := range familyDayTask {
-				getFamilyDayTaskPrize(serverURL, zoneToken, k)
-				xlog.Infof("[%v]领取公会任务奖励[%v]", name, k)
-			}
-		}
+		getFamilyTaskPrizeLogic(familyDayTask, serverURL, zoneToken, name)
 
 	}()
 
@@ -4899,8 +4880,6 @@ func pullAnimalBySql(SQL string) {
 			insertAllAnimals(uid, foods)
 			xlog.Infof("[%v]拉动物完成", name)
 		}
-		// time.Sleep(time.Second * 1)
-		// xlog.Infof("serverURL:%v, zoneToken:%v\n", serverURL, zoneToken)
 	}
 }
 
@@ -8342,8 +8321,13 @@ func getDayTasksInfo(serverURL, zoneToken string) (keys []string) {
 	tasks, ok := formData["tasks"].(map[string]interface{})
 
 	if ok {
-		for k := range tasks {
-			keys = append(keys, k)
+		for k, v := range tasks {
+			vv, ok := v.(map[string]interface{})
+			if ok {
+				if vv["a"].(float64) == 0 {
+					keys = append(keys, k)
+				}
+			}
 		}
 	}
 
@@ -8932,6 +8916,7 @@ func RunnerDraw() (err error) {
 	}
 
 	hour := time.Now().Hour()
+	minute := time.Now().Minute()
 
 	var maxDraw float64
 	Pool.QueryRow("select conf_value from config where conf_key = 'maxDraw'").Scan(&maxDraw)
@@ -9044,10 +9029,7 @@ func RunnerDraw() (err error) {
 						return err
 					}
 
-					for k := range goFamilyDayTask.(map[string]interface{}) {
-						getFamilyDayTaskPrize(goServerURL, goZoneToken, k)
-						xlog.Infof("[%v]领取公会任务奖励[%v]", goName, k)
-					}
+					getFamilyTaskPrizeLogic(goFamilyDayTask, goServerURL, goZoneToken, goName)
 
 				}
 
@@ -9098,10 +9080,7 @@ func RunnerDraw() (err error) {
 						return
 					}
 
-					for k := range goFamilyDayTask.(map[string]interface{}) {
-						getFamilyDayTaskPrize(goServerURL, goZoneToken, k)
-						xlog.Infof("[%v]领取公会任务奖励[%v]", goName, k)
-					}
+					getFamilyTaskPrizeLogic(goFamilyDayTask, goServerURL, goZoneToken, goName)
 
 				}()
 			}
@@ -9166,6 +9145,12 @@ func RunnerDraw() (err error) {
 
 	if hour == 0 || hour == 1 || hour == 3 || hour == 8 || hour == 11 || hour == 14 || hour == 17 || hour == 20 || hour == 22 {
 		xlog.Infof("start draw")
+		if hour == 0 {
+			if minute < 3 {
+				xlog.Infof("no draw")
+				return
+			}
+		}
 		SQL := "select id, name, token, familyId from tokens where draw_status = 1"
 
 		rows, err := Pool.Query(SQL)
@@ -9273,10 +9258,7 @@ func RunnerDraw() (err error) {
 						return err
 					}
 
-					for k := range goFamilyDayTask.(map[string]interface{}) {
-						getFamilyDayTaskPrize(goServerURL, goZoneToken, k)
-						xlog.Infof("[%v]领取公会任务奖励[%v]", goName, k)
-					}
+					getFamilyTaskPrizeLogic(goFamilyDayTask, goServerURL, goZoneToken, goName)
 
 				}
 
@@ -9327,10 +9309,7 @@ func RunnerDraw() (err error) {
 						return
 					}
 
-					for k := range goFamilyDayTask.(map[string]interface{}) {
-						getFamilyDayTaskPrize(goServerURL, goZoneToken, k)
-						xlog.Infof("[%v]领取公会任务奖励[%v]", goName, k)
-					}
+					getFamilyTaskPrizeLogic(goFamilyDayTask, goServerURL, goZoneToken, goName)
 
 				}()
 			}
@@ -9342,6 +9321,23 @@ func RunnerDraw() (err error) {
 
 	xlog.Infof("no draw")
 	return
+}
+
+// 1=护盾防御住1次攻击 2=领取1次免费20能量 3=在公会聊天发言1次 4=领取1点好友赠送能量 5=使用转盘100次 6=攻击仇人1次 7=通过转盘获得3个护盾 8=偷对土豪2次 9=自己召唤的恶龙被击杀 11=使用魔法药水重置糖果树 13=在糖果树上打出1个糖果 15=分享3次
+func getFamilyTaskPrizeLogic(goFamilyDayTask interface{}, goServerURL, goZoneToken, goName string) {
+	familyDayTask, ok := goFamilyDayTask.(map[string]interface{})
+	if !ok {
+		return
+	}
+	for k, v := range familyDayTask {
+		vv, ok := v.(map[string]interface{})
+		if ok {
+			if vv["prize"].(float64) == 0 && vv["count"].(float64) > 0 {
+				getFamilyDayTaskPrize(goServerURL, goZoneToken, k)
+				xlog.Infof("[%v]领取公会任务奖励[%v]", goName, k)
+			}
+		}
+	}
 }
 
 func RunnerPullAnimal() (err error) {
@@ -9371,55 +9367,57 @@ func RunnerPullAnimal() (err error) {
 
 		xlog.Infof("现在开始拉动物")
 
-		SQL := "select id, token, name, pull_rows from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
-		var uid, token, name, pullRows string
-
-		err = Pool.QueryRow(SQL).Scan(&uid, &token, &name, &pullRows)
-
-		if err != nil {
-			return
-		}
-
-		user := GetUser(uid)
-
-		collectMineGold(user.ServerURL, user.ZoneToken)
-		foods := enterFamilyRob(user.ServerURL, user.ZoneToken)
-		for _, v := range foods {
-			// myTeam := v["myTeam"].(int)
-			// if myTeam != 4 {
-			if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
-				robFamilyFood(user.ServerURL, user.ZoneToken, v["id"].(string))
-				break
-			}
-			// }
-
-		}
-		insertAllAnimals(uid, foods)
-		xlog.Infof("[%v]拉动物完成", name)
-		// time.Sleep(time.Second * 1)
-		// xlog.Infof("cowboy serverURL:%v, zoneToken:%v\n", serverURL, zoneToken)
-
 		pullAnimalGo()
 
-		time.Sleep(900 * time.Second)
+		// SQL := "select id, token, name, pull_rows from tokens where id = (select conf_value from config where conf_key = 'cowBoy')"
+		// var uid, token, name, pullRows string
 
-		err = Pool.QueryRow(SQL).Scan(&uid, &token, &name, &pullRows)
-		user = GetUser(uid)
+		// err = Pool.QueryRow(SQL).Scan(&uid, &token, &name, &pullRows)
 
-		foods = enterFamilyRob(user.ServerURL, user.ZoneToken)
+		// if err != nil {
+		// 	return
+		// }
 
-		for _, v := range foods {
-			// myTeam := v["myTeam"].(int)
-			// if myTeam != 4 {
-			if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
-				robFamilyFood(user.ServerURL, user.ZoneToken, v["id"].(string))
-				break
-			}
-			// }
+		// user := GetUser(uid)
 
-		}
-		insertAllAnimals(uid, foods)
-		xlog.Infof("[%v]拉动物完成", name)
+		// collectMineGold(user.ServerURL, user.ZoneToken)
+		// foods := enterFamilyRob(user.ServerURL, user.ZoneToken)
+		// for _, v := range foods {
+		// 	// myTeam := v["myTeam"].(int)
+		// 	// if myTeam != 4 {
+		// 	if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
+		// 		robFamilyFood(user.ServerURL, user.ZoneToken, v["id"].(string))
+		// 		break
+		// 	}
+		// 	// }
+
+		// }
+		// insertAllAnimals(uid, foods)
+		// xlog.Infof("[%v]拉动物完成", name)
+		// // time.Sleep(time.Second * 1)
+		// // xlog.Infof("cowboy serverURL:%v, zoneToken:%v\n", serverURL, zoneToken)
+
+		// pullAnimalGo()
+
+		// time.Sleep(900 * time.Second)
+
+		// err = Pool.QueryRow(SQL).Scan(&uid, &token, &name, &pullRows)
+		// user = GetUser(uid)
+
+		// foods = enterFamilyRob(user.ServerURL, user.ZoneToken)
+
+		// for _, v := range foods {
+		// 	// myTeam := v["myTeam"].(int)
+		// 	// if myTeam != 4 {
+		// 	if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
+		// 		robFamilyFood(user.ServerURL, user.ZoneToken, v["id"].(string))
+		// 		break
+		// 	}
+		// 	// }
+
+		// }
+		// insertAllAnimals(uid, foods)
+		// xlog.Infof("[%v]拉动物完成", name)
 
 		return
 	}
@@ -9517,10 +9515,8 @@ func RunnerCheckTokenGoLogic() (err error) {
 		if user.FamilyDayTask == nil {
 			continue
 		}
-		for k := range user.FamilyDayTask.(map[string]interface{}) {
-			getFamilyDayTaskPrize(user.ServerURL, user.ZoneToken, k)
-			xlog.Infof("[%v]领取公会任务奖励[%v]", user.Name, k)
-		}
+		getFamilyTaskPrizeLogic(user.FamilyDayTask, user.ServerURL, user.ZoneToken, user.Name)
+
 	}
 	RunnerBeach()
 
