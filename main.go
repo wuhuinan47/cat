@@ -378,7 +378,7 @@ func main() {
 	go RunnerEveryOneSteamBox()
 
 	if cfg.Str("draw") == "1" {
-		go drawLogic(time.Now().Hour(), 200, 1, true)
+		go drawLogic(time.Now().Hour(), 800, 5, true)
 	}
 
 	runnerPull := cfg.Int("runner_pull")
@@ -465,78 +465,26 @@ func main() {
 }
 
 func Handle(pre string, mux *web.SessionMux) {
-	// mux.FilterFunc("^"+pre+"/(index.html)?(\\?.*)?$", SellerIDF)
 	mux.FilterFunc("^"+pre+"/usr/.*$", LoginAccessF)
-	//index
-	// mux.HandleFunc("^"+pre+"/pub/loadIndex(\\?.*)?$", LoadIndexH)
-	// mux.HandleFunc("^"+pre+"/usr/updateIndex(\\?.*)?$", UpdateIndexH)
-
-	//user
 	mux.HandleFunc("^"+pre+"/pub/adminLogin(\\?.*)?$", AdminLoginH)
 	mux.HandleFunc("^"+pre+"/usr/logout(\\?.*)?$", LogoutH)
-
-	// "^"+pre+"/pub/login(\\?.*)?$
-
 	mux.HandleFunc("^"+pre+"/pub/login(\\?.*)?$", LoginH1)
 	mux.HandleFunc("^"+pre+"/pub/update(\\?.*)?$", UpdateH1)
 	mux.HandleFunc("^"+pre+"/usr/pullAnimal(\\?.*)?$", PullAnimalH1)
 	mux.HandleFunc("^"+pre+"/usr/diamond(\\?.*)?$", DiamondH1)
 	mux.HandleFunc("^"+pre+"/usr/familySign(\\?.*)?$", familySignH1)
-	// mux.HandleFunc("^"+pre+"/pub/sendQrcode(\\?.*)?$", SendQrcodeH1)
-	// mux.HandleFunc("^"+pre+"/pub/sendQQQrcode(\\?.*)?$", SendQQQrcodeH1)
-
 	mux.HandleFunc("^"+pre+"/pub/loginByQrcode(\\?.*)?$", LoginByQrcodeH1)
-	// mux.HandleFunc("^"+pre+"/usr/setConfig(\\?.*)?$", SetConfigH1)
 	mux.HandleFunc("^"+pre+"/usr/getAllTokens(\\?.*)?$", GetAllTokensH1)
-
 	mux.HandleFunc("^"+pre+"/usr/hitCandy(\\?.*)?$", HitCandyH1)
-	// mux.HandleFunc("^"+pre+"/usr/getFreeBossCannon(\\?.*)?$", GetFreeBossCannonH1)
-
 	mux.HandleFunc("^"+pre+"/usr/attackBoss(\\?.*)?$", AttackBossH1)
-	// mux.HandleFunc("^"+pre+"/usr/giftPiece(\\?.*)?$", GiftPieceH1)
 	mux.HandleFunc("^"+pre+"/usr/draw(\\?.*)?$", DrawH1)
-	// mux.HandleFunc("^"+pre+"/usr/throwDice(\\?.*)?$", ThrowDiceH1)
-	// mux.HandleFunc("^"+pre+"/usr/getMailPrize(\\?.*)?$", GetMailPrizeH1)
 	mux.HandleFunc("^"+pre+"/usr/getBossPrize(\\?.*)?$", GetBossPrizeH1)
 	mux.HandleFunc("^"+pre+"/usr/singleBossAttack(\\?.*)?$", SingleBossAttackH1)
 	mux.HandleFunc("^"+pre+"/usr/setPiece(\\?.*)?$", SetPieceH1)
-	// mux.HandleFunc("^"+pre+"/usr/sixEnergy(\\?.*)?$", SixEnergyH1)
 	mux.HandleFunc("^"+pre+"/usr/attackMyBoss(\\?.*)?$", AttackMyBossH1)
-	// mux.HandleFunc("^"+pre+"/usr/beachHelp(\\?.*)?$", BeachHelpH1)
-	// mux.HandleFunc("^"+pre+"/usr/useShovel(\\?.*)?$", UseShovelH1)
-	// mux.HandleFunc("^"+pre+"/usr/getBeachLineRewards(\\?.*)?$", GetBeachLineRewardsH1)
-	// mux.HandleFunc("^"+pre+"/usr/setRunner(\\?.*)?$", SetRunnerH1)
-	// mux.HandleFunc("^"+pre+"/usr/buildUp(\\?.*)?$", BuildUpH1)
-	// mux.HandleFunc("^"+pre+"/usr/openSteamBox(\\?.*)?$", OpenSteamBoxH1)
 	mux.HandleFunc("^"+pre+"/usr/setPullRows(\\?.*)?$", SetPullRowsH1)
-	// mux.HandleFunc("^"+pre+"/usr/addFirewood(\\?.*)?$", AddFirewoodH1)
-	// mux.HandleFunc("^"+pre+"/usr/exchangeRiceCake(\\?.*)?$", ExchangeRiceCakeH1)
-	// mux.HandleFunc("^"+pre+"/usr/unlockWorker(\\?.*)?$", UnlockWorkerH1)
 	mux.HandleFunc("^"+pre+"/usr/searchFamily(\\?.*)?$", SearchFamilyH1)
-	// mux.HandleFunc("^"+pre+"/usr/getTodayAnimal(\\?.*)?$", GetTodayAnimalsH1)
 	mux.HandleFunc("^"+pre+"/usr/familyReward(\\?.*)?$", FamilyRewardH1)
-
-	//
-
-	// mux.HandleFunc("^"+pre+"/getServerURL(\\?.*)?$", GetServerURLH1)
-	// mux.HandleFunc("^"+pre+"/getZoneToken(\\?.*)?$", GetZoneTokenH1)
-
-	//
-	// mux.HandleFunc("^"+pre+"/checkToken(\\?.*)?$", CheckTokenH1)
-
-	//
-
-	// mux.HandleFunc("^"+pre+"/ctrl.html(\\?.*)?$", IndexH1)
-	// mux.HandleFunc("^"+pre+"/maolaile.html(\\?.*)?$", MaolaileH1)
-	// mux.HandleFunc("^"+pre+"/cat_demo.html(\\?.*)?$", CatDemoH1)
-
-	// mux.HandleFunc("^"+pre+"/(\\?.*)?$", StaticServer1)
-
-	// mux.HandleFunc("^"+pre+"/usr/getServerLogs(\\?.*)?$", GetServerLogsH1)
-	// mux.HandleFunc("^"+pre+"/delServerLogs(\\?.*)?$", DelServerLogsH1)
-
-	//
-
 }
 
 // LoginAccessF is the normal user login access filter
@@ -1681,7 +1629,7 @@ func SearchRiceCakeH(w http.ResponseWriter, req *http.Request) {
 		serverURL := getServerURL()
 		zoneToken, _, _, riceCake := getZoneToken_1(serverURL, token)
 
-		a, b, c, d, e, old, new, needs := getRiceNums(riceCake, serverURL, zoneToken)
+		a, b, c, d, e, old, new, needs := getRiceNums(riceCake, serverURL, zoneToken, 0)
 		UpdateUser(uid, serverURL, zoneToken, token)
 
 		xlog.Infof("a:%v,b:%v,c:%v,d:%v,e:%v\n", a, b, c, d, e)
@@ -1690,7 +1638,7 @@ func SearchRiceCakeH(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, contentStr)
 }
 
-func getRiceNums(riceCake map[string]float64, serverURL, zoneToken string) (a, b, c, d, e float64, old, new, needs string) {
+func getRiceNums(riceCake map[string]float64, serverURL, zoneToken string, targetE float64) (a, b, c, d, e float64, old, new, needs string) {
 	var a1, b1, c1, d1, e1 float64
 	var a2, b2, c2, d2, e2 float64
 
@@ -1717,12 +1665,53 @@ func getRiceNums(riceCake map[string]float64, serverURL, zoneToken string) (a, b
 		}
 	}
 
+	if targetE > 0 {
+		if e2 > targetE {
+			e2 = targetE
+		}
+	}
 	limitV := e1 + e2
 	e = e2
 	d = getRiceCakeInterval(d1, d2, limitV)
 	c = getRiceCakeInterval(c1, c2, limitV)
 	b = getRiceCakeInterval(b1, b2, limitV*2)
 	a = getRiceCakeInterval(a1, a2, limitV*2)
+
+	aMax := (a + a1) / 2
+	bMax := (b + b1) / 2
+	cMax := (c + c1)
+	dMax := (d + d1)
+	eMax := (e + e1)
+	//  找到最小的
+	min := aMax
+	if bMax < min {
+		min = bMax
+	}
+	if cMax < min {
+		min = cMax
+	}
+	if dMax < min {
+		min = dMax
+	}
+	if eMax < min {
+		min = eMax
+	}
+
+	// 去掉min的小数部分
+	min = math.Floor(min)
+
+	// 比较min和limitV
+	if min < limitV {
+		limitV = min
+		e = limitV - e1
+		if e < 0 {
+			e = 0
+		}
+		d = getRiceCakeInterval(d1, d2, limitV)
+		c = getRiceCakeInterval(c1, c2, limitV)
+		b = getRiceCakeInterval(b1, b2, limitV*2)
+		a = getRiceCakeInterval(a1, a2, limitV*2)
+	}
 
 	old += formatItemName("98") + ":" + fmt.Sprintf("%v", a1) + "|"
 	new += formatItemName("98") + ":" + fmt.Sprintf("%v", a2) + "|"
@@ -1826,6 +1815,8 @@ func getLabaPrizeLogic(id, flag string) {
 
 func MakeRiceCakeH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
+	amount := req.URL.Query().Get("amount")
+	intAmount, _ := strconv.Atoi(amount)
 	SQL := fmt.Sprintf("select id, name, token from tokens where id = %s", id)
 	if id == "" {
 		SQL = "select id, name, token from tokens"
@@ -1842,7 +1833,7 @@ func MakeRiceCakeH(w http.ResponseWriter, req *http.Request) {
 		serverURL := getServerURL()
 		zoneToken, _, _, riceCake := getZoneToken_1(serverURL, token)
 
-		a, b, c, d, e, _, _, _ := getRiceNums(riceCake, serverURL, zoneToken)
+		a, b, c, d, e, _, _, _ := getRiceNums(riceCake, serverURL, zoneToken, float64(intAmount))
 		UpdateUser(uid, serverURL, zoneToken, token)
 		if a > 0 {
 			mailids := getMailList(serverURL, zoneToken, "煮汤圆成功开启", "98")
@@ -3378,6 +3369,10 @@ func attackMyBossLogic(id, mode string) (err error) {
 		SQL = "select id,name,token from tokens where FIND_IN_SET(id, (select conf_value from config where conf_key='cannotdeleteusers'))"
 	}
 
+	if id == "1945" {
+		SQL = "select id,name,token from tokens where familyId = 1945"
+	}
+
 	rows, err := Pool.Query(SQL)
 	if err != nil {
 		return
@@ -3396,25 +3391,52 @@ func attackMyBossLogic(id, mode string) (err error) {
 
 			bossCannonFloat, ok := bossCannon.(float64)
 
-			if !ok {
+			if !ok && mode != "5000" {
 				xlog.Infof("---------------------------[%v]bossCannon无法打龙---------------------------", name)
 				return
 			}
 
 			if zoneToken != "" {
-				bossID, bossHp := summonBossBlood(serverURL, zoneToken, bossCannonFloat)
+
+				bossID, bossHp := getMyBoss(serverURL, zoneToken)
+
+				if bossID == "" {
+					if mode == "5000" {
+						if bossCannonFloat < 8 {
+							for i := 0; i < 3; i++ {
+								getBossCannonFromfamilyShop(serverURL, zoneToken)
+								xlog.Infof("[%v]购买boss炮台", name)
+								bossCannonFloat += 10
+							}
+						} else if bossCannonFloat < 18 {
+							for i := 0; i < 2; i++ {
+								getBossCannonFromfamilyShop(serverURL, zoneToken)
+								xlog.Infof("[%v]购买boss炮台", name)
+								bossCannonFloat += 10
+							}
+						} else if bossCannonFloat < 28 {
+							getBossCannonFromfamilyShop(serverURL, zoneToken)
+							xlog.Infof("[%v]购买boss炮台", name)
+							bossCannonFloat += 10
+						}
+					}
+					bossID, bossHp = summonBossBlood(serverURL, zoneToken, bossCannonFloat)
+				}
+
 				if bossID == "" {
 					xlog.Infof("---------------------------[%v]bossID无法打龙---------------------------", name)
 					return
 				}
 				// Pool.Exec("insert into boss_list (boss_id) values (?)", bossID)
 				Pool.Exec("update config set conf_value = 0 where conf_key = 'checkTokenStatus'")
-				inviteBoss(serverURL, zoneToken, bossID)
-				time.Sleep(time.Second * 1)
-				shareAPI(serverURL, zoneToken)
-				if uid == "302691822" || uid == "309392050" {
-					Pool.Exec("update config set conf_value = 1 where conf_key = 'checkTokenStatus'")
-					return
+				if mode != "5000" {
+					inviteBoss(serverURL, zoneToken, bossID)
+					time.Sleep(time.Second * 1)
+					shareAPI(serverURL, zoneToken)
+					if uid == "302691822" || uid == "309392050" {
+						Pool.Exec("update config set conf_value = 1 where conf_key = 'checkTokenStatus'")
+						return
+					}
 				}
 				xlog.Infof("---------------------------[%v]开始打龙---------------------------", name)
 				attackMyBossByHp(uid, serverURL, zoneToken, bossID, mode, bossHp)
@@ -6291,6 +6313,22 @@ func summonBoss(serverURL, zoneToken string, bossCannonFloat float64) string {
 	return bossID
 }
 
+func getMyBoss(serverURL, zoneToken string) (bossID string, leftHp float64) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	url := fmt.Sprintf("%v/game?cmd=getMyBoss&token=%v&now=%v", serverURL, zoneToken, now)
+	formData := httpGetReturnJson(url)
+	myBoss, ok := formData["boss"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	bossID, ok = myBoss["id"].(string)
+	if !ok {
+		return
+	}
+	leftHp = myBoss["leftHp"].(float64)
+	return
+}
+
 // 开启Boss
 func summonBossBlood(serverURL, zoneToken string, bossCannonFloat float64) (bossID string, leftHp float64) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
@@ -6543,6 +6581,494 @@ func attackMyBoss(uid, serverURL, zoneToken, bossID, mode string) {
 func attackMyBossByHp(uid, serverURL, zoneToken, bossID, mode string, hp float64) {
 
 	// Pool.QueryRow("select conf_value from config where conf_key = 'attackBossMode'").Scan()
+
+	if mode == "5000" {
+		lock := userOnline.GetUserLock(uid)
+		lock.Lock()
+		defer lock.Unlock()
+		switch hp {
+		case 5000:
+			// 300
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			// 1500
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			// 1800
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			// 3000
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			// 3300
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			// 4100
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			// 4400
+			attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			return
+		case 4900:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 4800:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 4700:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 4500:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 5, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 4300:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 4100:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 3900:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 3700:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 3500:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 3400:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 3300:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 3200:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 6, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 3000:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 5, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 2800:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 2600:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 2400:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 2200:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 2000:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 1900:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 1800:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 0, 100, 100, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+
+		case 1700:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+			if !flag {
+				return
+			}
+		case 1500:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+		case 1300:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+		case 1100:
+			flag := attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 4400)
+			if !flag {
+				return
+			}
+			attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+		case 900:
+			attackBossAPI(serverURL, zoneToken, bossID, 3, 1, 1, 300, 300, 0)
+		case 600:
+			attackBossAPI(serverURL, zoneToken, bossID, 2, 1, 1, 300, 300, 0)
+		case 300:
+			attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 300, 300, 0)
+		default:
+
+		}
+		return
+	}
 
 	if mode == "4400" {
 
@@ -9716,7 +10242,21 @@ func RunnerFamilySignGo() (err error) {
 		familyRewardLogic("")
 	}
 	familySignGo()
-	drawLogic(time.Now().Hour(), 200, 1, true)
+
+	if time.Now().Weekday() == time.Saturday {
+		if time.Now().Hour() == 0 {
+			if runnerStatus("SaturdayAttackMyBossStatus") == "1" {
+				attackMyBossLogic("1945", "5000")
+				time.Sleep(time.Second * 200)
+			}
+		}
+	}
+	now := time.Now()
+	if now.Minute() < 35 {
+		s := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 35, 0, 0, now.Location())
+		time.Sleep(s.Sub(now))
+	}
+	drawLogic(time.Now().Hour(), 800, 5, true)
 	return
 }
 
@@ -10218,9 +10758,16 @@ func confirmFriend(serverURL, zoneToken, fuid string) {
 
 }
 
+// 购买1次20能量
 func familyShop(serverURL, zoneToken string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=familyShop&token=%v&id=1&now=%v", serverURL, zoneToken, now)
+	httpGetReturnJson(URL)
+}
+
+func getBossCannonFromfamilyShop(serverURL, zoneToken string) {
+	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	URL := fmt.Sprintf("%v/game?cmd=familyShop&token=%v&id=2&now=%v", serverURL, zoneToken, now)
 	httpGetReturnJson(URL)
 }
 

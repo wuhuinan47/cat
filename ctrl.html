@@ -253,6 +253,7 @@
     <select style="font-size:40px;width:250px; height:100px;" name="attackMyBossMode" id="attackMyBossMode">
         <option selected="selected" value="4400">打4400血</option>
         <option value="4200">打4200血</option>
+        <option value="5000">打5000血</option>
     </select>
     <button style="font-size:40px;width:300px; height:100px;" onclick="attackMyBoss()">
         打自己龙
@@ -613,6 +614,9 @@
     <select style="font-size:40px;width:200px; height:100px;" name="makeRiceCake" id="makeRiceCake">
         <option selected="selected" value="">全部</option>
     </select>
+
+    <input id="makeRiceCakeAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="几套"
+    value="10" />
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="makeRiceCake()">
         领取汤圆数量
@@ -1302,8 +1306,8 @@ function submitRequest() {
             var r = confirm("makeRiceCake是否继续")
             if (r == true) {
                 var id = $("#makeRiceCake option:selected").val();
-
-                $.get(APIURL + "/makeRiceCake?id=" + id, function (data) {
+                var makeRiceCakeAmount = document.getElementById("makeRiceCakeAmount").value;
+                $.get(APIURL + "/makeRiceCake?id=" + id+"&amount="+makeRiceCakeAmount, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1780,6 +1784,42 @@ function submitRequest() {
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("getFamilyEnergySelect").options.add(tOption);
                 }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1") {
+                        name = "拉1"
+                    }
+                    if (jsarr[i]["pull_rows"] == "2") {
+                        name = "拉2"
+                    }
+                    if (jsarr[i]["pull_rows"] == "3") {
+                        name = "拉3"
+                    } 
+                    if (jsarr[i]["pull_rows"] == "4") {
+                        name = "拉4"
+                    }
+                    if (jsarr[i]["pull_rows"] == "5") {
+                        name = "拉5"
+                    }
+                    if (jsarr[i]["pull_rows"] == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("SelectMyBoss").options.add(tOption);
+                }
+                // 
 
                 // 
 
