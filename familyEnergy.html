@@ -71,13 +71,16 @@
     // 定义表示时间的字段数组
     var timeFields = ["createTime", "monthVipEndTime", "lastDrawCompanionTime", "now"];
 
-    for (var key in data) {
+    // data数据是[{"key":key,"value":value}],怎么for循环遍历？
+
+
+    for (i=0;i<data.length;i++) {
 
         var row = table.insertRow(-1);
         var cell1 = row.insertCell(0);
         var cell2 = row.insertCell(1);
-        cell1.innerHTML = key;
-        cell2.innerHTML = data[key];
+        cell1.innerHTML = data[i]["key"];
+        cell2.innerHTML = data[i]["value"];
     }
                 });
     

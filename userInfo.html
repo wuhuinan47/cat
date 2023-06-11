@@ -108,7 +108,7 @@
       "elevenRecharge": "十一点充值",
       "elevenRechargePrizeFlag": "十一点充值奖励标志",
       "familyMedal": "公会勋章",
-      "familyCoin": "公会金币",
+      "familyCoin": "我的公会币",
       "familyId": "公会ID",
       "familyDayTask": "公会每日任务",
       "familyShopTimes": "公会商店次数",
@@ -139,7 +139,19 @@
       "island": "岛屿",
       "drawPrizeList": "抽奖奖励列表",
       "mineCapacity": "矿石容量",
-      "buildPrice": "建造价格"
+      "buildPrice": "建造价格",
+      "184":"鱼叉数量",
+      "185":"🚀数量",
+      "186":"水雷数量",
+      "187":"当前矿积分",
+      "76":"浣熊🦝",
+      "77":"企鹅🐧",
+      "78":"野猪🐗",
+      "79":"羊驼🦙",
+      "80":"熊猫🐼",
+      "81":"大象🐘",
+      "endTime":"结束时间",
+      "familyWeekActive":"本周活跃度"
     };
 
 
@@ -148,9 +160,27 @@
 
     // 定义表示时间的字段数组
     var timeFields = ["createTime", "monthVipEndTime", "lastDrawCompanionTime", "now"];
+    // 定义需要排序的字段数组
+    var keys = ["uid", "nickname", "star", "gold", "buildPrice", "miningItems", "animal", "energy", "dayDraw", "familyId", "familyCoin", "familyWeekActive"];
+    var sortedKeys = [];
 
-    for (var key in data) {
-      if (data.hasOwnProperty(key)) {
+for (var i = 0; i < keys.length; i++) {
+  var key = keys[i];
+  if (data.hasOwnProperty(key)) {
+    sortedKeys.push(key);
+  }
+}
+
+// 遍历 data 对象中的键
+for (var key in data) {
+  if (data.hasOwnProperty(key) && !sortedKeys.includes(key)) {
+    sortedKeys.push(key);
+  }
+}
+
+for (var i = 0; i < sortedKeys.length; i++) {
+  var key = sortedKeys[i];
+    // for (var key in data) {
         if (translateMap[key] ==null){
           continue;
         }
@@ -165,11 +195,19 @@
           // 如果字段在时间字段数组中，将其解析为时间
           var timestamp = parseInt(data[key]);
           var date = new Date(timestamp);
-          cell2.innerHTML = date.toISOString();
+          // 设置选项以获得中国时间格式
+var options = { timeZone: 'Asia/Shanghai' };
+var formattedDate = date.toLocaleString('zh-CN', options);
+          cell2.innerHTML = formattedDate;
         } else if (translateMap[key] === "昵称") {
           // 如果字段代表名字，进行 URL 解码
-          var decodedValue = decodeURIComponent(data[key]);
-          cell2.innerHTML = decodedValue;
+          try {
+            var decodedValue = decodeURIComponent(data[key]);
+            cell2.innerHTML = decodedValue;
+          } catch (error) {
+            // 解码失败，直接显示原始值
+            cell2.innerHTML = "玩家";
+          }
         } else if (key === "pieceList" || key === "getIslandPrizeList" || key === "dayTasks" || key === "getIslandEnergyList") {
           // 对于特定的字段，将其值解析为 JSON
           // try {
@@ -181,13 +219,47 @@
           // }
           cell2.innerHTML = JSON.stringify(data[key]);
 
-        } else {
+        } else if (key === "miningItems" || key === "animal"){
+          // 遍历data[key],数据是{"184":3404,"185":2176,"186":944,"187":0} 把key从translateMap中取出来作为新的key,重新组装成新的json
+          var jsonValue = data[key];
+          var newJson = {};
+          for (var key2 in jsonValue) {
+            if (jsonValue.hasOwnProperty(key2)) {
+              if (translateMap[key2] ==null){
+                continue;
+              }
+              newJson[translateMap[key2]] = jsonValue[key2];
+            }
+          }
+          cell2.innerHTML = JSON.stringify(newJson);
+        } else if (key === "gold" || key === "totalGold"){
+          // 把data[key]除以1000000保留2位小数 然后后面加个M字符串
+          var gold = data[key];
+          var goldStr = (gold/1000000).toFixed(2) + "M";
+          cell2.innerHTML = goldStr;
+          // cell2.innerHTML = JSON.stringify(data[key]);
+        } else if (key === "buildPrice"){
+          var jsonValue = data[key];
+          // 遍历jsonValue,数据是{"1":{"1":61600000,"2":92400000,"3":138000000,"4":235000000,"5":352000000},"2":{"1":67400000,"2":103000000,"3":154000000,"4":249000000,"5":396000000},"3":{"1":73300000,"2":113000000,"3":169000000,"4":264000000,"5":440000000},"4":{"1":79200000,"2":123000000,"3":191000000,"4":293000000,"5":513000000},"5":{"1":85000000,"2":138000000,"3":220000000,"4":337000000,"5":616000000}} 把里面的61600000等值sum起来
+          var sum = 0;
+          for (var key2 in jsonValue) {
+            if (jsonValue.hasOwnProperty(key2)) {
+              var jsonValue2 = jsonValue[key2];
+              for (var key3 in jsonValue2) {
+                if (jsonValue2.hasOwnProperty(key3)) {
+                  sum += jsonValue2[key3];
+                }
+              }
+            }
+          }
+          var goldStr = (sum/1000000).toFixed(2) + "M";
+          cell2.innerHTML = "需要:"+goldStr;
+        }else {
           // 其他情况直接显示原始值
           // cell2.innerHTML = data[key];
           cell2.innerHTML = JSON.stringify(data[key]);
 
         }
-      }
     }
                 });
     

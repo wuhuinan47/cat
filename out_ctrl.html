@@ -9,6 +9,15 @@
     <title>猫来了辅助简易版</title>
 </head>
 <style>
+    /* body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(45deg, #f3f3f3, #ffffff);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    } */
+    
     button {
         background-color: #4CAF50;
         color: white;
@@ -81,7 +90,7 @@
     <select style="font-size:40px;width:400px; height:100px;" name="Oper_Type" id="Oper_Type">
     </select>
     <button style="font-size:40px;width:300px; height:100px;" onclick="login('')">
-        登录
+        登陆
     </button>
 
     <button style="font-size:40px;width:200px; height:100px;" onclick="reload()">
@@ -123,6 +132,13 @@
     </select>
     <br>
 
+    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="startPullAnimal()">
+        开启动物定时器
+    </button>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="stopPullAnimal()">
+        关闭动物定时器
+    </button> -->
     <br>
     <select style="font-size:40px;width:180px; height:100px;" name="cancelFamilyRob" id="cancelFamilyRob">
         <option selected="selected" value="">全部</option>
@@ -160,6 +176,7 @@
     <button style="font-size:40px;width:350px; height:100px;" onclick="setPullRows()">
         设置动物规则
     </button>
+    <!-- <input style="font-size:40px;width:200px; height:100px;" type="text" value="1,2,3,4,5,6" id="setPullRows" class="textClass" name="textName"> -->
     <br>
     <select style="font-size:40px;width:250px; height:100px;" name="setPullRowsSelectFamily1"
         id="setPullRowsSelectFamily1">
@@ -174,7 +191,12 @@
         设置转盘
     </button>
     <br>
-    
+    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="startDrawStatus()">
+        开启摇一摇状态
+    </button>
+    <button style="font-size:40px;width:400px; height:100px;" onclick="stopDrawStatus()">
+        关闭摇一摇状态
+    </button> -->
     <br>
     <select style="font-size:40px;width:180px; height:100px;" name="boxUidsSelect" id="boxUidsSelect">
         <option selected="selected" value="">请选择</option>
@@ -188,9 +210,12 @@
     <input id="boxAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="目标数量" value="300" />
 
     <button style="font-size:40px;width:300px; height:100px;" onclick="getBox(2)">
-        抓宝箱
+        抓别人宝箱
     </button>
-    
+    <!-- 
+    <button style="font-size:40px;width:280px; height:100px;" onclick="getBox(1)">
+        抓自己宝箱(未开发)
+    </button> -->
     <br>
     <select style="font-size:40px;width:180px; height:100px;" name="Oper_Candy" id="Oper_Candy">
         <option selected="selected" value="">请选择</option>
@@ -211,11 +236,15 @@
     <select style="font-size:40px;width:250px; height:100px;" name="attackBossUsers" id="attackBossUsers">
         <option selected="selected" value="all">全部</option>
     </select>
+    <!-- attackBoss -->
     <button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss()">
         打500-800血龙
     </button>
-    
+    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss1()">
+        蜜打龙
+    </button> -->
     <br>
+    <!-- singleBossAttack -->
     <select style="font-size:40px;width:250px; height:100px;" name="SelectMyBoss" id="SelectMyBoss">
         <option selected="" value="">全部(除大号)</option>
         <option selected="" value="outsystem">外部账号</option>
@@ -224,6 +253,7 @@
     <select style="font-size:40px;width:250px; height:100px;" name="attackMyBossMode" id="attackMyBossMode">
         <option selected="selected" value="4400">打4400血</option>
         <option value="4200">打4200血</option>
+        <option value="5000">打5000血</option>
     </select>
     <button style="font-size:40px;width:300px; height:100px;" onclick="attackMyBoss()">
         打自己龙
@@ -233,6 +263,11 @@
         <option selected="" value="outsystem">外部账号</option>
         <option selected="" value="0">小号</option>
         <option selected="selected" value="system">系统账号</option>
+        <!-- <option value="1">蜜龙组</option> -->
+        <!-- <option value="2">牛龙组</option> -->
+        <!-- <option value="3">龙组3</option> -->
+        <!-- <option value="4">笨蛋小峰组</option> -->
+        <!-- <option value="5">云颜辛巴组</option> -->
 
     </select>
 
@@ -258,6 +293,7 @@
     <button style="font-size:40px;width:400px; height:100px;" onclick="setPiece()">
         领取拼图奖励
     </button>
+    <!-- allBeachHelp -->
     <br>
     <button style="font-size:40px;width:700px; height:100px;" onclick="allBeachHelp()">
         海滩互相助力[同时更新公会id]
@@ -318,11 +354,10 @@
         领取挖矿奖励
     </button>
     <br>
-    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="checkToken()">
+    <button style="font-size:40px;width:400px; height:100px;" onclick="checkToken()">
         检测账号状态
-    </button> -->
+    </button>
     <br>
-    
     <br>
     <select style="font-size:40px;width:400px; height:100px;" name="Oper_Boss" id="Oper_Boss">
         <option selected="selected" value="">全部</option>
@@ -455,6 +490,12 @@
         转盘
     </button>
 
+
+
+ 
+    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="delServerLogs()">
+        删除服务器日志
+    </button> -->
     <br>
 
     <select style="font-size:40px;width:200px; height:100px;" name="RunnerUsers" id="RunnerUsers">
@@ -559,6 +600,9 @@
         <option selected="selected" value="">全部</option>
     </select>
 
+    <input id="makeRiceCakeAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="几套"
+    value="10" />
+
     <button style="font-size:40px;width:400px; height:100px;" onclick="makeRiceCake()">
         领取汤圆数量
     </button>
@@ -581,6 +625,7 @@
     </button>
     <br>
 
+    <!-- startExchangeRiceCakeStatus -->
     <button style="font-size:40px;width:400px; height:100px;" onclick="startPlayLuckyWheelGo()">
         开启每日幸运夺宝100次领取
     </button>
@@ -984,8 +1029,30 @@
                 var str = $("#Oper_Type option:selected").val();
                 id = str
             }
+
+            // if (id != ""){
+            //     alert("是否前往");
+            //     $.get(APIURL + "/getPassword?id=" + id, function (data) {
+            //         var password = data;
+            //         const timestamp = new Date().getTime();
+            //         $.get("https://login.11h5.com/account/api.php?c=login&d=auth&uid=" + id + "&password=" + password + "&ver=" + timestamp, function (data) {
+            //             var jsarr = JSON.parse(data);
+            //             var token = jsarr.token;
+            //             console.log("token is ", token);
+            //             if (token != null && token != "") {
+            //                 $.get(APIURL + "/update?id=" + id + "&token=" + token, function (data) {
+            //                     window.status = "1";
+            //                     window.open(APIURL + "/login?id=" + id)
+            //                 });
+            //             } else {
+            //             }
+            //         });
+            //     });
+            // }
+
             // window.location.href = APIURL+"/login?id="+id;
             window.open(APIURL + "/login?id=" + id)
+            
         }
 
         // deleteAccount
@@ -1194,8 +1261,8 @@
             var r = confirm("makeRiceCake是否继续")
             if (r == true) {
                 var id = $("#makeRiceCake option:selected").val();
-
-                $.get(APIURL + "/makeRiceCake?id=" + id, function (data) {
+                var makeRiceCakeAmount = document.getElementById("makeRiceCakeAmount").value;
+                $.get(APIURL + "/makeRiceCake?id=" + id+"&amount="+makeRiceCakeAmount, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1251,10 +1318,7 @@
             }
 
         }
-
         getMiningScoreReward = function () {
-            // buildUpUsers
-
             var r = confirm("getMiningScoreReward是否继续")
             if (r == true) {
                 var id = $("#getMiningScoreReward option:selected").val();
@@ -1266,12 +1330,6 @@
             }
 
         }
-
-
-
-
-
-
         setRunner = function () {
             var r = confirm("setRunner是否继续")
             if (r == true) {
@@ -1658,6 +1716,42 @@
                     document.getElementById("getFamilyEnergySelect").options.add(tOption);
                 }
 
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1") {
+                        name = "拉1"
+                    }
+                    if (jsarr[i]["pull_rows"] == "2") {
+                        name = "拉2"
+                    }
+                    if (jsarr[i]["pull_rows"] == "3") {
+                        name = "拉3"
+                    } 
+                    if (jsarr[i]["pull_rows"] == "4") {
+                        name = "拉4"
+                    }
+                    if (jsarr[i]["pull_rows"] == "5") {
+                        name = "拉5"
+                    }
+                    if (jsarr[i]["pull_rows"] == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("SelectMyBoss").options.add(tOption);
+                }
+                // 
+
                 // 
 
 
@@ -1918,7 +2012,6 @@
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("exchangeRiceCake").options.add(tOption);
                 }
-
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
                     tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
@@ -1926,6 +2019,10 @@
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("getMiningScoreReward").options.add(tOption);
                 }
+
+
+
+
 
 
                 for (var i = 0; i < jsarr.length; i++) {

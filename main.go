@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -101,12 +102,15 @@ var AllLock = sync.RWMutex{}
 func AddUser(uid string) {
 	xlog.Infof("add user:%v", uid)
 	userOnline.Lock.Lock()
+	defer userOnline.Lock.Unlock()
 	sql := `select id,name,token,serverURL,zoneToken,pull_rows,ifnull(draw_status,0),ifnull(follow_uids,''),familyId from tokens where id = ?`
 	var id, name, token, serverURL, zoneToken, pullRows, follow_uids, familyId string
 	var draw_status int
 	err := Pool.QueryRow(sql, uid).Scan(&id, &name, &token, &serverURL, &zoneToken, &pullRows, &draw_status, &follow_uids, &familyId)
 	if err == nil {
+		xlog.Infof("add user getSeverURLAndZoneTokenAndToken:%v", uid)
 		serverURL, zoneToken, newToken := getSeverURLAndZoneTokenAndToken(token)
+		xlog.Infof("add user getSeverURLAndZoneTokenAndToken end:%v", uid)
 		userOnline.Users[id] = &User{
 			Uid:           id,
 			Name:          name,
@@ -122,8 +126,6 @@ func AddUser(uid string) {
 			CompanionList: map[string]map[string]float64{},
 		}
 	}
-	userOnline.Lock.Unlock()
-
 }
 
 func GetUser(uid string) *User {
@@ -2114,7 +2116,7 @@ func GetFamilyEnergyH(w http.ResponseWriter, req *http.Request) {
 		rows.Scan(&uid)
 		ids = append(ids, uid)
 	}
-	d := xmap.M{}
+	d := []xmap.M{}
 	var maxDraw float64
 	Pool.QueryRow("select conf_value from config where conf_key = ?", "family_draw_"+id).Scan(&maxDraw)
 	if maxDraw > 0 {
@@ -2122,15 +2124,15 @@ func GetFamilyEnergyH(w http.ResponseWriter, req *http.Request) {
 	} else {
 		maxDraw = 0
 	}
-	d["1日摇能量设置"] = maxDraw
+	sort.Strings(ids)
+	d = append(d, xmap.M{"key": "1日摇能量设置", "value": maxDraw})
 	for _, userID := range ids {
 		user := GetUser(userID)
 		data := game(user.ZoneToken)
 		energy := data.Int64Def(0, "energy")
 		dayDraw := data.Int64Def(0, "elevenEnergy")
-		d[user.Name+"("+userID+")"] = fmt.Sprintf("每日摇能量:%d,可用能量:%d", dayDraw, energy)
+		d = append(d, xmap.M{"key": user.Name + "(" + userID + ")", "value": fmt.Sprintf("每日摇能量:%d,可用能量:%d", dayDraw, energy)})
 	}
-
 	io.WriteString(w, converter.JSON(d))
 }
 
@@ -2655,6 +2657,7 @@ func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
 	UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
 	userOnline.Lock.Lock()
 	result := &UseMiningWin{}
+	startTime := time.Now()
 	if quantity > 0 {
 		for i := 0; i < int(quantity); i++ {
 			flag := result.doUseMiningItem(user)
@@ -2671,7 +2674,9 @@ func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
 		UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
 	}
 	xlog.Infof("[%v]挖矿结束", name)
-	s := fmt.Sprintf("消耗了%v个鱼叉,%v个火箭,%v个水雷,获得了%v矿山,%v鱼叉,%v火箭,%v水雷", result.UseItem184, result.UseItem185, result.UseItem186, result.Score, result.WinItem184, result.WinItem185, result.WinItem186)
+	endTime := time.Now()
+	xlog.Infof("[%v]挖矿耗时%v", name, endTime.Sub(startTime))
+	s := fmt.Sprintf("耗时:%v消耗了%v个鱼叉,%v个火箭,%v个水雷,获得了%v矿山,%v鱼叉,%v火箭,%v水雷", endTime.Sub(startTime), result.UseItem184, result.UseItem185, result.UseItem186, result.Score, result.WinItem184, result.WinItem185, result.WinItem186)
 	if !result.GoOn {
 		s = "前面请手动挖到倒数第二层！下次再处理这个逻辑！"
 	}
@@ -10251,12 +10256,14 @@ func RunnerFamilySignGo() (err error) {
 			}
 		}
 	}
-	now := time.Now()
-	if now.Minute() < 35 {
-		s := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 35, 0, 0, now.Location())
-		time.Sleep(s.Sub(now))
+	if time.Now().Weekday() != time.Sunday {
+		now := time.Now()
+		if now.Minute() < 35 {
+			s := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 35, 0, 0, now.Location())
+			time.Sleep(s.Sub(now))
+		}
+		drawLogic(time.Now().Hour(), 800, 5, true)
 	}
-	drawLogic(time.Now().Hour(), 800, 5, true)
 	return
 }
 
@@ -10286,25 +10293,32 @@ func RunnerCheckTokenGoLogic() (err error) {
 		rows.Scan(&id)
 		users = append(users, id)
 	}
+	now := time.Now()
 	for _, id := range users {
 		user := GetUser(id)
-		for i := 1; i <= 3; i++ {
-			getFamilySignPrize(user.ServerURL, user.ZoneToken, i)
-			xlog.Infof("[%v] getFamilySignPrize[%v]", user.Name, i)
-		}
-		followCompanion_1(user.ServerURL, user.ZoneToken, 3)
-		taskIDs := getDayTasksInfo(user.ServerURL, user.ZoneToken)
-		xlog.Infof("[%v]领取日常任务奖励:%v", user.Name, taskIDs)
-		for _, taskID := range taskIDs {
-			// time.Sleep(time.Millisecond * 100)
-			getDayTaskAward(user.ServerURL, user.ZoneToken, taskID)
-		}
-		user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
-		UpdateUser(id, user.ServerURL, user.ZoneToken, user.Token)
-		if user.FamilyDayTask == nil {
+
+		if user == nil {
 			continue
 		}
-		getFamilyTaskPrizeLogic(user.FamilyDayTask, user.ServerURL, user.ZoneToken, user.Name)
+		if now.Hour() == 1 || now.Hour() == 6 || now.Hour() == 15 || now.Hour() == 23 {
+			for i := 1; i <= 3; i++ {
+				getFamilySignPrize(user.ServerURL, user.ZoneToken, i)
+				xlog.Infof("[%v] getFamilySignPrize[%v]", user.Name, i)
+			}
+			followCompanion_1(user.ServerURL, user.ZoneToken, 3)
+			taskIDs := getDayTasksInfo(user.ServerURL, user.ZoneToken)
+			xlog.Infof("[%v]领取日常任务奖励:%v", user.Name, taskIDs)
+			for _, taskID := range taskIDs {
+				// time.Sleep(time.Millisecond * 100)
+				getDayTaskAward(user.ServerURL, user.ZoneToken, taskID)
+			}
+			user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
+			UpdateUser(id, user.ServerURL, user.ZoneToken, user.Token)
+			if user.FamilyDayTask == nil {
+				continue
+			}
+			getFamilyTaskPrizeLogic(user.FamilyDayTask, user.ServerURL, user.ZoneToken, user.Name)
+		}
 
 	}
 	RunnerBeach()

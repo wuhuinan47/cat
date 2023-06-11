@@ -90,7 +90,7 @@
     <select style="font-size:40px;width:400px; height:100px;" name="Oper_Type" id="Oper_Type">
     </select>
     <button style="font-size:40px;width:300px; height:100px;" onclick="login('')">
-        登录
+        登陆
     </button>
 
     <button style="font-size:40px;width:200px; height:100px;" onclick="reload()">
@@ -1096,8 +1096,30 @@ function submitRequest() {
                 var str = $("#Oper_Type option:selected").val();
                 id = str
             }
+
+            // if (id != ""){
+            //     alert("是否前往");
+            //     $.get(APIURL + "/getPassword?id=" + id, function (data) {
+            //         var password = data;
+            //         const timestamp = new Date().getTime();
+            //         $.get("https://login.11h5.com/account/api.php?c=login&d=auth&uid=" + id + "&password=" + password + "&ver=" + timestamp, function (data) {
+            //             var jsarr = JSON.parse(data);
+            //             var token = jsarr.token;
+            //             console.log("token is ", token);
+            //             if (token != null && token != "") {
+            //                 $.get(APIURL + "/update?id=" + id + "&token=" + token, function (data) {
+            //                     window.status = "1";
+            //                     window.open(APIURL + "/login?id=" + id)
+            //                 });
+            //             } else {
+            //             }
+            //         });
+            //     });
+            // }
+
             // window.location.href = APIURL+"/login?id="+id;
             window.open(APIURL + "/login?id=" + id)
+            
         }
 
         // deleteAccount
