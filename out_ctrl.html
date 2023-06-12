@@ -72,6 +72,13 @@
 
     <br>
 
+    <select style="font-size:40px;width:400px; height:100px;" name="getFamilyDayTaskSelect" id="getFamilyDayTaskSelect">
+    </select>
+    <button style="font-size:40px;width:350px; height:100px;" onclick="getFamilyDayTask()">
+        查看公会任务
+    </button>
+    <br> 
+
     <select style="font-size:40px;width:400px; height:100px;" name="getFamilyEnergySelect" id="getFamilyEnergySelect">
     </select>
     <button style="font-size:40px;width:350px; height:100px;" onclick="getFamilyEnergy()">
@@ -131,14 +138,6 @@
         <option selected="selected" value="">全部</option>
     </select>
     <br>
-
-    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="startPullAnimal()">
-        开启动物定时器
-    </button>
-
-    <button style="font-size:40px;width:400px; height:100px;" onclick="stopPullAnimal()">
-        关闭动物定时器
-    </button> -->
     <br>
     <select style="font-size:40px;width:180px; height:100px;" name="cancelFamilyRob" id="cancelFamilyRob">
         <option selected="selected" value="">全部</option>
@@ -191,12 +190,6 @@
         设置转盘
     </button>
     <br>
-    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="startDrawStatus()">
-        开启摇一摇状态
-    </button>
-    <button style="font-size:40px;width:400px; height:100px;" onclick="stopDrawStatus()">
-        关闭摇一摇状态
-    </button> -->
     <br>
     <select style="font-size:40px;width:180px; height:100px;" name="boxUidsSelect" id="boxUidsSelect">
         <option selected="selected" value="">请选择</option>
@@ -212,10 +205,6 @@
     <button style="font-size:40px;width:300px; height:100px;" onclick="getBox(2)">
         抓别人宝箱
     </button>
-    <!-- 
-    <button style="font-size:40px;width:280px; height:100px;" onclick="getBox(1)">
-        抓自己宝箱(未开发)
-    </button> -->
     <br>
     <select style="font-size:40px;width:180px; height:100px;" name="Oper_Candy" id="Oper_Candy">
         <option selected="selected" value="">请选择</option>
@@ -240,9 +229,6 @@
     <button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss()">
         打500-800血龙
     </button>
-    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="attackBoss1()">
-        蜜打龙
-    </button> -->
     <br>
     <!-- singleBossAttack -->
     <select style="font-size:40px;width:250px; height:100px;" name="SelectMyBoss" id="SelectMyBoss">
@@ -263,11 +249,6 @@
         <option selected="" value="outsystem">外部账号</option>
         <option selected="" value="0">小号</option>
         <option selected="selected" value="system">系统账号</option>
-        <!-- <option value="1">蜜龙组</option> -->
-        <!-- <option value="2">牛龙组</option> -->
-        <!-- <option value="3">龙组3</option> -->
-        <!-- <option value="4">笨蛋小峰组</option> -->
-        <!-- <option value="5">云颜辛巴组</option> -->
 
     </select>
 
@@ -485,17 +466,14 @@
     </select>
     <input id="drawAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="摇次数"
         value="399" />
+        <select style="font-size:40px;width:150px; height:100px;" name="DrawModeSelect" id="DrawModeSelect">
+            <option value="1">做攻击任务</option>
+            <option selected="selected" value="0">不做任务</option>
+        </select>
 
     <button style="font-size:40px;width:200px; height:100px;" onclick="draw()">
         转盘
     </button>
-
-
-
- 
-    <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="delServerLogs()">
-        删除服务器日志
-    </button> -->
     <br>
 
     <select style="font-size:40px;width:200px; height:100px;" name="RunnerUsers" id="RunnerUsers">
@@ -671,7 +649,6 @@
     <br>
     <br>
     <br>
-
     <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 
     <script type="text/javascript">
@@ -758,6 +735,10 @@
             window.open(APIURL + "/familyEnergy.html?id=" + UID)
         }
 
+        getFamilyDayTask = function () {
+            var UID = $("#getFamilyDayTaskSelect option:selected").val();
+            window.open(APIURL + "/familyDayTask.html?id=" + UID)
+        }
         getUserToken = function () {
             var UID = $("#getUserTokenSelect option:selected").val();
             var r = confirm("是否更新token？")
@@ -936,7 +917,7 @@
 
             var value = document.getElementById("setPullRows").value
             $.get(APIURL + "/setPullRows?input=" + value + "&id=" + id + "&familyId=" + familyId, function (data) {
-                alert(data)
+                alert("设置成功,正在进行作业")
                 window.status = "1";
             });
         }
@@ -1134,7 +1115,8 @@
                 var familyId = $("#selectDrawFamily option:selected").val();
                 var drawMulti = $("#DrawSelect option:selected").val();
                 var drawAmount = document.getElementById("drawAmount");
-                $.get(APIURL + "/draw?id=" + id + "&familyId=" + familyId + "&drawMulti=" + drawMulti + "&amount=" + drawAmount.value, function (data) {
+                var drawMode = $("#DrawModeSelect option:selected").val();
+                $.get(APIURL + "/draw?id=" + id + "&familyId=" + familyId + "&drawMulti=" + drawMulti + "&amount=" + drawAmount.value + "&mode="+drawMode, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1318,7 +1300,25 @@
             }
 
         }
+
+        userMingingItem = function () {
+            // buildUpUsers
+
+            var r = confirm("userMingingItem是否继续")
+            if (r == true) {
+                var id = $("#userMingingItem option:selected").val();
+                var quantity = document.getElementById("userMingingItemQuantity").value;
+                $.get(APIURL + "/useMiningItem5000?id=" + id+"&quantity="+quantity, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
         getMiningScoreReward = function () {
+            // buildUpUsers
+
             var r = confirm("getMiningScoreReward是否继续")
             if (r == true) {
                 var id = $("#getMiningScoreReward option:selected").val();
@@ -1330,6 +1330,12 @@
             }
 
         }
+
+
+
+
+
+
         setRunner = function () {
             var r = confirm("setRunner是否继续")
             if (r == true) {
@@ -1748,6 +1754,41 @@
                     }
                     tOption.text = jsarr[i]["id"] + "(" + name + ")";
                     tOption.value = jsarr[i]["id"];
+                    document.getElementById("getFamilyDayTaskSelect").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1") {
+                        name = "拉1"
+                    }
+                    if (jsarr[i]["pull_rows"] == "2") {
+                        name = "拉2"
+                    }
+                    if (jsarr[i]["pull_rows"] == "3") {
+                        name = "拉3"
+                    } 
+                    if (jsarr[i]["pull_rows"] == "4") {
+                        name = "拉4"
+                    }
+                    if (jsarr[i]["pull_rows"] == "5") {
+                        name = "拉5"
+                    }
+                    if (jsarr[i]["pull_rows"] == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
                     document.getElementById("SelectMyBoss").options.add(tOption);
                 }
                 // 
@@ -2011,6 +2052,14 @@
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("exchangeRiceCake").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"]+"("+jsarr[i]["familyId"]+")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("userMingingItem").options.add(tOption);
                 }
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");

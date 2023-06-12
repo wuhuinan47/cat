@@ -22,11 +22,7 @@ func CheckZoneToken(serverURL, zoneToken string) bool {
 	// log.Println("checkZoneToken URL is :", URL)
 	formData := httpGetReturnJson(URL)
 	_, ok := formData["newMailCnt"].(float64)
-	if ok {
-		return true
-	}
-	log.Println("zoneToken is err :", formData["error"])
-	return false
+	return ok
 }
 
 func httpGetReturnJson(url string) (formData map[string]interface{}) {

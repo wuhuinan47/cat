@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>JSON数据</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border: 2px solid black;
+      padding: 20px;
+      font-size: 48px;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    @media only screen and (max-width: 600px) {
+      td {
+        font-size: 32px;
+        white-space: normal;
+        overflow: auto;
+        max-height: 100px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>JSON 数据解析</h1>
+  <table id="jsonTable">
+    <tr>
+      <th>用户id</th>
+      <th>未完成公会任务</th>
+    </tr>
+  </table>
+
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script>
+        var url = document.location;
+     var APIURL = url["protocol"] + "//" + url["host"]
+     var url = window.location.href;
+  var paramsIndex = url.indexOf('?');
+  if (paramsIndex !== -1) {
+    var paramsString = url.slice(paramsIndex + 1);
+    var paramsArray = paramsString.split('&');
+    for (var i = 0; i < paramsArray.length; i++) {
+      var param = paramsArray[i].split('=');
+      if (param[0] === 'id') {
+        var id = param[1];
+      }  else {
+          var isShow = param[1];
+        }
+    }
+  }
+                $.get(APIURL + "/getFamilyDayTask?id="+id, function (data) {
+                  var data = JSON.parse(data);
+    var table = document.getElementById("jsonTable");
+
+    // 定义表示时间的字段数组
+    var timeFields = ["createTime", "monthVipEndTime", "lastDrawCompanionTime", "now"];
+
+    // data数据是[{"key":key,"value":value}],怎么for循环遍历？
+
+
+    for (i=0;i<data.length;i++) {
+
+        var row = table.insertRow(-1);
+        var cell1 = row.insertCell(0);
+        var cell2 = row.insertCell(1);
+
+        if (isShow && isShow === "0") {
+          cell1.innerHTML = data[i]["key"]
+        } else {
+          var href = APIURL+"/login?id="+data[i]["user_id"];
+         cell1.innerHTML = data[i]["key"]+'<a href="'+href +'" target="_blank">登陆</a>';
+        }
+        cell2.innerHTML = data[i]["value"];
+    }
+                });
+    
+
+
+
+  </script>
+</body>
+
+</html>

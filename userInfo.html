@@ -151,8 +151,15 @@
       "80":"熊猫🐼",
       "81":"大象🐘",
       "endTime":"结束时间",
-      "familyWeekActive":"本周活跃度"
-    };
+      "familyWeekActive":"本周活跃度",
+      "gemList":"小岛寻宝",
+      "25":"黄水晶",
+      "26":"紫水晶",
+      "27":"黑水晶",
+      "28":"绿宝石",
+      "29":"红宝石",
+      "30":"钻石"
+   };
 
 
 
@@ -161,7 +168,7 @@
     // 定义表示时间的字段数组
     var timeFields = ["createTime", "monthVipEndTime", "lastDrawCompanionTime", "now"];
     // 定义需要排序的字段数组
-    var keys = ["uid", "nickname", "star", "gold", "buildPrice", "miningItems", "animal", "energy", "dayDraw", "familyId", "familyCoin", "familyWeekActive"];
+    var keys = ["uid", "nickname", "star", "gold", "buildPrice", "miningItems", "animal", "energy", "dayDraw", "familyId", "familyCoin", "familyWeekActive", "gemList", "clamp", "timeMachine"];
     var sortedKeys = [];
 
 for (var i = 0; i < keys.length; i++) {
@@ -219,7 +226,7 @@ var formattedDate = date.toLocaleString('zh-CN', options);
           // }
           cell2.innerHTML = JSON.stringify(data[key]);
 
-        } else if (key === "miningItems" || key === "animal"){
+        } else if (key === "miningItems" || key === "animal" || key === "gemList"){
           // 遍历data[key],数据是{"184":3404,"185":2176,"186":944,"187":0} 把key从translateMap中取出来作为新的key,重新组装成新的json
           var jsonValue = data[key];
           var newJson = {};
@@ -260,6 +267,43 @@ var formattedDate = date.toLocaleString('zh-CN', options);
           cell2.innerHTML = JSON.stringify(data[key]);
 
         }
+
+        // if (cell2.innerHTML.length > 20) {
+        //   cell2.style.fontSize = '27px';
+        // } 
+
+        // switch (key) {
+        //   case "gold":
+        //     cell2.style.color = 'red';
+        //     break;
+        //   case "buildPrice":
+        //     cell2.style.color = 'red';
+        //     break;
+        //   case "clamp":
+        //     cell2.style.color = 'red';
+        //     break;
+        //   case "dayDraw":
+        //     cell2.style.color = 'red';
+        //     break;
+        //   case "familyCoin":
+        //     cell2.style.color = 'red';
+        //     break;
+        //   case "familyWeekActive":
+        //     cell2.style.color = 'red';
+        //     break;
+        //   }
+        //   var keyValue = cell1.innerHTML.length
+        // switch (true){
+        //     case keyValue>=8:
+        //       cell1.style.fontSize = '10px';
+        //     break;
+        //     case keyValue>4:
+        //       cell1.style.fontSize = '10px';
+        //     case keyValue>=2:
+        //       cell1.style.fontSize = '40px';
+        //     break;
+        // }
+
     }
                 });
     

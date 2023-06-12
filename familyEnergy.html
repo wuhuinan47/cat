@@ -47,43 +47,54 @@
 
   <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
   <script>
-        var url = document.location;
-     var APIURL = url["protocol"] + "//" + url["host"]
-     var url = window.location.href;
-  var paramsIndex = url.indexOf('?');
-  if (paramsIndex !== -1) {
-    var paramsString = url.slice(paramsIndex + 1);
-    var paramsArray = paramsString.split('&');
-    for (var i = 0; i < paramsArray.length; i++) {
-      var param = paramsArray[i].split('=');
-      if (param[0] === 'id') {
-        var id = param[1];
-        console.log(id); // 打印参数 id 的值
-        break;
+    var url = document.location;
+    var APIURL = url["protocol"] + "//" + url["host"]
+    var url = window.location.href;
+    var paramsIndex = url.indexOf('?');
+    if (paramsIndex !== -1) {
+      var paramsString = url.slice(paramsIndex + 1);
+      var paramsArray = paramsString.split('&');
+      for (var i = 0; i < paramsArray.length; i++) {
+        var param = paramsArray[i].split('=');
+        if (param[0] === 'id') {
+          var id = param[1];
+        } else {
+          var isShow = param[1];
+        }
       }
     }
-  }
-      console.log(id); // 打印参数 id 的值
-                $.get(APIURL + "/getFamilyEnergy?id="+id, function (data) {
-                  var data = JSON.parse(data);
-    var table = document.getElementById("jsonTable");
+    $.get(APIURL + "/getFamilyEnergy?id=" + id, function (data) {
+      var data = JSON.parse(data);
+      var table = document.getElementById("jsonTable");
 
-    // 定义表示时间的字段数组
-    var timeFields = ["createTime", "monthVipEndTime", "lastDrawCompanionTime", "now"];
+      // 定义表示时间的字段数组
+      var timeFields = ["createTime", "monthVipEndTime", "lastDrawCompanionTime", "now"];
 
-    // data数据是[{"key":key,"value":value}],怎么for循环遍历？
+      // data数据是[{"key":key,"value":value}],怎么for循环遍历？
 
 
-    for (i=0;i<data.length;i++) {
+      for (i = 0; i < data.length; i++) {
 
         var row = table.insertRow(-1);
         var cell1 = row.insertCell(0);
         var cell2 = row.insertCell(1);
-        cell1.innerHTML = data[i]["key"];
+
+        // 判断user_id是否存在
+
+        if (isShow && isShow === "0") {
+          cell1.innerHTML = data[i]["key"]
+        } else {
+          if (data[i]["user_id"]) {
+            var href = APIURL + "/login?id=" + data[i]["user_id"];
+            cell1.innerHTML = data[i]["key"] + '<a href="' + href + '" target="_blank">登陆</a>';
+          } else {
+            cell1.innerHTML = data[i]["key"]
+          }
+        }
         cell2.innerHTML = data[i]["value"];
-    }
-                });
-    
+      }
+    });
+
 
 
 

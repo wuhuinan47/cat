@@ -335,6 +335,7 @@ func main() {
 	http.HandleFunc("/searchFamily", SearchFamilyH)
 	http.HandleFunc("/getUserInfo", GetUserInfoH)
 	http.HandleFunc("/getFamilyEnergy", GetFamilyEnergyH)
+	http.HandleFunc("/getFamilyDayTask", GetFamilyDayTaskH)
 
 	http.HandleFunc("/cancelFamilyRob", cancelFamilyRobH)
 	http.HandleFunc("/getTodayAnimal", GetTodayAnimalsH)
@@ -362,6 +363,7 @@ func main() {
 	http.HandleFunc("/favicon.ico", FaviconH)
 	http.HandleFunc("/userInfo.html", UserInfoH)
 	http.HandleFunc("/familyEnergy.html", FamilyEnergyH)
+	http.HandleFunc("/familyDayTask.html", FamilyDayTaskH)
 
 	http.HandleFunc("/maolaile.html", MaolaileH)
 	http.HandleFunc("/cat_demo.html", CatDemoH)
@@ -566,6 +568,11 @@ func FaviconH(w http.ResponseWriter, req *http.Request) {
 
 func FamilyEnergyH(w http.ResponseWriter, req *http.Request) {
 	t, _ := template.ParseFiles("familyEnergy.html")
+	t.Execute(w, nil)
+}
+
+func FamilyDayTaskH(w http.ResponseWriter, req *http.Request) {
+	t, _ := template.ParseFiles("familyDayTask.html")
 	t.Execute(w, nil)
 }
 
@@ -1530,6 +1537,27 @@ func SetPullRowsH(w http.ResponseWriter, req *http.Request) {
 			Pool.Exec("update tokens set pull_rows = ? where id = ?", input, id)
 		}
 	}
+
+	if familyId != "" && input != "0" {
+		go func() {
+			sql := `select id from tokens where familyId = ?`
+			rows, err := Pool.Query(sql, familyId)
+			if err != nil {
+				return
+			}
+			defer rows.Close()
+			for rows.Next() {
+				var userID string
+				rows.Scan(&userID)
+				user := GetUser(userID)
+				cancelFamilyRob(user.ServerURL, user.ZoneToken)
+				xlog.Infof("[%s]取消啦动物", user.Name)
+			}
+			SQL := fmt.Sprintf("select id, token, name, pull_rows, follow_uids from tokens where familyId = %s", familyId)
+			pullAnimalBySql(SQL)
+		}()
+	}
+
 	io.WriteString(w, "SUCCESS")
 }
 
@@ -2099,10 +2127,43 @@ func BuildUpH(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, "SUCCESS")
 }
 
+func GetFamilyDayTaskH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	if id == "" {
+		io.WriteString(w, "FAIL")
+		return
+	}
+	sql := `select id from tokens where familyId = ?`
+	rows, err := Pool.Query(sql, id)
+	if err != nil {
+		io.WriteString(w, "FAIL")
+	}
+	defer rows.Close()
+	ids := []string{}
+	for rows.Next() {
+		var uid string
+		rows.Scan(&uid)
+		ids = append(ids, uid)
+	}
+	sort.Strings(ids)
+	d := []xmap.M{}
+	for _, userID := range ids {
+
+		user := GetUser(userID)
+
+		zoneToken, familyDayTask := getEnterInfo(userID, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
+		UpdateUser(userID, user.ServerURL, zoneToken, user.Token)
+		result := getFamilyTaskPrizeLogic(familyDayTask, user.ServerURL, user.ZoneToken, user.Name)
+		d = append(d, xmap.M{"key": user.Name + "(" + userID + ")", "value": result, "user_id": userID})
+	}
+	io.WriteString(w, converter.JSON(d))
+}
+
 func GetFamilyEnergyH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	if id == "" {
 		io.WriteString(w, "FAIL")
+		return
 	}
 	sql := `select id from tokens where familyId = ?`
 	rows, err := Pool.Query(sql, id)
@@ -2131,7 +2192,7 @@ func GetFamilyEnergyH(w http.ResponseWriter, req *http.Request) {
 		data := game(user.ZoneToken)
 		energy := data.Int64Def(0, "energy")
 		dayDraw := data.Int64Def(0, "elevenEnergy")
-		d = append(d, xmap.M{"key": user.Name + "(" + userID + ")", "value": fmt.Sprintf("每日摇能量:%d,可用能量:%d", dayDraw, energy)})
+		d = append(d, xmap.M{"user_id": userID, "key": user.Name + "(" + userID + ")", "value": fmt.Sprintf("每日摇能量:%d,可用能量:%d", dayDraw, energy)})
 	}
 	io.WriteString(w, converter.JSON(d))
 }
@@ -2759,6 +2820,7 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 
 	drawMulti := req.URL.Query().Get("drawMulti")
 	amount := req.URL.Query().Get("amount")
+	mode := req.URL.Query().Get("mode")
 	intDrawMulti, _ := strconv.Atoi(drawMulti)
 	intAmount, _ := strconv.Atoi(amount)
 
@@ -2782,6 +2844,11 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 
 	i := 0
 
+	var isTask = false
+	if mode == "1" {
+		isTask = true
+	}
+
 	for rows.Next() {
 		var uid, name, token, zoneToken string
 		rows.Scan(&uid, &name, &token, &zoneToken)
@@ -2800,9 +2867,7 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 			xlog.Infof("[%v]【摇一摇】领取好友能量", name)
 			autoFriendEnergy(serverURL, zoneToken)
 
-			followCompanion_1(serverURL, zoneToken, 2)
-
-			energy := draw(uid, name, serverURL, zoneToken, drawMulti, false)
+			energy := draw(uid, name, serverURL, zoneToken, drawMulti, isTask)
 
 			targetEnergy := intDrawMulti * intAmount
 
@@ -2812,13 +2877,18 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 			}
 			time.Sleep(time.Millisecond * 2100)
 
-			for i := 1; i <= intAmountAll; i++ {
-				xx := draw(uid, name, serverURL, zoneToken, drawMulti, false)
-				xlog.Infof("剩余转盘次数:%v", intAmountAll-i)
-				if xx == -1 {
-					break
+			if intAmountAll == 0 {
+				xlog.Infof("[%v]转盘次数不足", name)
+			} else {
+				followCompanion_1(serverURL, zoneToken, 2)
+				for i := 1; i <= intAmountAll; i++ {
+					xx := draw(uid, name, serverURL, zoneToken, drawMulti, isTask)
+					xlog.Infof("剩余转盘次数:%v", intAmountAll-i)
+					if xx == -1 {
+						break
+					}
+					time.Sleep(time.Millisecond * 2100)
 				}
-				time.Sleep(time.Millisecond * 2100)
 			}
 
 			taskIDs := getDayTasksInfo(serverURL, zoneToken)
@@ -2950,7 +3020,6 @@ func drawAll(intDrawMulti, intAmount int) {
 		} else {
 			go func() {
 				xlog.Infof("---------------------------[%v]开始转盘[intDrawMulti:%v][intAmount:%v]---------------------------", goName, intDrawMulti, intAmount)
-				followCompanion_1(goServerURL, goZoneToken, 2)
 				energy := draw(goUid, goName, goServerURL, goZoneToken, intDrawMulti, false)
 				xlog.Infof("---------------------------[%v]energy[%v]---------------------------", goName, energy)
 				targetEnergy := intDrawMulti * intAmount
@@ -2963,6 +3032,10 @@ func drawAll(intDrawMulti, intAmount int) {
 				xlog.Infof("---------------------------[%v]drawAmount[%v]---------------------------", goName, drawAmount)
 
 				time.Sleep(time.Millisecond * 2100)
+
+				if drawAmount > 0 {
+					followCompanion_1(goServerURL, goZoneToken, 2)
+				}
 				for i := 0; i <= int(drawAmount); i++ {
 					count := draw(goUid, goName, goServerURL, goZoneToken, intDrawMulti, false)
 					if count == -1 {
@@ -3027,7 +3100,6 @@ func DrawH1(s *web.Session) web.Result {
 
 	go func() {
 		xlog.Infof("---------------------------[%v]开始转盘---------------------------", name)
-		followCompanion_1(serverURL, zoneToken, 2)
 
 		energy := draw(uid, name, serverURL, zoneToken, drawMulti, false)
 
@@ -3037,7 +3109,9 @@ func DrawH1(s *web.Session) web.Result {
 			intAmount = int(energy) / intDrawMulti
 		}
 		time.Sleep(time.Millisecond * 2100)
-
+		if intAmount > 0 {
+			followCompanion_1(serverURL, zoneToken, 2)
+		}
 		for i := 1; i <= intAmount; i++ {
 			draw(uid, name, serverURL, zoneToken, drawMulti, false)
 			xlog.Infof("剩余转盘次数:%v", intAmount-i)
@@ -4775,6 +4849,10 @@ func LoginH(w http.ResponseWriter, req *http.Request) {
 	// 	return
 	// }
 	user := GetUser(id)
+	if user == nil {
+		io.WriteString(w, "cannot find user")
+		return
+	}
 	url := "https://play.h5avu.com/game/?gameid=147&token="
 	url += user.Token
 
@@ -6219,6 +6297,15 @@ func goldMineFish(serverURL, zoneToken string, fuid, id interface{}) int64 {
 
 }
 
+func goldMineGift(serverURL, zoneToken, fuid, id string) bool {
+	params := map[string]string{
+		"fuid": fuid,
+		"id":   id,
+	}
+	data := CommonReq(serverURL, zoneToken, params)
+	return data.Int64("error") == 0
+}
+
 // 获取帮助列表
 func getBossHelpList(serverURL, zoneToken string) (bossList []map[string]interface{}) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
@@ -7641,7 +7728,7 @@ func attackBoss(serverURL, zoneToken, bossID string) {
 	attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 0)
 }
 
-func getAttackEnemyList(serverURL, zoneToken string) (userIDs []int) {
+func getAttackEnemyList(serverURL, zoneToken string) (userIDs, policeUserIDs []int) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := fmt.Sprintf("%v/game?cmd=getAttackEnemyList&token=%v&now=%v", serverURL, zoneToken, now)
 	formData := httpGetReturnJson(url)
@@ -7650,10 +7737,23 @@ func getAttackEnemyList(serverURL, zoneToken string) (userIDs []int) {
 		for _, v := range enemys {
 			enemy, ok := v.(map[string]interface{})
 			if ok {
-				userID := enemy["uid"].(float64)
+				userID, ok := enemy["uid"].(float64)
+				if !ok {
+					userIDS, ok := enemy["uid"].(string)
+					if !ok {
+						continue
+					}
+					userID, _ = strconv.ParseFloat(userIDS, 64)
+				}
+
 				if empty, ok := enemy["empty"]; ok {
 					if empty.(float64) == 0 {
-						userIDs = append(userIDs, int(userID))
+
+						if enemy["isPolice"].(float64) == 1 {
+							policeUserIDs = append(policeUserIDs, int(userID))
+						} else {
+							userIDs = append(userIDs, int(userID))
+						}
 					}
 				}
 			}
@@ -8363,20 +8463,52 @@ func draw(uid, userName, serverURL, zoneToken string, drawMulti interface{}, isT
 			attackType := 0
 
 			if isTask {
-				enemys := getAttackEnemyList(serverURL, zoneToken)
-				for _, v := range enemys {
-					if v == 302691822 || v == 309392050 {
-						continue
-					}
-					attackUid = v
+				enemys, policeUserIDs := getAttackEnemyList(serverURL, zoneToken)
+
+				if len(policeUserIDs) > 0 {
+					xlog.Infof("[%v]【摇一摇】打通缉", userName)
+					attackUid = policeUserIDs[0]
 					var buildings = []string{}
-					buildings, attackType = visitIsland(serverURL, zoneToken, attackUid)
+					buildings, _ = visitIsland(serverURL, zoneToken, attackUid)
+					attackType = 3
 					if len(buildings) > 0 {
 						building = buildings[0]
-						xlog.Infof("[%v]【目标更换成复仇对象】:%v --> %v:%v", userName, attackUid, building, attackType)
-						break
+						xlog.Infof("[%v]【目标更换成通缉对象】:%v --> %v:%v", userName, attackUid, building, attackType)
+					} else {
+						for _, v := range enemys {
+							if v == 302691822 || v == 309392050 {
+								continue
+							}
+							attackUid = v
+							var buildings = []string{}
+							buildings, attackType = visitIsland(serverURL, zoneToken, attackUid)
+							if len(buildings) > 0 {
+								building = buildings[0]
+								xlog.Infof("[%v]【目标更换成复仇对象】:%v --> %v:%v", userName, attackUid, building, attackType)
+								break
+							} else {
+								xlog.Infof("[%v] 复仇对象中没有可攻击的建筑", userName)
+							}
+						}
+					}
+				} else {
+					for _, v := range enemys {
+						if v == 302691822 || v == 309392050 {
+							continue
+						}
+						attackUid = v
+						var buildings = []string{}
+						buildings, attackType = visitIsland(serverURL, zoneToken, attackUid)
+						if len(buildings) > 0 {
+							building = buildings[0]
+							xlog.Infof("[%v]【目标更换成复仇对象】:%v --> %v:%v", userName, attackUid, building, attackType)
+							break
+						} else {
+							xlog.Infof("[%v] 复仇对象中没有可攻击的建筑", userName)
+						}
 					}
 				}
+
 			}
 
 			time.Sleep(time.Second * 1)
@@ -9664,8 +9796,12 @@ func RunnerDraw() (err error) {
 
 				iMax := int((gomaxDraw - goDayDraw) / 5)
 				if iMax <= 0 {
-					xlog.Infof("[%v]不用摇", goName)
-
+					if gomaxDraw > goDayDraw {
+						xlog.Infof("[%v]摇最后1次", goName)
+						draw(goUid, goName, goServerURL, goZoneToken, gomaxDraw-goDayDraw, false)
+					} else {
+						xlog.Infof("[%v]不用摇", goName)
+					}
 				} else {
 					followCompanion_1(goServerURL, goZoneToken, 2)
 					// amount := draw(goUid, goName, goServerURL, goZoneToken, 1)
@@ -9709,14 +9845,20 @@ func RunnerDraw() (err error) {
 			} else {
 				go func() {
 					xlog.Infof("---------------------------[%v]开始转盘---------------------------", goName)
-					followCompanion_1(goServerURL, goZoneToken, 2)
 					// amount := draw(goUid, goName, goServerURL, goZoneToken, 1)
 					iMax := int((gomaxDraw - goDayDraw) / 5)
 					// time.Sleep(time.Millisecond * 2100)
 					if iMax <= 0 {
-						xlog.Infof("[%v]不用摇", goName)
+						if gomaxDraw > goDayDraw {
+							xlog.Infof("[%v]摇最后1次", goName)
+							draw(goUid, goName, goServerURL, goZoneToken, gomaxDraw-goDayDraw, false)
+						} else {
+							xlog.Infof("[%v]不用摇", goName)
+						}
 						return
 					}
+					followCompanion_1(goServerURL, goZoneToken, 2)
+
 					for i := 0; i <= iMax; i++ {
 						count := draw(goUid, goName, goServerURL, goZoneToken, 5, false)
 						if count == -1 {
@@ -9950,8 +10092,12 @@ func drawLogic(hour int, maxDraw, drawMulti float64, isTask bool) (err error) {
 			}
 
 			if iMax <= 0 {
-				xlog.Infof("[%v]不用摇", goName)
-
+				if gomaxDraw > goDayDraw {
+					xlog.Infof("[%v]摇最后1次", goName)
+					draw(goUid, goName, goServerURL, goZoneToken, gomaxDraw-goDayDraw, isTask)
+				} else {
+					xlog.Infof("[%v]不用摇", goName)
+				}
 			} else {
 				followCompanion_1(goServerURL, goZoneToken, 2)
 				// amount := draw(goUid, goName, goServerURL, goZoneToken, 1)
@@ -9995,7 +10141,6 @@ func drawLogic(hour int, maxDraw, drawMulti float64, isTask bool) (err error) {
 		} else {
 			go func() {
 				xlog.Infof("---------------------------[%v]开始转盘---------------------------", goName)
-				followCompanion_1(goServerURL, goZoneToken, 2)
 				// amount := draw(goUid, goName, goServerURL, goZoneToken, 1)
 				// drawMulti := float64(5)
 
@@ -10008,9 +10153,16 @@ func drawLogic(hour int, maxDraw, drawMulti float64, isTask bool) (err error) {
 				}
 
 				if iMax <= 0 {
-					xlog.Infof("[%v]不用摇", goName)
+					if gomaxDraw > goDayDraw {
+						xlog.Infof("[%v]摇最后1次", goName)
+						draw(goUid, goName, goServerURL, goZoneToken, gomaxDraw-goDayDraw, isTask)
+					} else {
+						xlog.Infof("[%v]不用摇", goName)
+					}
 					return
 				}
+				followCompanion_1(goServerURL, goZoneToken, 2)
+
 				for i := 0; i <= iMax; i++ {
 					count := draw(goUid, goName, goServerURL, goZoneToken, drawMulti, isTask)
 					if count == -1 {
@@ -10019,7 +10171,11 @@ func drawLogic(hour int, maxDraw, drawMulti float64, isTask bool) (err error) {
 					time.Sleep(time.Millisecond * 2100)
 				}
 				if goCompanionList["3"] == nil {
-					followCompanion_1(goServerURL, goZoneToken, 1)
+					if goCompanionList["4"] == nil {
+						followCompanion_1(goServerURL, goZoneToken, 1)
+					} else {
+						followCompanion_1(goServerURL, goZoneToken, 4)
+					}
 				} else {
 					followCompanion_1(goServerURL, goZoneToken, 3)
 				}
@@ -10056,21 +10212,59 @@ func drawLogic(hour int, maxDraw, drawMulti float64, isTask bool) (err error) {
 	return err
 }
 
-// 1=护盾防御住1次攻击 2=领取1次免费20能量 3=在公会聊天发言1次 4=领取1点好友赠送能量 5=使用转盘100次 6=攻击仇人1次 7=通过转盘获得3个护盾 8=偷对土豪2次 9=自己召唤的恶龙被击杀 11=使用魔法药水重置糖果树 13=在糖果树上打出1个糖果 15=分享3次
-func getFamilyTaskPrizeLogic(goFamilyDayTask interface{}, goServerURL, goZoneToken, goName string) {
+// 1=护盾防御住1次攻击 2=领取1次免费20能量 3=在公会聊天发言1次 4=领取1点好友赠送能量 5=使用转盘100次 6=攻击仇人1次 7=通过转盘获得3个护盾 8=偷对土豪2次 9=自己召唤的恶龙被击杀 11=使用魔法药水重置糖果树 12=使用时光机重置小岛 13=在糖果树上打出1个糖果 14=在小岛寻宝中夹到1个宝石 15=分享3次
+func getFamilyTaskPrizeLogic(goFamilyDayTask interface{}, goServerURL, goZoneToken, goName string) (result string) {
 	familyDayTask, ok := goFamilyDayTask.(map[string]interface{})
 	if !ok {
 		return
 	}
+
 	for k, v := range familyDayTask {
 		vv, ok := v.(map[string]interface{})
 		if ok {
+
+			if vv["count"].(float64) == 0 {
+				switch k {
+				case "1":
+					result += "|护盾防御住1次攻击"
+				case "2":
+					result += "|领取1次免费20能量"
+				case "3":
+					result += "|在公会聊天发言1次"
+				case "4":
+					result += "|领取1点好友赠送能量"
+				case "5":
+					result += "|使用转盘100次"
+				case "6":
+					result += "|攻击仇人1次"
+				case "7":
+					result += "|通过转盘获得3个护盾"
+				case "8":
+					result += "|偷对土豪2次"
+				case "9":
+					result += "|自己召唤的恶龙被击杀"
+				case "11":
+					result += "|使用魔法药水重置糖果树"
+				case "12":
+					result += "|使用时光机重置小岛"
+				case "13":
+					result += "|在糖果树上打出1个糖果"
+				case "14":
+					result += "|在小岛寻宝中夹到1个宝石"
+				case "15":
+					result += "|分享3次"
+				default:
+					result += "|未知任务"
+				}
+			}
+
 			if vv["prize"].(float64) == 0 && vv["count"].(float64) > 0 {
 				getFamilyDayTaskPrize(goServerURL, goZoneToken, k)
 				xlog.Infof("[%v]领取公会任务奖励[%v]", goName, k)
 			}
 		}
 	}
+	return
 }
 
 func RunnerPullAnimal() (err error) {
@@ -10248,21 +10442,29 @@ func RunnerFamilySignGo() (err error) {
 	}
 	familySignGo()
 
+	xlog.Infof("签到完成")
 	if time.Now().Weekday() == time.Saturday {
 		if time.Now().Hour() == 0 {
 			if runnerStatus("SaturdayAttackMyBossStatus") == "1" {
+				xlog.Infof("周六开始执行打龙")
 				attackMyBossLogic("1945", "5000")
+				xlog.Infof("周六执行打龙完成")
 				time.Sleep(time.Second * 200)
 			}
 		}
 	}
-	if time.Now().Weekday() != time.Sunday {
-		now := time.Now()
-		if now.Minute() < 35 {
-			s := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 35, 0, 0, now.Location())
-			time.Sleep(s.Sub(now))
+	if runnerStatus("SaturdayAttackMyBossStatus") == "1" {
+		if time.Now().Weekday() != time.Sunday {
+			now := time.Now()
+			if now.Minute() < 35 {
+				s := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 35, 0, 0, now.Location())
+				xlog.Infof("准备执行任务转盘,等待%v", s.Sub(now))
+				time.Sleep(s.Sub(now))
+			}
+			xlog.Infof("开始执行任务转盘")
+			drawLogic(time.Now().Hour(), 800, 5, true)
+			xlog.Infof("执行任务转盘完成")
 		}
-		drawLogic(time.Now().Hour(), 800, 5, true)
 	}
 	return
 }
@@ -10300,12 +10502,12 @@ func RunnerCheckTokenGoLogic() (err error) {
 		if user == nil {
 			continue
 		}
+		followCompanion_1(user.ServerURL, user.ZoneToken, 3)
 		if now.Hour() == 1 || now.Hour() == 6 || now.Hour() == 15 || now.Hour() == 23 {
 			for i := 1; i <= 3; i++ {
 				getFamilySignPrize(user.ServerURL, user.ZoneToken, i)
 				xlog.Infof("[%v] getFamilySignPrize[%v]", user.Name, i)
 			}
-			followCompanion_1(user.ServerURL, user.ZoneToken, 3)
 			taskIDs := getDayTasksInfo(user.ServerURL, user.ZoneToken)
 			xlog.Infof("[%v]领取日常任务奖励:%v", user.Name, taskIDs)
 			for _, taskID := range taskIDs {
@@ -10327,12 +10529,17 @@ func RunnerCheckTokenGoLogic() (err error) {
 }
 
 func AttackBossGo() (err error) {
-	getbossPrizeLogic("system")
+	status := runnerStatus("AttackBossGoGetbossPrizeLogic")
+	if status == "1" {
+		getbossPrizeLogic("system")
+	}
 	attackMyBossLogic("system", "4400")
 	time.Sleep(450 * time.Second)
 	go singleBossAttackLogic("system")
 	attackBossLogic("")
-	getbossPrizeLogic("outsystem")
+	if status == "1" {
+		getbossPrizeLogic("outsystem")
+	}
 	attackMyBossLogic("outsystem", "4400")
 	sql := `select id from tokens`
 	rows, err := Pool.Query(sql)
@@ -10346,22 +10553,12 @@ func AttackBossGo() (err error) {
 		rows.Scan(&uuid)
 		ids = append(ids, uuid)
 	}
-
-	// for _, v := range ids {
-	// bossList := getBossHelpList(serverURL, zoneToken)
-	// for _, v := range bossList {
-	// 	leftHp, ok := v["leftHp"].(float64)
-	// 	if ok {
-	// 		if leftHp >= 1150 {
-	// 			attackBoss(serverURL, zoneToken, v["id"].(string))
-	// 		}
-	// 	}
-	// }
-	// }
 	for _, v := range ids {
 		attackBossLogic(v)
 	}
-	getbossPrizeLogic("")
+	if status == "1" {
+		getbossPrizeLogic("")
+	}
 	return
 }
 
@@ -10793,6 +10990,14 @@ func helpEraseGift(serverURL, zoneToken string) {
 		}
 	}
 }
+
+// TODO: 未完成
+// func doneUserGoldMine(userID string) (result string) {
+// 	AllLock.Lock()
+// 	defer AllLock.Unlock()
+// 	user := GetUser(userID)
+
+// }
 
 func doneUserPiece(userID string) (result string) {
 	AllLock.Lock()

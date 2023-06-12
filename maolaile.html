@@ -795,7 +795,7 @@ function submitRequest() {
         }
         getFamilyEnergy = function () {
             var UID = $("#getFamilyEnergySelect option:selected").val();
-            window.open(APIURL + "/familyEnergy.html?id=" + UID)
+            window.open(APIURL + "/familyEnergy.html?id=" + UID+"&is_show=0")
         }
 
         getUserToken = function () {
