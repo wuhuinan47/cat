@@ -144,7 +144,7 @@ CREATE TABLE `tokens` (
   `zoneToken` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `pull_rows` varchar(80) COLLATE utf8mb4_unicode_ci DEFAULT '1,2,3,4,5,6',
   `init_animals` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `all_animals` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `all_animals` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `password` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'Aa112211',
   `beach_runner` int(11) DEFAULT '0',
   `add_firewood_types` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT '2,3',
