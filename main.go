@@ -4252,7 +4252,7 @@ func GetZoneTokenH(w http.ResponseWriter, req *http.Request) {
 func AllBeachHelpH(w http.ResponseWriter, req *http.Request) {
 	// enterWithBeachHelp
 
-	AllBeachHelpGo()
+	go AllBeachHelpGo()
 
 	io.WriteString(w, "执行中")
 }
@@ -4320,6 +4320,8 @@ func AllBeachHelpGo() (err error) {
 
 	getHelpItemFlag := false
 	for id1, m := range s {
+		getVipEnergyResult := getVipEnergy(m.Str("serverURL"), m.Str("zoneToken"))
+		xlog.Infof("[%v]领取vip能量[%v]", m.Str("name"), getVipEnergyResult)
 		if m.Int("shovelHelpNum") == 5 {
 			continue
 		}
@@ -4647,19 +4649,56 @@ func GetTodayAnimalsH(w http.ResponseWriter, req *http.Request) {
 func DiamondH(w http.ResponseWriter, req *http.Request) {
 
 	id := req.URL.Query().Get("id")
-	// flag := req.URL.Query().Get("flag")
+	flag := req.URL.Query().Get("flag")
 	quality := req.URL.Query().Get("quality")
 	amount := req.URL.Query().Get("amount")
+	familyId := req.URL.Query().Get("familyId")
 
 	v2, _ := strconv.ParseFloat(quality, 64)
 	v3, _ := strconv.ParseFloat(amount, 64)
 
-	total, all := getBoxPrizeGo(id, v2, v3)
+	if familyId != "" {
+		sql := `select id from tokens where familyId = ?`
+		userIDs := []string{}
+		rows, err := Pool.Query(sql, familyId)
+		if err != nil {
+			return
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var userID string
+			rows.Scan(&userID)
+			userIDs = append(userIDs, userID)
+		}
+		go func() {
+			xlog.Infof("开始抓取")
+			for _, userID := range userIDs {
+				if flag == "1" {
+					// 抓自己
+					getSelfBoxPrizeGo(userID, v2, v3)
+				} else {
+					getBoxPrizeGo(userID, v2, v3)
+				}
+				time.Sleep(time.Second * 1)
+			}
+			xlog.Infof("抓取结束")
+		}()
+		io.WriteString(w, "SUCCESS")
 
-	rate, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", (total/all)*100), 64)
-	str := fmt.Sprintf("抓取次数:%v, 抓中次数:%v, 命中率:%v", all, total, fmt.Sprintf("%v", rate)+"%")
+	} else {
+		var total, all float64
+		if flag == "1" {
+			// 抓自己
+			total, all = getSelfBoxPrizeGo(id, v2, v3)
+		} else {
+			total, all = getBoxPrizeGo(id, v2, v3)
+		}
 
-	io.WriteString(w, str)
+		rate, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", (total/all)*100), 64)
+		str := fmt.Sprintf("抓取次数:%v, 抓中次数:%v, 命中率:%v", all, total, fmt.Sprintf("%v", rate)+"%")
+		io.WriteString(w, str)
+	}
+
 }
 
 func DiamondH1(s *web.Session) web.Result {
@@ -5644,44 +5683,148 @@ func openSteamBoxGo() {
 }
 
 // 抓特定箱子 quality-> 1=普通 2=稀有 3=传奇
-func getBoxPrizeGo(uid string, quality, amount float64) (total, all float64) {
-
-	// SQL := "select token from tokens where id = ?"
-
-	// var token string
-	// Pool.QueryRow(SQL, uid).Scan(&token)
+func getSelfBoxPrizeGo(uid string, quality, amount float64) (total, all float64) {
 	user := GetUser(uid)
-
 	serverURL, zoneToken := user.ServerURL, user.ZoneToken
-	helpList := getGoldMineHelpList(serverURL, zoneToken, quality)
+	// helpList := getGoldMineHelpList(serverURL, zoneToken, quality)
+	// ids := []int64{21, 22, 23}
+	// for _, v := range helpList {
 
-	ids := []int64{21, 22}
-
-	for _, v := range helpList {
-
+	userQuality, ids := enterGoldMine(serverURL, zoneToken, uid, "0")
+	if quality == 0 || userQuality == quality {
+		count := 0
 		for _, v2 := range ids {
 			if total == amount {
-				xlog.Infof("抓取完毕")
+				xlog.Infof("[%s]抓取完毕", user.Name)
 				rate, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", (total/all)*100), 64)
-				xlog.Infof("命中率:%v", fmt.Sprintf("%v", rate)+"%")
+				xlog.Infof("[%s]命中率:%v", user.Name, fmt.Sprintf("%v", rate)+"%")
 				return
 			}
-			time.Sleep(time.Second * 1)
+			time.Sleep(time.Millisecond * 500)
+			getFlag := goldMineFish(serverURL, zoneToken, uid, v2)
+			if getFlag != -1 {
+				all++
+			}
+			count++
+			if getFlag == 1 {
+				total += 1
+				xlog.Infof("[%s]当前数量:%v 目标数量:%v", user.Name, total, amount)
+				if userQuality == 1 && count == 2 {
+					break
+				}
+				if userQuality == 2 && count == 2 {
+					break
+				}
+				if userQuality == 3 {
+					break
+				}
+			}
+		}
+		if total == amount {
+			xlog.Infof("[%s]抓取完毕", user.Name)
+			rate, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", (total/all)*100), 64)
+			xlog.Infof("[%s]命中率:%v", user.Name, fmt.Sprintf("%v", rate)+"%")
+			return
+		}
+		for {
+			if total == amount {
+				xlog.Infof("[%s]抓取完毕", user.Name)
+				rate, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", (total/all)*100), 64)
+				xlog.Infof("[%s]命中率:%v", user.Name, fmt.Sprintf("%v", rate)+"%")
+				return
+			}
+			userQuality, ids := enterGoldMine(serverURL, zoneToken, uid, "1")
+			if quality == 0 || userQuality == quality {
+				if len(ids) > 0 {
+					count := 0
+					for _, v2 := range ids {
+						if total == amount {
+							xlog.Infof("[%s]抓取完毕", user.Name)
+							rate, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", (total/all)*100), 64)
+							xlog.Infof("[%s]命中率:%v", user.Name, fmt.Sprintf("%v", rate)+"%")
+							return
+						}
+						time.Sleep(time.Millisecond * 500)
+						getFlag := goldMineFish(serverURL, zoneToken, uid, v2)
+						if getFlag != -1 {
+							all++
+						}
+						count++
+						if getFlag == 1 {
+							total += 1
+							xlog.Infof("[%s]当前数量:%v 目标数量:%v", user.Name, total, amount)
+							if userQuality == 1 && count == 2 {
+								break
+							}
+							if userQuality == 2 && count == 2 {
+								break
+							}
+							if userQuality == 3 {
+								break
+							}
+						}
+					}
+				} else {
+					return
+				}
+			}
+
+		}
+
+	} else {
+		return
+	}
+
+	// for _, v2 := range ids {
+	// 	if total == amount {
+	// 		xlog.Infof("抓取完毕")
+	// 		rate, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", (total/all)*100), 64)
+	// 		xlog.Infof("命中率:%v", fmt.Sprintf("%v", rate)+"%")
+	// 		return
+	// 	}
+	// 	time.Sleep(time.Second * 1)
+	// 	getFlag := goldMineFish(serverURL, zoneToken, uid, v2)
+	// 	if getFlag != -1 {
+	// 		all++
+	// 	}
+	// 	if getFlag == 1 {
+	// 		total += 1
+	// 		xlog.Infof("当前数量:%v 目标数量:%v", total, amount)
+	// 		break
+	// 	}
+	// }
+	// // }
+	// rate, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", (total/all)*100), 64)
+	// xlog.Infof("命中率:%v", fmt.Sprintf("%v", rate)+"%")
+}
+func getBoxPrizeGo(uid string, quality, amount float64) (total, all float64) {
+	user := GetUser(uid)
+	serverURL, zoneToken := user.ServerURL, user.ZoneToken
+	helpList := getGoldMineHelpList(serverURL, zoneToken, quality)
+	// ids := []int64{21, 22}
+	for _, v := range helpList {
+		_, ids := enterGoldMine(serverURL, zoneToken, fmt.Sprintf("%v", v["uid"]), "0")
+		for _, v2 := range ids {
+			if total == amount {
+				xlog.Infof("[%s]抓取完毕", user.Name)
+				rate, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", (total/all)*100), 64)
+				xlog.Infof("[%s]命中率:%v", user.Name, fmt.Sprintf("%v", rate)+"%")
+				return
+			}
+			time.Sleep(time.Millisecond * 500)
 			getFlag := goldMineFish(serverURL, zoneToken, v["uid"], v2)
 			if getFlag != -1 {
 				all++
 			}
 			if getFlag == 1 {
 				total += 1
-				xlog.Infof("当前数量:%v 目标数量:%v", total, amount)
+				xlog.Infof("[%s]当前数量:%v 目标数量:%v", user.Name, total, amount)
 				break
 			}
 		}
 	}
-
 	rate, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", (total/all)*100), 64)
-	xlog.Infof("命中率:%v", fmt.Sprintf("%v", rate)+"%")
-
+	xlog.Infof("[%s]命中率:%v", user.Name, fmt.Sprintf("%v", rate)+"%")
 	return
 }
 
@@ -6344,25 +6487,26 @@ func getGoldMineHelpList(serverURL, zoneToken string, quality float64) (data []m
 	return
 }
 
-// // 进入抓宝箱
-// func enterGoldMine(serverURL, zoneToken string, fuid interface{}) {
-// 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+// https://s147.11h5.com//game?cmd=enterGoldMine&token=ildRZZVWhT6j5b_uk-8Ouimu9cKkEIO_tZU&fuid=302691822&type=1&now=1686708856916
 
-// 	url := fmt.Sprintf("%v/game?cmd=enterGoldMine&token=%v&fuid=%v&type=0&now=%v", serverURL, zoneToken, fuid, now)
-// 	formData := httpGetReturnJson(url)
-
-// 	// ids := []int64{21, 22}
-
-// 	goldMine, ok := formData["goldMine"]
-// 	if !ok {
-// 		return
-// 	}
-
-// 	if goldMine.(map[string]interface{})["quality"].(float64) == quality {
-
-// 	}
-
-// }
+// 刷新进入抓宝箱 flushType=1:is flush =0:is normal
+func enterGoldMine(serverURL, zoneToken string, fuid, flushType string) (quality float64, ids []string) {
+	params := map[string]string{
+		"cmd":   "enterGoldMine",
+		"token": zoneToken,
+		"fuid":  fmt.Sprintf("%v", fuid),
+		"type":  flushType,
+	}
+	data := CommonReq(serverURL, zoneToken, params)
+	treasureList := data.Map("goldMine/treasureList")
+	for id := range treasureList {
+		if id == "21" || id == "22" || id == "23" {
+			ids = append(ids, id)
+		}
+	}
+	quality = data.Float64("goldMine/quality")
+	return
+}
 
 // 抓宝箱
 func goldMineFish(serverURL, zoneToken string, fuid, id interface{}) int64 {
@@ -8466,6 +8610,17 @@ func getFreeEnergy(serverURL, zoneToken string) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := fmt.Sprintf("%v/game?cmd=getFreeEnergy&token=%v&now=%v", serverURL, zoneToken, now)
 	httpGetReturnJson(url)
+}
+
+func getVipEnergy(serverURL, zoneToken string) bool {
+	params := map[string]string{
+		"cmd": "getVipEnergy",
+		"req": "GET",
+	}
+
+	data := CommonReq(serverURL, zoneToken, params)
+	xlog.Infof("getVipEnergy data is %v", data)
+	return data.Int64("error") == 0
 }
 
 func draw(uid, userName, serverURL, zoneToken string, drawMulti interface{}, isTask bool) float64 {

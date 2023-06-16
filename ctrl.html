@@ -208,21 +208,23 @@
     <select style="font-size:40px;width:180px; height:100px;" name="boxUidsSelect" id="boxUidsSelect">
         <option selected="selected" value="">请选择</option>
     </select>
+    <select style="font-size:40px;width:250px; height:100px;" name="boxUidsSelectFamilyId" id="boxUidsSelectFamilyId">
+        <option value="">个人</option>
+        <option selected="selected" value="">选择公会</option>
+    </select>
     <select style="font-size:40px;width:180px; height:100px;" name="BCSelect2" id="BCSelect2">
         <option value="1">普通</option>
         <option value="2">稀有</option>
         <option value="3">传奇</option>
         <option selected="selected" value="0">全部</option>
     </select>
-    <input id="boxAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="目标数量" value="300" />
-
+    <input id="boxAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="目标数量" value="3" />
     <button style="font-size:40px;width:300px; height:100px;" onclick="getBox(2)">
         抓别人宝箱
     </button>
-    <!-- 
     <button style="font-size:40px;width:280px; height:100px;" onclick="getBox(1)">
-        抓自己宝箱(未开发)
-    </button> -->
+        抓自己宝箱
+    </button>
     <br>
     <select style="font-size:40px;width:180px; height:100px;" name="Oper_Candy" id="Oper_Candy">
         <option selected="selected" value="">请选择</option>
@@ -234,7 +236,7 @@
         <option selected="selected" value="0">全部</option>
     </select>
     <input id="candyAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="目标数量"
-        value="300" />
+        value="3" />
 
     <button style="font-size:40px;width:250px; height:100px;" onclick="hitCandy()">
         打糖果
@@ -923,7 +925,9 @@ function submitRequest() {
                 var boxUID = $("#boxUidsSelect option:selected").val();
                 var boxQuality = $("#BCSelect2 option:selected").val();
                 var boxAmount = document.getElementById("boxAmount");
-                $.get(APIURL + "/diamond?id=" + boxUID + "&quality=" + boxQuality + "&amount=" + boxAmount.value + "&flag=" + flag, function (data) {
+                var familyId = $("#boxUidsSelectFamilyId option:selected").val();
+
+                $.get(APIURL + "/diamond?id=" + boxUID + "&quality=" + boxQuality + "&amount=" + boxAmount.value + "&flag=" + flag + "&familyId="+familyId, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1540,7 +1544,7 @@ function submitRequest() {
             var r = confirm("整理拼图是否继续")
             if (r == true) {
                 var boxUID = $("#Oper_Mail option:selected").val();
-                var familyId = $("#getMailPrizeFamilyId option:selected").val();
+                var familyId = $("#getMailPrizeFamilyId option:selected").val();                
                 var title = $("#Oper_MailTitle option:selected").val();
                 var mailAmount = document.getElementById("mailAmount");
                 $.get(APIURL + "/doneUserPiece?id=" + boxUID + "&familyId=" + familyId + "&title=" + title + "&amount=" + mailAmount.value, function (data) {
@@ -1787,6 +1791,42 @@ function submitRequest() {
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("getMailPrizeFamilyId").options.add(tOption);
                 }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    if (jsarr[i]["pull_rows"] == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (jsarr[i]["pull_rows"] == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (jsarr[i]["pull_rows"] == "1") {
+                        name = "拉1"
+                    }
+                    if (jsarr[i]["pull_rows"] == "2") {
+                        name = "拉2"
+                    }
+                    if (jsarr[i]["pull_rows"] == "3") {
+                        name = "拉3"
+                    } 
+                    if (jsarr[i]["pull_rows"] == "4") {
+                        name = "拉4"
+                    }
+                    if (jsarr[i]["pull_rows"] == "5") {
+                        name = "拉5"
+                    }
+                    if (jsarr[i]["pull_rows"] == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("boxUidsSelectFamilyId").options.add(tOption);
+                }
+
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
