@@ -2760,7 +2760,9 @@ func QueryfamilyId2H(w http.ResponseWriter, req *http.Request) {
 func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	quantity1 := req.URL.Query().Get("quantity")
+	targetScore1 := req.URL.Query().Get("target_score")
 	quantity, _ := strconv.ParseFloat(quantity1, 64)
+	targetScore, _ := strconv.ParseFloat(targetScore1, 64)
 	// doUseMiningItem
 	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
 	var uid, name, token string
@@ -2769,6 +2771,14 @@ func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	user := GetUser(uid)
+	// miningItems
+	gameData := game(user.ZoneToken)
+	score := gameData.Float64("miningItems/187")
+	if targetScore > 0 && score >= targetScore {
+		xlog.Infof("[%v]已达到目标分数", name)
+		io.WriteString(w, "已达到目标分数,当前分数:"+fmt.Sprintf("%v", score))
+		return
+	}
 	// var miningActivityId1, miningGroupId1 interface{}
 	// user.ZoneToken, miningActivityId1 = getEnterInfo(id, name, user.ServerURL, user.Token, user.ZoneToken, "miningActivityId")
 	// user.ZoneToken, miningGroupId1 = getEnterInfo(id, name, user.ServerURL, user.Token, user.ZoneToken, "miningGroupId")
@@ -2778,12 +2788,24 @@ func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
 	// useMiningItem5000(name, user.ServerURL, user.ZoneToken)
 	UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
 	userOnline.Lock.Lock()
-	result := &UseMiningWin{}
+	result := &UseMiningWin{
+		AllScore: score,
+	}
 	startTime := time.Now()
 	if quantity > 0 {
 		for i := 0; i < int(quantity); i++ {
 			flag := result.doUseMiningItem(user)
 			if !flag {
+				break
+			}
+		}
+	} else {
+		for {
+			flag := result.doUseMiningItem(user)
+			if !flag {
+				break
+			}
+			if result.AllScore >= targetScore {
 				break
 			}
 		}
@@ -2798,7 +2820,7 @@ func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
 	xlog.Infof("[%v]挖矿结束", name)
 	endTime := time.Now()
 	xlog.Infof("[%v]挖矿耗时%v", name, endTime.Sub(startTime))
-	s := fmt.Sprintf("耗时:%v消耗了%v个鱼叉,%v个火箭,%v个水雷,获得了%v矿山,%v鱼叉,%v火箭,%v水雷", endTime.Sub(startTime), result.UseItem184, result.UseItem185, result.UseItem186, result.Score, result.WinItem184, result.WinItem185, result.WinItem186)
+	s := fmt.Sprintf("耗时:%v 当前矿石积分:%v 消耗了%v个鱼叉,%v个火箭,%v个水雷,本次获得了%v矿石,%v鱼叉,%v火箭,%v水雷", endTime.Sub(startTime), result.AllScore, result.UseItem184, result.UseItem185, result.UseItem186, result.Score, result.WinItem184, result.WinItem185, result.WinItem186)
 	if !result.GoOn {
 		s = "前面请手动挖到倒数第二层！下次再处理这个逻辑！"
 	}
@@ -4587,10 +4609,20 @@ func GetTodayAnimalsH(w http.ResponseWriter, req *http.Request) {
 		var s = make(map[string]float64)
 		var sum float64
 		var ss = "我方今日已获得->"
-		for k, v1 := range nowAnimal {
+
+		// 排序nowAnimal
+		var keys []int
+		for k := range nowAnimal {
+			i, _ := strconv.Atoi(k)
+			keys = append(keys, i)
+		}
+		sort.Ints(keys)
+
+		for _, v := range keys {
+			k := strconv.Itoa(v)
+			v1 := nowAnimal[k]
 			v := v1.(float64)
 			initV := todayInitAnimal[k]
-
 			if k == "76" {
 				s["浣熊"] = v - initV
 				sum += s["浣熊"] * 2
@@ -4631,6 +4663,51 @@ func GetTodayAnimalsH(w http.ResponseWriter, req *http.Request) {
 
 			}
 		}
+
+		// for k, v1 := range nowAnimal {
+		// 	v := v1.(float64)
+		// 	initV := todayInitAnimal[k]
+
+		// 	if k == "76" {
+		// 		s["浣熊"] = v - initV
+		// 		sum += s["浣熊"] * 2
+		// 		ss += fmt.Sprintf("[浣熊:%v]", s["浣熊"])
+		// 	}
+
+		// 	if k == "77" {
+		// 		s["企鹅"] = v - initV
+		// 		sum += s["企鹅"] * 2
+		// 		ss += fmt.Sprintf("[企鹅:%v]", s["企鹅"])
+		// 	}
+
+		// 	if k == "78" {
+		// 		s["野猪"] = v - initV
+		// 		sum += s["野猪"] * 3
+		// 		ss += fmt.Sprintf("[野猪:%v]", s["野猪"])
+
+		// 	}
+
+		// 	if k == "79" {
+		// 		s["羊驼"] = v - initV
+		// 		sum += s["羊驼"] * 3
+		// 		ss += fmt.Sprintf("[羊驼:%v]", s["羊驼"])
+
+		// 	}
+
+		// 	if k == "80" {
+		// 		s["熊猫"] = v - initV
+		// 		sum += s["熊猫"] * 4
+		// 		ss += fmt.Sprintf("[熊猫:%v]", s["熊猫"])
+
+		// 	}
+
+		// 	if k == "81" {
+		// 		s["大象"] = v - initV
+		// 		sum += s["大象"] * 6
+		// 		ss += fmt.Sprintf("[大象:%v]", s["大象"])
+
+		// 	}
+		// }
 
 		ss += fmt.Sprintf(";目前:%v分，还差:%v分", sum, 50-sum)
 		io.WriteString(w, ss)
@@ -11129,10 +11206,17 @@ func getTodayAnimal(id string) (ss, ssEnemy string) {
 		var sum, sumEnemy float64
 		ss = "我方今日已获得:"
 		ssEnemy = "敌方今日已获得:"
-		for k, v1 := range nowAnimal {
-			v := v1.(float64)
+		// 排序nowAnimal
+		var keys []int
+		for k := range nowAnimal {
+			i, _ := strconv.Atoi(k)
+			keys = append(keys, i)
+		}
+		sort.Ints(keys)
+		for _, k1 := range keys {
+			k := strconv.Itoa(k1)
+			v := nowAnimal[k].(float64)
 			initV := todayInitAnimal[k]
-
 			var count float64 = v - initV
 
 			cc := float64(0)
@@ -11185,10 +11269,69 @@ func getTodayAnimal(id string) (ss, ssEnemy string) {
 				ss += fmt.Sprintf("[大象:%v]", s["大象"])
 
 			}
+
 		}
+		// for k, v1 := range nowAnimal {
+		// 	v := v1.(float64)
+		// 	initV := todayInitAnimal[k]
+
+		// 	var count float64 = v - initV
+
+		// 	cc := float64(0)
+		// 	for k2 := range todayAllAnimals {
+		// 		if cc >= count {
+		// 			break
+		// 		}
+		// 		if strings.Contains(k2, "itemId"+k) {
+		// 			delete(todayAllAnimals, k2)
+		// 			cc += 1
+		// 		}
+		// 	}
+
+		// 	if k == "76" {
+		// 		s["浣熊"] = count
+		// 		sum += s["浣熊"] * 2
+		// 		ss += fmt.Sprintf("[浣熊:%v]", s["浣熊"])
+		// 	}
+
+		// 	if k == "77" {
+		// 		s["企鹅"] = count
+		// 		sum += s["企鹅"] * 2
+		// 		ss += fmt.Sprintf("[企鹅:%v]", s["企鹅"])
+		// 	}
+
+		// 	if k == "78" {
+		// 		s["野猪"] = count
+		// 		sum += s["野猪"] * 3
+		// 		ss += fmt.Sprintf("[野猪:%v]", s["野猪"])
+
+		// 	}
+
+		// 	if k == "79" {
+		// 		s["羊驼"] = count
+		// 		sum += s["羊驼"] * 3
+		// 		ss += fmt.Sprintf("[羊驼:%v]", s["羊驼"])
+
+		// 	}
+
+		// 	if k == "80" {
+		// 		s["熊猫"] = count
+		// 		sum += s["熊猫"] * 4
+		// 		ss += fmt.Sprintf("[熊猫:%v]", s["熊猫"])
+
+		// 	}
+
+		// 	if k == "81" {
+		// 		s["大象"] = count
+		// 		sum += s["大象"] * 6
+		// 		ss += fmt.Sprintf("[大象:%v]", s["大象"])
+
+		// 	}
+		// }
 
 		ss += fmt.Sprintf(";目前:%v分，还差:%v分", sum, 50-sum)
 
+		// 排序todayAllAnimals
 		for k2 := range todayAllAnimals {
 			if strings.Contains(k2, "itemId76") {
 				sEnemy["浣熊"] += 1
@@ -11738,6 +11881,7 @@ type UseMiningWin struct {
 	WinItem185 float64
 	WinItem186 float64
 	GoOn       bool
+	AllScore   float64
 }
 
 func (result *UseMiningWin) doUseMiningItem(user *User) (flag bool) {
@@ -11819,6 +11963,7 @@ func (result *UseMiningWin) doUseMiningItem(user *User) (flag bool) {
 	xlog.Infof("%s 目标火箭:%v 获得火箭:%v", user.Name, item185, nowItem185)
 	xlog.Infof("%s 目标水雷:%v 获得水雷:%v", user.Name, item186, nowItem186)
 	result.Score += score
+	result.AllScore += score
 	result.WinItem184 += item184
 	result.WinItem185 += item185
 	result.WinItem186 += item186
