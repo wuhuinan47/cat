@@ -8129,7 +8129,7 @@ func attackBoss(serverURL, zoneToken, bossID string) {
 	attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 0)
 }
 
-func getAttackEnemyList(serverURL, zoneToken string) (userIDs, policeUserIDs []int) {
+func getAttackEnemyList(serverURL, zoneToken string) (userIDs, policeUserIDs, policeUids []int) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	url := fmt.Sprintf("%v/game?cmd=getAttackEnemyList&token=%v&now=%v", serverURL, zoneToken, now)
 	formData := httpGetReturnJson(url)
@@ -8149,9 +8149,9 @@ func getAttackEnemyList(serverURL, zoneToken string) (userIDs, policeUserIDs []i
 
 				if empty, ok := enemy["empty"]; ok {
 					if empty.(float64) == 0 {
-
 						if enemy["isPolice"].(float64) == 1 {
 							policeUserIDs = append(policeUserIDs, int(userID))
+							policeUids = append(policeUids, int(enemy["policeUid"].(float64)))
 						} else {
 							userIDs = append(userIDs, int(userID))
 						}
@@ -8875,17 +8875,18 @@ func draw(uid, userName, serverURL, zoneToken string, drawMulti interface{}, isT
 			attackType := 0
 
 			if isTask {
-				enemys, policeUserIDs := getAttackEnemyList(serverURL, zoneToken)
+				enemys, policeUserIDs, policeUids := getAttackEnemyList(serverURL, zoneToken)
 
 				if len(policeUserIDs) > 0 {
 					xlog.Infof("[%v]【摇一摇】打通缉", userName)
 					attackUid = policeUserIDs[0]
+					policeUid := policeUids[0]
 					var buildings = []string{}
 					buildings, _ = visitIsland(serverURL, zoneToken, attackUid)
 					attackType = 3
 					if len(buildings) > 0 {
 						building = buildings[0]
-						xlog.Infof("[%v]【目标更换成通缉对象】:%v --> %v:%v", userName, attackUid, building, attackType)
+						xlog.Infof("[%v]【目标更换成通缉对象】通缉者:%v 被通缉:%v --> %v:%v", userName, policeUid, attackUid, building, attackType)
 					} else {
 						for _, v := range enemys {
 							if v == 302691822 || v == 309392050 {
