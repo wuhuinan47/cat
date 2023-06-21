@@ -2278,17 +2278,31 @@ func SearchFamilyH(w http.ResponseWriter, req *http.Request) {
 	user := GetUser(uid)
 
 	familyId, timeFlushList := getFamilyId2(user.ServerURL, user.ZoneToken, oldFamilyId)
-	familyName := searchFamily(user.ServerURL, user.ZoneToken, familyId)
-	familyName, _ = url.QueryUnescape(familyName)
+	// familyName := searchFamily(user.ServerURL, user.ZoneToken, familyId)
+	// familyName, _ = url.QueryUnescape(familyName)
 	_, mailEnergyCount := getMailListByCakeID(user.ServerURL, user.ZoneToken, "", "2")
 	labaStr, _ := enterLabaBowl(user.ServerURL, user.ZoneToken, uid)
-	mapList := map[string]interface{}{"labaStr": labaStr, "familyName": familyName, "familyId": familyId, "timeFlushList": timeFlushList, "todayAnimals": ss, "todayEnemyAnimals": ssEnemy, "mailEnergyCount": mailEnergyCount}
-	jsonBytes, err := json.Marshal(mapList)
-	if err != nil {
-		io.WriteString(w, err.Error())
-		return
+	score := getLastMiningRankScore(user.ServerURL, user.ZoneToken)
+	s := fmt.Sprintf("\n第500名挖矿分数:%v|邮件能量储备:%v", score, mailEnergyCount)
+	s += "\n\n"
+	for _, v := range timeFlushList {
+		s += fmt.Sprintf("%v,", v)
 	}
-	io.WriteString(w, string(jsonBytes))
+	// 带颜色
+	s += fmt.Sprintf(`【%v】`, familyId)
+	s += "\n"
+	s += fmt.Sprintf("\n%v", ss)
+	s += "\n"
+	s += fmt.Sprintf("\n%v", ssEnemy)
+	s += fmt.Sprintf("\n\n水果大亨:%v", labaStr)
+	// mapList := map[string]interface{}{"第500名挖矿分数": score, "labaStr": labaStr, "公会名称": familyName, "公会ID": familyId, "动物刷新时间": timeFlushList, "todayAnimals": ss, "todayEnemyAnimals": ssEnemy, "邮件能量储备": mailEnergyCount}
+	// jsonBytes, err := json.Marshal(mapList)
+	// if err != nil {
+	// 	io.WriteString(w, err.Error())
+	// 	return
+	// }
+	// io.WriteString(w, string(jsonBytes))
+	io.WriteString(w, s)
 }
 
 func SearchFamilyH1(s *web.Session) web.Result {
@@ -2764,67 +2778,114 @@ func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
 	quantity, _ := strconv.ParseFloat(quantity1, 64)
 	targetScore, _ := strconv.ParseFloat(targetScore1, 64)
 	// doUseMiningItem
-	SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
-	var uid, name, token string
-	err := Pool.QueryRow(SQL).Scan(&uid, &name, &token)
-	if err != nil {
-		return
-	}
-	user := GetUser(uid)
-	// miningItems
-	gameData := game(user.ZoneToken)
-	score := gameData.Float64("miningItems/187")
-	if targetScore > 0 && score >= targetScore {
-		xlog.Infof("[%v]已达到目标分数", name)
-		io.WriteString(w, "已达到目标分数,当前分数:"+fmt.Sprintf("%v", score))
-		return
-	}
-	// var miningActivityId1, miningGroupId1 interface{}
-	// user.ZoneToken, miningActivityId1 = getEnterInfo(id, name, user.ServerURL, user.Token, user.ZoneToken, "miningActivityId")
-	// user.ZoneToken, miningGroupId1 = getEnterInfo(id, name, user.ServerURL, user.Token, user.ZoneToken, "miningGroupId")
-	// miningActivityId := fmt.Sprintf("%v", miningActivityId1)
-	// miningGroupId := fmt.Sprintf("%v", miningGroupId1)
-	xlog.Infof("[%v]开始挖矿", name)
-	// useMiningItem5000(name, user.ServerURL, user.ZoneToken)
-	UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
-	userOnline.Lock.Lock()
-	result := &UseMiningWin{
-		AllScore: score,
-	}
-	startTime := time.Now()
-	if quantity > 0 {
-		for i := 0; i < int(quantity); i++ {
-			flag := result.doUseMiningItem(user)
-			if !flag {
-				break
+	// SQL := fmt.Sprintf("select id, name, token from tokens where id = %v", id)
+	// var uid, name, token string
+	// err := Pool.QueryRow(SQL).Scan(&uid, &name, &token)
+	// if err != nil {
+	// 	return
+	// }
+
+	userIDs := []string{}
+	if id == "all" {
+		rows, err := Pool.Query(`select id from tokens`)
+		if err != nil {
+			return
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var uid string
+			rows.Scan(&uid)
+			if uid != "" {
+				userIDs = append(userIDs, uid)
 			}
 		}
 	} else {
-		for {
-			flag := result.doUseMiningItem(user)
-			if !flag {
-				break
-			}
-			if result.AllScore >= targetScore {
-				break
-			}
+		userIDs = append(userIDs, id)
+	}
+	s := ""
+	if len(userIDs) > 0 {
+		if len(userIDs) > 10 {
+			length := len(userIDs)
+			// 分成3份
+			userIDs1 := userIDs[:length/3]
+			userIDs2 := userIDs[length/3 : length/3*2]
+			userIDs3 := userIDs[length/3*2:]
+			go userMiningLogic(userIDs1, quantity, targetScore)
+			go userMiningLogic(userIDs2, quantity, targetScore)
+			go userMiningLogic(userIDs3, quantity, targetScore)
+			s = "后台作业中,可查看日志"
+		} else {
+			s = userMiningLogic(userIDs, quantity, targetScore)
 		}
 	}
-	// else {
-	// 	useMiningItem5110(name, user.ServerURL, user.ZoneToken, miningActivityId, miningGroupId)
-	// }
-	userOnline.Lock.Unlock()
-	if quantity > 0 {
-		UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
-	}
-	xlog.Infof("[%v]挖矿结束", name)
-	endTime := time.Now()
-	xlog.Infof("[%v]挖矿耗时%v", name, endTime.Sub(startTime))
-	s := fmt.Sprintf("耗时:%v 当前矿石积分:%v 消耗了%v个鱼叉,%v个火箭,%v个水雷,本次获得了%v矿石,%v鱼叉,%v火箭,%v水雷", endTime.Sub(startTime), result.AllScore, result.UseItem184, result.UseItem185, result.UseItem186, result.Score, result.WinItem184, result.WinItem185, result.WinItem186)
-	if !result.GoOn {
-		s = "前面请手动挖到倒数第二层！下次再处理这个逻辑！"
-	}
+
 	io.WriteString(w, s)
+}
+
+func userMiningLogic(userIDs []string, quantity, targetScore float64) (s string) {
+	for _, uid := range userIDs {
+		user := GetUser(uid)
+		name := user.Name
+
+		// miningItems
+		gameData := game(user.ZoneToken)
+		score := gameData.Float64("miningItems/187")
+
+		if score == 0 {
+			xlog.Infof("[%v]未开启挖矿,准备开启前面49分挖矿", name)
+			doUseMiningItemAtFirst(user)
+			gameData := game(user.ZoneToken)
+			score = gameData.Float64("miningItems/187")
+			if score != 50 {
+				xlog.Infof("[%v]开启挖矿失败,请手动开启", name)
+				s += fmt.Sprintf("[%v]开启挖矿失败,请手动开启\n", name)
+				continue
+			}
+		}
+
+		if targetScore > 0 && score >= targetScore {
+			xlog.Infof("[%v]已达到目标分数", name)
+			s += fmt.Sprintf("[%v]已达到目标分数,当前分数:%v\n", name, score)
+			continue
+		}
+		xlog.Infof("[%v]开始挖矿", name)
+		UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
+		userOnline.Lock.Lock()
+		result := &UseMiningWin{
+			AllScore: score,
+		}
+		startTime := time.Now()
+		if quantity > 0 {
+			for i := 0; i < int(quantity); i++ {
+				flag := result.doUseMiningItem(user)
+				if !flag {
+					break
+				}
+			}
+		} else {
+			for {
+				flag := result.doUseMiningItem(user)
+				if !flag {
+					break
+				}
+				if result.AllScore >= targetScore {
+					break
+				}
+			}
+		}
+		userOnline.Lock.Unlock()
+		if quantity > 0 {
+			UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
+		}
+		xlog.Infof("[%v]挖矿结束", name)
+		endTime := time.Now()
+		xlog.Infof("[%v]挖矿耗时%v", name, endTime.Sub(startTime))
+		s += fmt.Sprintf("\n耗时:%v 当前矿石积分:%v 消耗了%v个鱼叉,%v个火箭,%v个水雷,本次获得了%v矿石,%v鱼叉,%v火箭,%v水雷", endTime.Sub(startTime), result.AllScore, result.UseItem184, result.UseItem185, result.UseItem186, result.Score, result.WinItem184, result.WinItem185, result.WinItem186)
+		if !result.GoOn {
+			s += "前面请手动挖到倒数第二层！下次再处理这个逻辑！"
+		}
+	}
+	return
 }
 
 func GetMiningScoreRewardH(w http.ResponseWriter, req *http.Request) {
@@ -4572,15 +4633,15 @@ func HitCandyH1(s *web.Session) web.Result {
 
 func GetTodayAnimalsH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
-	sql := `select id, name, token, init_animals,zoneToken from tokens where id = (select conf_value from config where conf_key = 'animalUid')`
+	sql := `select id, name, token, init_animals,zoneToken,familyId from tokens where id = (select conf_value from config where conf_key = 'animalUid')`
 
 	if id != "" {
-		sql = fmt.Sprintf("select id, name, token, init_animals,zoneToken from tokens where id = %v", id)
+		sql = fmt.Sprintf("select id, name, token, init_animals,zoneToken,familyId from tokens where id = %v", id)
 	}
 
-	var uid, name, token, zoneToken string
+	var uid, name, token, zoneToken, familyId string
 	var initAnimals []byte
-	Pool.QueryRow(sql).Scan(&uid, &name, &token, &initAnimals, &zoneToken)
+	Pool.QueryRow(sql).Scan(&uid, &name, &token, &initAnimals, &zoneToken, &familyId)
 	serverURL := getServerURL()
 	zoneToken, animal := getEnterInfo(uid, name, serverURL, token, zoneToken, "animal")
 	UpdateUser(uid, serverURL, zoneToken, token)
@@ -4608,7 +4669,7 @@ func GetTodayAnimalsH(w http.ResponseWriter, req *http.Request) {
 
 		var s = make(map[string]float64)
 		var sum float64
-		var ss = "我方今日已获得->"
+		var ss = familyId + "公会今日已获得->"
 
 		// 排序nowAnimal
 		var keys []int
@@ -11005,7 +11066,7 @@ func InitTodayAnimal() (err error) {
 	UpdateUser(uid, serverURL, zoneToken, token)
 	_, err = Pool.Exec("update config set conf_value = ? where conf_key = 'todayInitAnimal'", ToJSON(animal))
 
-	sql = `select id, name, token, zoneToken from tokens`
+	sql = `select id, name, token, zoneToken from tokens order by id desc`
 
 	rows, err := Pool.Query(sql)
 	if err != nil {
@@ -11032,7 +11093,7 @@ func InitTodayAnimal() (err error) {
 		UpdateUser(uuid, serverURL, zoneToken, utoken)
 		if weekDay == 1 {
 			miningApply(serverURL, zoneToken)
-			getMiningRankList(serverURL, zoneToken)
+			getMiningRankList(serverURL, zoneToken, "0")
 		}
 		_, err = Pool.Exec("update tokens set init_animals = ?, all_animals = null where id = ?", ToJSON(animal), uuid)
 	}
@@ -11160,14 +11221,14 @@ func ToJSON(src interface{}) []byte {
 }
 
 func getTodayAnimal(id string) (ss, ssEnemy string) {
-	sql := `select id, name, token, init_animals, all_animals, zoneToken from tokens where id = (select conf_value from config where conf_key = 'animalUid')`
+	sql := `select id, name, token, init_animals, all_animals, zoneToken, familyId from tokens where id = (select conf_value from config where conf_key = 'animalUid')`
 
 	if id != "" {
-		sql = fmt.Sprintf("select id, name, token, init_animals, all_animals, zoneToken from tokens where id = %v", id)
+		sql = fmt.Sprintf("select id, name, token, init_animals, all_animals, zoneToken, familyId from tokens where id = %v", id)
 	}
-	var uid, name, token, zoneToken string
+	var uid, name, token, zoneToken, familyId string
 	var initAnimals, allAnimals []byte
-	Pool.QueryRow(sql).Scan(&uid, &name, &token, &initAnimals, &allAnimals, &zoneToken)
+	Pool.QueryRow(sql).Scan(&uid, &name, &token, &initAnimals, &allAnimals, &zoneToken, &familyId)
 	user := GetUser(id)
 	zoneToken, animal := getEnterInfo(uid, name, user.ServerURL, user.Token, user.ZoneToken, "animal")
 	UpdateUser(uid, user.ServerURL, zoneToken, user.Token)
@@ -11204,8 +11265,15 @@ func getTodayAnimal(id string) (ss, ssEnemy string) {
 		var s = make(map[string]float64)
 		var sEnemy = make(map[string]float64)
 		var sum, sumEnemy float64
-		ss = "我方今日已获得:"
-		ssEnemy = "敌方今日已获得:"
+		ss = familyId + "公会今日已获得:"
+		var enemyFamilyId string
+		for k := range todayAllAnimals {
+			enemyFamilyId = strings.Split(k, "_")[0]
+			if enemyFamilyId != familyId {
+				break
+			}
+		}
+		ssEnemy = enemyFamilyId + "公会今日已获得:"
 		// 排序nowAnimal
 		var keys []int
 		for k := range nowAnimal {
@@ -11329,7 +11397,7 @@ func getTodayAnimal(id string) (ss, ssEnemy string) {
 		// 	}
 		// }
 
-		ss += fmt.Sprintf(";目前:%v分，还差:%v分", sum, 50-sum)
+		ss += fmt.Sprintf(";目前:%v分,还差:%v分", sum, 50-sum)
 
 		// 排序todayAllAnimals
 		for k2 := range todayAllAnimals {
@@ -11364,7 +11432,7 @@ func getTodayAnimal(id string) (ss, ssEnemy string) {
 			}
 		}
 
-		ssEnemy += fmt.Sprintf("[浣熊:%v][企鹅:%v][野猪:%v][羊驼:%v][熊猫:%v][大象:%v];目前:%v分，还差:%v分", sEnemy["浣熊"], sEnemy["企鹅"], sEnemy["野猪"], sEnemy["羊驼"], sEnemy["熊猫"], sEnemy["大象"], sumEnemy, 50-sumEnemy)
+		ssEnemy += fmt.Sprintf("[浣熊:%v][企鹅:%v][野猪:%v][羊驼:%v][熊猫:%v][大象:%v];目前:%v分,还差:%v分", sEnemy["浣熊"], sEnemy["企鹅"], sEnemy["野猪"], sEnemy["羊驼"], sEnemy["熊猫"], sEnemy["大象"], sumEnemy, 50-sumEnemy)
 
 		// data, err := json.Marshal(s)
 		// if err != nil {
@@ -11594,10 +11662,22 @@ func miningApply(serverURL, zoneToken string) {
 	httpGetReturnJson(URL)
 }
 
-func getMiningRankList(serverURL, zoneToken string) {
-	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
-	URL := fmt.Sprintf("%v/game?cmd=getMiningRankList&token=%v&isAllRankList=0&now=%v", serverURL, zoneToken, now)
-	httpGetReturnJson(URL)
+func getMiningRankList(serverURL, zoneToken, isAllRankList string) (data xmap.M) {
+	params := map[string]string{
+		"req":           "GET",
+		"cmd":           "getMiningRankList",
+		"isAllRankList": isAllRankList,
+	}
+	return CommonReq(serverURL, zoneToken, params)
+}
+
+func getLastMiningRankScore(serverURL, zoneToken string) float64 {
+	data := getMiningRankList(serverURL, zoneToken, "1")
+	rankList := data.ArrayMapDef([]xmap.M{}, "rankList")
+	//读出最后一个
+	last := rankList[len(rankList)-1]
+	lastScore := last.Float64("score")
+	return lastScore
 }
 
 func formatItemName(key string) (name string) {
@@ -11857,6 +11937,8 @@ func wabao(uid, name, serverURL, token string) {
 	xlog.Infof("[%v]miningItems is %v grids is %v", zoneToken, miningItems, grids)
 }
 
+// https://s147.11h5.com//game?cmd=getMiningRankList&token=ildgENSj8Ab3730Cvryqr0JdYMMP_pZlder&isAllRankList=1&now=1687326133456
+
 // https://s147.11h5.com//game?cmd=reportChat&token=ildOn9WpalsMP9b3yfyoLyoA2gPwMGoZWjz&type=0&content=%E8%BF%99%E5%82%BB%E5%AD%90%EF%BC%8C%E5%8F%B7%E7%9C%9F%E5%A4%9A%EF%BC%8C%E5%8D%B4%E6%AF%8F%E4%B8%80%E4%B8%AA%E5%8F%B7%E6%95%A2%E5%BB%BA%E5%B2%9B&target=415835110&now=1684437279203
 func CommonReq(serverURL, zoneToken string, params map[string]string) (data xmap.M) {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
@@ -11882,6 +11964,21 @@ type UseMiningWin struct {
 	WinItem186 float64
 	GoOn       bool
 	AllScore   float64
+}
+
+func doUseMiningItemAtFirst(user *User) {
+	miningApply(user.ServerURL, user.ZoneToken)
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildatRbwKlNTz38Kpr1UKtSvRb0Cv6npWkJ&itemId=184&row=4&column=3&now=1687317038434
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildatRbwKlNTz38Kpr1UKtSvRb0Cv6npWkJ&itemId=186&row=4&column=3&now=1687317053700
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildatRbwKlNTz38Kpr1UKtSvRb0Cv6npWkJ&itemId=186&row=5&column=2&now=1687317068883
+	// https://s147.11h5.com//game?cmd=useMiningItem&token=ildatRbwKlNTz38Kpr1UKtSvRb0Cv6npWkJ&itemId=185&row=6&column=3&now=1687317080098
+	useMiningItem(user.ServerURL, user.ZoneToken, "184", "4", "3")
+	time.Sleep(time.Millisecond * 300)
+	useMiningItem(user.ServerURL, user.ZoneToken, "186", "4", "3")
+	time.Sleep(time.Millisecond * 300)
+	useMiningItem(user.ServerURL, user.ZoneToken, "186", "5", "2")
+	time.Sleep(time.Millisecond * 300)
+	useMiningItem(user.ServerURL, user.ZoneToken, "185", "6", "3")
 }
 
 func (result *UseMiningWin) doUseMiningItem(user *User) (flag bool) {
