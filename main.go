@@ -2282,8 +2282,8 @@ func SearchFamilyH(w http.ResponseWriter, req *http.Request) {
 	// familyName, _ = url.QueryUnescape(familyName)
 	_, mailEnergyCount := getMailListByCakeID(user.ServerURL, user.ZoneToken, "", "2")
 	labaStr, _ := enterLabaBowl(user.ServerURL, user.ZoneToken, uid)
-	score := getLastMiningRankScore(user.ServerURL, user.ZoneToken)
-	s := fmt.Sprintf("\n第500名挖矿分数:%v|邮件能量储备:%v", score, mailEnergyCount)
+	scores := getLastMiningRankScore(user.ServerURL, user.ZoneToken)
+	s := fmt.Sprintf("\n第500名挖矿分数:%v|第450名挖矿分数:%v|邮件能量储备:%v", scores[0], scores[1], mailEnergyCount)
 	s += "\n\n"
 	for _, v := range timeFlushList {
 		s += fmt.Sprintf("%v,", v)
@@ -2965,6 +2965,10 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 	drawMulti := req.URL.Query().Get("drawMulti")
 	amount := req.URL.Query().Get("amount")
 	mode := req.URL.Query().Get("mode")
+	var isTask = false
+	if mode == "1" {
+		isTask = true
+	}
 	intDrawMulti, _ := strconv.Atoi(drawMulti)
 	intAmount, _ := strconv.Atoi(amount)
 
@@ -2978,6 +2982,11 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 			io.WriteString(w, "SUCCESS")
 			return
 		}
+		if id == "runner" {
+			go drawLogic(time.Now().Hour(), 2000, float64(intDrawMulti), isTask)
+			io.WriteString(w, "SUCCESS")
+			return
+		}
 	}
 
 	rows, err := Pool.Query(SQL)
@@ -2988,10 +2997,6 @@ func DrawH(w http.ResponseWriter, req *http.Request) {
 
 	i := 0
 
-	var isTask = false
-	if mode == "1" {
-		isTask = true
-	}
 	userIDs := []string{}
 	for rows.Next() {
 		var uid, name, token, zoneToken string
@@ -4514,63 +4519,130 @@ func GetFreeBossCannonH(w http.ResponseWriter, req *http.Request) {
 
 func HitCandyH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
+	familyId := req.URL.Query().Get("familyId")
 	quality := req.URL.Query().Get("quality")
 	amount := req.URL.Query().Get("amount")
 
-	xlog.Infof("id is %v, quality is %v, amount is %v", id, quality, amount)
+	xlog.Infof("id is %v,familyId is %v, quality is %v, amount is %v", id, familyId, quality, amount)
 
 	v2, _ := strconv.ParseFloat(quality, 64)
 	v3, _ := strconv.ParseFloat(amount, 64)
 
-	user := GetUser(id)
+	if familyId != "" {
+		sql := `select id from tokens where familyId=?`
+		rows, err := Pool.Query(sql, familyId)
+		if err != nil {
+			io.WriteString(w, "fail")
+			return
+		}
+		defer rows.Close()
+		userIDs := []string{}
+		for rows.Next() {
+			var uid string
+			rows.Scan(&uid)
+			userIDs = append(userIDs, uid)
+		}
+		for _, uid := range userIDs {
+			go func(id string) {
+				user := GetUser(id)
 
-	serverURL, zoneToken := user.ServerURL, user.ZoneToken
+				serverURL, zoneToken := user.ServerURL, user.ZoneToken
 
-	uids := getFriendsCandyTreeInfo(serverURL, zoneToken, v2)
-	uids = append(uids, int(decimal.RequireFromString(id).IntPart()))
-	time.Sleep(time.Second * 1)
-
-	var targetAmount float64
-
-	for _, v := range uids {
-		// posList
-		posList := getCandyTreeInfo(serverURL, zoneToken, v)
-		time.Sleep(time.Second * 1)
-		testList := []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
-		mathrand.Shuffle(len(testList), func(i, j int) {
-			testList[i], testList[j] = testList[j], testList[i]
-		})
-		l := len(posList)
-		i := 0
-		if l > 3 || int(decimal.RequireFromString(id).IntPart()) == v {
-			xlog.Infof("开始打糖果树:%v", testList)
-			for _, v4 := range testList {
-				if i == l {
-					break
-				}
-
-				if v3 == targetAmount {
-					return
-				}
-
-				flag := hitCandyTree(serverURL, zoneToken, v, v4)
-				i++
+				uids := getFriendsCandyTreeInfo(serverURL, zoneToken, v2)
+				uids = append(uids, int(decimal.RequireFromString(id).IntPart()))
 				time.Sleep(time.Second * 1)
-				// if flag == "err" {
-				// 	break
-				// }
 
-				if flag == "true" {
-					xlog.Infof("打到糖果+1")
-					targetAmount += 1
-					break
-				} else {
-					xlog.Infof("没打到糖果，继续 %v", flag)
+				var targetAmount float64
+
+				for _, v := range uids {
+					// posList
+					posList := getCandyTreeInfo(serverURL, zoneToken, v)
+					time.Sleep(time.Second * 1)
+					testList := []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+					mathrand.Shuffle(len(testList), func(i, j int) {
+						testList[i], testList[j] = testList[j], testList[i]
+					})
+					l := len(posList)
+					i := 0
+					if l > 3 || int(decimal.RequireFromString(id).IntPart()) == v {
+						xlog.Infof("开始打糖果树:%v", testList)
+						for _, v4 := range testList {
+							if i == l {
+								break
+							}
+							if v3 == targetAmount {
+								return
+							}
+
+							flag := hitCandyTree(serverURL, zoneToken, v, v4)
+							i++
+							time.Sleep(time.Second * 1)
+							// if flag == "err" {
+							// 	break
+							// }
+
+							if flag == "true" {
+								xlog.Infof("打到糖果+1")
+								targetAmount += 1
+								break
+							} else {
+								xlog.Infof("没打到糖果，继续 %v", flag)
+							}
+
+						}
+					}
 				}
+			}(uid)
+		}
+	} else {
+		user := GetUser(id)
 
+		serverURL, zoneToken := user.ServerURL, user.ZoneToken
+
+		uids := getFriendsCandyTreeInfo(serverURL, zoneToken, v2)
+		uids = append(uids, int(decimal.RequireFromString(id).IntPart()))
+		time.Sleep(time.Second * 1)
+
+		var targetAmount float64
+
+		for _, v := range uids {
+			// posList
+			posList := getCandyTreeInfo(serverURL, zoneToken, v)
+			time.Sleep(time.Second * 1)
+			testList := []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+			mathrand.Shuffle(len(testList), func(i, j int) {
+				testList[i], testList[j] = testList[j], testList[i]
+			})
+			l := len(posList)
+			i := 0
+			if l > 3 || int(decimal.RequireFromString(id).IntPart()) == v {
+				xlog.Infof("开始打糖果树:%v", testList)
+				for _, v4 := range testList {
+					if i == l {
+						break
+					}
+					if v3 == targetAmount {
+						return
+					}
+
+					flag := hitCandyTree(serverURL, zoneToken, v, v4)
+					i++
+					time.Sleep(time.Second * 1)
+					// if flag == "err" {
+					// 	break
+					// }
+
+					if flag == "true" {
+						xlog.Infof("打到糖果+1")
+						targetAmount += 1
+						break
+					} else {
+						xlog.Infof("没打到糖果，继续 %v", flag)
+					}
+
+				}
 			}
 		}
-
 	}
 
 	io.WriteString(w, "SUCCESS")
@@ -10509,9 +10581,9 @@ func drawLogic(hour int, maxDraw, drawMulti float64, isTask bool) (err error) {
 			}
 
 			if iMax <= 0 {
-				if gomaxDraw > goDayDraw {
+				if gomaxDraw+5 > goDayDraw {
 					xlog.Infof("[%v]摇最后1次", goName)
-					draw(goUid, goName, goServerURL, goZoneToken, gomaxDraw-goDayDraw, isTask)
+					draw(goUid, goName, goServerURL, goZoneToken, gomaxDraw+5-goDayDraw, isTask)
 				} else {
 					xlog.Infof("[%v]不用摇", goName)
 				}
@@ -10570,11 +10642,12 @@ func drawLogic(hour int, maxDraw, drawMulti float64, isTask bool) (err error) {
 				}
 
 				if iMax <= 0 {
-					if gomaxDraw > goDayDraw {
-						xlog.Infof("[%v]摇最后1次", goName)
-						draw(goUid, goName, goServerURL, goZoneToken, gomaxDraw-goDayDraw, isTask)
+					if gomaxDraw+5 > goDayDraw {
+						xlog.Infof("[%v]摇最后1次[%v]", goName, gomaxDraw+5-goDayDraw)
+						draw(goUid, goName, goServerURL, goZoneToken, gomaxDraw+5-goDayDraw, isTask)
+						xlog.Infof("[%v]摇最后1次完成", goName)
 					} else {
-						xlog.Infof("[%v]不用摇", goName)
+						xlog.Infof("[%v]不用摇[gomaxDraw:%v goDayDraw:%v]", goName, gomaxDraw, goDayDraw)
 					}
 					return
 				}
@@ -10708,6 +10781,7 @@ func RunnerPullAnimal() (err error) {
 		}
 
 		if hour == 11 && minute <= 1 {
+			chongbangLogic()
 			chongbangLogic()
 			// getFreeEnergy(serverURL, zoneToken)
 		}
@@ -11672,13 +11746,20 @@ func getMiningRankList(serverURL, zoneToken, isAllRankList string) (data xmap.M)
 	return CommonReq(serverURL, zoneToken, params)
 }
 
-func getLastMiningRankScore(serverURL, zoneToken string) float64 {
+func getLastMiningRankScore(serverURL, zoneToken string) []float64 {
 	data := getMiningRankList(serverURL, zoneToken, "1")
 	rankList := data.ArrayMapDef([]xmap.M{}, "rankList")
+	l := []float64{}
 	//读出最后一个
 	last := rankList[len(rankList)-1]
 	lastScore := last.Float64("score")
-	return lastScore
+	l = append(l, lastScore)
+	if len(rankList) > 50 {
+		last = rankList[len(rankList)-50]
+		lastScore = last.Float64("score")
+		l = append(l, lastScore)
+	}
+	return l
 }
 
 func formatItemName(key string) (name string) {
@@ -11985,7 +12066,15 @@ func doUseMiningItemAtFirst(user *User) {
 func (result *UseMiningWin) doUseMiningItem(user *User) (flag bool) {
 	var mine1 interface{}
 	user.ZoneToken, mine1 = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "mine")
-	mine := mine1.(map[string]interface{})
+	if mine1 == nil {
+		xlog.Infof("[%v]doUseMiningItem mine nil", user.Name)
+		return
+	}
+	mine, ok := mine1.(map[string]interface{})
+	if !ok {
+		xlog.Infof("[%v]doUseMiningItem mine error", user.Name)
+		return
+	}
 	grids1 := mine["grids"].([]interface{})
 	var grids [][]float64
 	for _, v := range grids1 {

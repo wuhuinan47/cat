@@ -229,6 +229,10 @@
     <select style="font-size:40px;width:180px; height:100px;" name="Oper_Candy" id="Oper_Candy">
         <option selected="selected" value="">请选择</option>
     </select>
+    <select style="font-size:40px;width:250px; height:100px;" name="Oper_Candy_Family" id="Oper_Candy_Family">
+        <option value="">个人</option>
+        <option selected="selected" value="">选择公会</option>
+    </select>
     <select style="font-size:40px;width:180px; height:100px;" name="BCSelect" id="BCSelect">
         <option value="1">普通</option>
         <option value="2">稀有</option>
@@ -419,6 +423,8 @@
         <option value="煮汤圆成功开启(抹茶)">煮汤圆成功开启(抹茶)</option>
         <option value="煮汤圆成功开启(紫薯)">煮汤圆成功开启(紫薯)</option>
         <option selected="selected" value="煮汤圆成功开启(草莓)">煮汤圆成功开启(草莓)</option>
+        <option value="深海挖矿-赛区排名奖励">深海挖矿-赛区排名奖励</option>
+        <option value="乐园圈数奖励">乐园圈数奖励</option>
         <option value="福利礼包">福利礼包</option>
         <option value="邮件能量">邮件能量</option>
     </select>
@@ -494,6 +500,7 @@
 
     <select style="font-size:40px;width:150px; height:100px;" name="Oper_Draw" id="Oper_Draw">
         <option selected="selected" value="">全部</option>
+        <option value="runner">runner</option>
     </select>
 
     <select style="font-size:40px;width:250px; height:100px;" name="selectDrawFamily" id="selectDrawFamily">
@@ -942,10 +949,12 @@ function submitRequest() {
             var r = confirm("hitCandy是否继续")
             if (r == true) {
                 var boxUID = $("#Oper_Candy option:selected").val();
+                var familyId = $("#Oper_Candy_Family option:selected").val();
+
                 var boxQuality = $("#BCSelect option:selected").val();
 
                 var boxAmount = document.getElementById("candyAmount");
-                $.get(APIURL + "/hitCandy?id=" + boxUID + "&quality=" + boxQuality + "&amount=" + boxAmount.value, function (data) {
+                $.get(APIURL + "/hitCandy?id=" + boxUID +"&familyId="+familyId+ "&quality=" + boxQuality + "&amount=" + boxAmount.value, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1854,6 +1863,46 @@ function submitRequest() {
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("boxUidsSelectFamilyId").options.add(tOption);
                 }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    var pull_rows = jsarr[i]["pull_rows"]
+                    if (pull_rows!="0") {
+                        name = "拉"+pull_rows
+                    }
+                    if (pull_rows == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (pull_rows == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (pull_rows == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (pull_rows == "1") {
+                        name = "拉1"
+                    }
+                    if (pull_rows == "2") {
+                        name = "拉2"
+                    }
+                    if (pull_rows == "3") {
+                        name = "拉3"
+                    } 
+                    if (pull_rows == "4") {
+                        name = "拉4"
+                    }
+                    if (pull_rows == "5") {
+                        name = "拉5"
+                    }
+                    if (pull_rows == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("Oper_Candy_Family").options.add(tOption);
+                }
+                // 
 
 
                 for (var i = 0; i < jsarr.length; i++) {
