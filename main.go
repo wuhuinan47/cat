@@ -954,6 +954,32 @@ func attackBossLogic(id string) (err error) {
 				flag = false
 				xlog.Infof("ignore")
 			}
+		} else if hitBossNums == 4 {
+			if leftHp <= 600 && leftHp >= 500 {
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 4, 0, 1, 150, 150, 0)
+				countI += 4
+			} else if leftHp == 601 {
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 1, 1, 0)
+				countI += 1
+			} else if leftHp <= 1000 && leftHp >= 500 {
+				attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 200, 200, 0)
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 400, 400, 0)
+				countI += 4
+			} else if leftHp == 400 {
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 200, 200, 0)
+				countI += 2
+			} else if leftHp == 200 {
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 0)
+				countI += 1
+			} else {
+				if id == "" {
+					if leftHp >= 1150 {
+						attackBoss(serverURL, zoneToken, bossID)
+					}
+				}
+				flag = false
+				xlog.Infof("ignore")
+			}
 		} else {
 			if leftHp <= 600 && leftHp >= 500 {
 				attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 0, 100, 100, 0)
@@ -2283,7 +2309,9 @@ func SearchFamilyH(w http.ResponseWriter, req *http.Request) {
 	_, mailEnergyCount := getMailListByCakeID(user.ServerURL, user.ZoneToken, "", "2")
 	labaStr, _ := enterLabaBowl(user.ServerURL, user.ZoneToken, uid)
 	scores := getLastMiningRankScore(user.ServerURL, user.ZoneToken)
-	s := fmt.Sprintf("\n第500名挖矿分数:%v|第450名挖矿分数:%v|邮件能量储备:%v", scores[0], scores[1], mailEnergyCount)
+	s := fmt.Sprintf("\n第500名挖矿分数:%v|第450名挖矿分数:%v", scores[0], scores[1])
+	s += fmt.Sprintf("\n第400名挖矿分数:%v|第300名挖矿分数:%v", scores[2], scores[3])
+	s += fmt.Sprintf("\n第200名挖矿分数:%v|第100名挖矿分数:%v|邮件能量储备:%v", scores[4], scores[5], mailEnergyCount)
 	s += "\n\n"
 	for _, v := range timeFlushList {
 		s += fmt.Sprintf("%v,", v)
@@ -10633,12 +10661,19 @@ func drawLogic(hour int, maxDraw, drawMulti float64, isTask bool) (err error) {
 				// amount := draw(goUid, goName, goServerURL, goZoneToken, 1)
 				// drawMulti := float64(5)
 
-				iMax := int((gomaxDraw - goDayDraw) / drawMulti)
+				gameData := game(goZoneToken)
+				star := gameData.Float64("star")
+				goDrawMulti := drawMulti
+				if star < 450 {
+					goDrawMulti = 1
+				}
+
+				iMax := int((gomaxDraw - goDayDraw) / goDrawMulti)
 				// time.Sleep(time.Millisecond * 2100)
 
-				if (gomaxDraw-goDayDraw) < drawMulti && (gomaxDraw-goDayDraw) > 0 {
+				if (gomaxDraw-goDayDraw) < goDrawMulti && (gomaxDraw-goDayDraw) > 0 {
 					iMax = 1
-					drawMulti = gomaxDraw - goDayDraw
+					goDrawMulti = gomaxDraw - goDayDraw
 				}
 
 				if iMax <= 0 {
@@ -10654,7 +10689,7 @@ func drawLogic(hour int, maxDraw, drawMulti float64, isTask bool) (err error) {
 				followCompanion_1(goServerURL, goZoneToken, 2)
 
 				for i := 0; i <= iMax; i++ {
-					count := draw(goUid, goName, goServerURL, goZoneToken, drawMulti, isTask)
+					count := draw(goUid, goName, goServerURL, goZoneToken, goDrawMulti, isTask)
 					if count == -1 {
 						break
 					}
@@ -11758,6 +11793,21 @@ func getLastMiningRankScore(serverURL, zoneToken string) []float64 {
 		last = rankList[len(rankList)-50]
 		lastScore = last.Float64("score")
 		l = append(l, lastScore)
+	}
+	if len(rankList) > 400 {
+		last = rankList[400]
+		lastScore = last.Float64("score")
+		l = append(l, lastScore)
+		last = rankList[300]
+		lastScore = last.Float64("score")
+		l = append(l, lastScore)
+		last = rankList[200]
+		lastScore = last.Float64("score")
+		l = append(l, lastScore)
+		last = rankList[100]
+		lastScore = last.Float64("score")
+		l = append(l, lastScore)
+
 	}
 	return l
 }

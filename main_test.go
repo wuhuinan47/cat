@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/codingeasygo/util/converter"
+	"github.com/codingeasygo/util/xhttp"
 	"github.com/codingeasygo/util/xmap"
 	"github.com/wuhuinan47/cat/catdb"
 )
@@ -245,4 +246,15 @@ func TestGetCanUseRange(t *testing.T) {
 	fmt.Println(win[item186Key])
 	fmt.Println(win[finalKey])
 
+}
+
+func TestHttp(t *testing.T) {
+	for i := 0; i < 1; i++ {
+		data, err := xhttp.GetMap("https://s147.11h5.com//game?cmd=useCompanionWine&token=ild-1RUD5bPxZf4OkMEL0FYFbz4MMMEYJRS&count=1&now=1688105725249")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println(converter.JSON(data))
+	}
 }
