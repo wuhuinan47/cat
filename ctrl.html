@@ -226,6 +226,17 @@
         抓自己宝箱
     </button>
     <br>
+    <select style="font-size:40px;width:180px; height:100px;" name="enterGoldMineUID" id="enterGoldMineUID">
+        <option selected="selected" value="">请选择</option>
+    </select>
+    <select style="font-size:40px;width:250px; height:100px;" name="enterGoldMineFamilyID" id="enterGoldMineFamilyID">
+        <option value="">个人</option>
+        <option selected="selected" value="">选择公会</option>
+    </select>
+    <button style="font-size:40px;width:300px; height:100px;" onclick="enterGoldMine()">
+        刷新宝箱
+    </button>
+    <br>
     <select style="font-size:40px;width:180px; height:100px;" name="Oper_Candy" id="Oper_Candy">
         <option selected="selected" value="">请选择</option>
     </select>
@@ -244,6 +255,17 @@
 
     <button style="font-size:40px;width:250px; height:100px;" onclick="hitCandy()">
         打糖果
+    </button>
+    <br>
+    <select style="font-size:40px;width:180px; height:100px;" name="refreshCandyTreeUID" id="refreshCandyTreeUID">
+        <option selected="selected" value="">请选择</option>
+    </select>
+    <select style="font-size:40px;width:250px; height:100px;" name="refreshCandyTreeFamilyID" id="refreshCandyTreeFamilyID">
+        <option value="">个人</option>
+        <option selected="selected" value="">选择公会</option>
+    </select>
+    <button style="font-size:40px;width:300px; height:100px;" onclick="refreshCandyTree()">
+        刷新糖果数
     </button>
     <br>
     <select style="font-size:40px;width:250px; height:100px;" name="attackBossUsers" id="attackBossUsers">
@@ -941,9 +963,21 @@ function submitRequest() {
                     window.status = "1";
                 });
             }
-
-
         }
+
+        enterGoldMine = function () {
+            var r = confirm("enterGoldMine是否继续")
+            if (r == true) {
+                var boxUID = $("#enterGoldMineUID option:selected").val();
+                var familyId = $("#enterGoldMineFamilyID option:selected").val();
+                $.get(APIURL + "/enterGoldMine?id=" + boxUID +"&familyId="+familyId, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+        }
+
+        // 
 
         hitCandy = function () {
             var r = confirm("hitCandy是否继续")
@@ -959,8 +993,18 @@ function submitRequest() {
                     window.status = "1";
                 });
             }
+        }
 
-
+        refreshCandyTree = function () {
+            var r = confirm("refreshCandyTree是否继续")
+            if (r == true) {
+                var boxUID = $("#refreshCandyTreeUID option:selected").val();
+                var familyId = $("#refreshCandyTreeFamilyID option:selected").val();
+                $.get(APIURL + "/refreshCandyTree?id=" + boxUID +"&familyId="+familyId, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
         }
 
 
@@ -1900,6 +1944,86 @@ function submitRequest() {
                     }
                     tOption.text = jsarr[i]["id"] + "(" + name + ")";
                     tOption.value = jsarr[i]["id"];
+                    document.getElementById("enterGoldMineFamilyID").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    var pull_rows = jsarr[i]["pull_rows"]
+                    if (pull_rows!="0") {
+                        name = "拉"+pull_rows
+                    }
+                    if (pull_rows == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (pull_rows == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (pull_rows == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (pull_rows == "1") {
+                        name = "拉1"
+                    }
+                    if (pull_rows == "2") {
+                        name = "拉2"
+                    }
+                    if (pull_rows == "3") {
+                        name = "拉3"
+                    } 
+                    if (pull_rows == "4") {
+                        name = "拉4"
+                    }
+                    if (pull_rows == "5") {
+                        name = "拉5"
+                    }
+                    if (pull_rows == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("refreshCandyTreeFamilyID").options.add(tOption);
+                }
+
+                // 
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    var pull_rows = jsarr[i]["pull_rows"]
+                    if (pull_rows!="0") {
+                        name = "拉"+pull_rows
+                    }
+                    if (pull_rows == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (pull_rows == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (pull_rows == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (pull_rows == "1") {
+                        name = "拉1"
+                    }
+                    if (pull_rows == "2") {
+                        name = "拉2"
+                    }
+                    if (pull_rows == "3") {
+                        name = "拉3"
+                    } 
+                    if (pull_rows == "4") {
+                        name = "拉4"
+                    }
+                    if (pull_rows == "5") {
+                        name = "拉5"
+                    }
+                    if (pull_rows == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
                     document.getElementById("Oper_Candy_Family").options.add(tOption);
                 }
                 // 
@@ -2087,6 +2211,22 @@ function submitRequest() {
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("boxUidsSelect").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("refreshCandyTreeUID").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("enterGoldMineUID").options.add(tOption);
                 }
 
 

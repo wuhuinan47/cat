@@ -1,88 +1,12 @@
-"tasks": {
-    "1": {
-        "id": "2",
-        "do": 6,
-        "a": 1
-    },
-    "3": {
-        "id": "4",
-        "do": 104,
-        "a": 1
-    },
-    "4": {
-        "id": "5",
-        "do": 3,
-        "a": 1
-    },
-    "5": {
-        "id": "8",
-        "do": 5,
-        "a": 1
-    },
-    "9": {
-        "id": "13",
-        "do": 0,
-        "a": 0
-    },
-    "12": {
-        "id": "18",
-        "do": 0,
-        "a": 0
-    },
-    "14": {
-        "id": "21",
-        "do": 1827700,
-        "a": 1
-    },
-    "15": {
-        "id": "23",
-        "do": 0,
-        "a": 0
+{
+    "card_no": "6225551691215162",
+    "card_phone": "18653120230",
+    "hcWithdrawal": {
+        "code": "FAIL",
+        "message": "子商户余额不足",
+        "merchantFee": "0.50"
     }
+}
 
 
-
-    "tasks": {
-        "1": {
-            "id": "2",
-            "do": 6,
-            "a": 1
-        },
-        "3": {
-            "id": "4",
-            "do": 104,
-            "a": 1
-        },
-        "4": {
-            "id": "5",
-            "do": 3,
-            "a": 1
-        },
-        "5": {
-            "id": "8",
-            "do": 5,
-            "a": 1
-        },
-        "9": {
-            "id": "13",
-            "do": 1,
-            "a": 0
-        },
-        "12": {
-            "id": "18",
-            "do": 0,
-            "a": 0
-        },
-        "14": {
-            "id": "21",
-            "do": 1827700,
-            "a": 1
-        },
-        "15": {
-            "id": "23",
-            "do": 0,
-            "a": 0
-        }
-
-        https://s147.11h5.com//game?cmd=attack&token=ild0IKhf9cv5WpdSuFT_r5SmhapX-9W5cBQ&type=2&targetUid=392118716&building=1&now=1686191086965
-        https://s147.11h5.com//game?cmd=attack&token=ild0IKhf9cv5WpdSuFT_r5SmhapX-9W5cBQ&type=5&targetUid=392118716&building=1&now=1686190970037
+/root/.acme.sh/*.supergameapp.com_ecc/*.supergameapp.com.cer

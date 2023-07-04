@@ -302,6 +302,9 @@ func main() {
 	http.HandleFunc("/oneSonAttackBoss", OneSonAttackBossH)
 	http.HandleFunc("/giftPiece", GiftPieceH)
 	http.HandleFunc("/draw", DrawH)
+	http.HandleFunc("/refreshCandyTree", refreshCandyTreeH)
+	http.HandleFunc("/enterGoldMine", enterGoldMineH)
+	//
 	http.HandleFunc("/useMiningItem5000", UseMiningItem5000H)
 	http.HandleFunc("/getMiningScoreReward", GetMiningScoreRewardH)
 
@@ -2213,24 +2216,34 @@ func GetFamilyDayTaskH(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		io.WriteString(w, "FAIL")
 	}
-	defer rows.Close()
 	ids := []string{}
 	for rows.Next() {
 		var uid string
 		rows.Scan(&uid)
 		ids = append(ids, uid)
 	}
+	rows.Close()
 	sort.Strings(ids)
 	d := []xmap.M{}
+	var wg sync.WaitGroup
+	ch := make(chan struct{}, 10)
+	var lock sync.RWMutex
 	for _, userID := range ids {
-
-		user := GetUser(userID)
-
-		zoneToken, familyDayTask := getEnterInfo(userID, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
-		UpdateUser(userID, user.ServerURL, zoneToken, user.Token)
-		result := getFamilyTaskPrizeLogic(familyDayTask, user.ServerURL, user.ZoneToken, user.Name)
-		d = append(d, xmap.M{"key": user.Name + "(" + userID + ")", "value": result, "user_id": userID})
+		ch <- struct{}{}
+		wg.Add(1)
+		go func(userID string) {
+			defer wg.Done()
+			user := GetUser(userID)
+			zoneToken, familyDayTask := getEnterInfo(userID, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
+			UpdateUser(userID, user.ServerURL, zoneToken, user.Token)
+			result := getFamilyTaskPrizeLogic(familyDayTask, user.ServerURL, user.ZoneToken, user.Name)
+			lock.Lock()
+			d = append(d, xmap.M{"key": user.Name + "(" + userID + ")", "value": result, "user_id": userID})
+			lock.Unlock()
+			<-ch
+		}(userID)
 	}
+	wg.Wait()
 	io.WriteString(w, converter.JSON(d))
 }
 
@@ -2310,8 +2323,13 @@ func SearchFamilyH(w http.ResponseWriter, req *http.Request) {
 	labaStr, _ := enterLabaBowl(user.ServerURL, user.ZoneToken, uid)
 	scores := getLastMiningRankScore(user.ServerURL, user.ZoneToken)
 	s := fmt.Sprintf("\n第500名挖矿分数:%v|第450名挖矿分数:%v", scores[0], scores[1])
-	s += fmt.Sprintf("\n第400名挖矿分数:%v|第300名挖矿分数:%v", scores[2], scores[3])
-	s += fmt.Sprintf("\n第200名挖矿分数:%v|第100名挖矿分数:%v|邮件能量储备:%v", scores[4], scores[5], mailEnergyCount)
+	if len(scores) >= 4 {
+		s += fmt.Sprintf("\n第400名挖矿分数:%v|第300名挖矿分数:%v", scores[2], scores[3])
+	}
+	if len(scores) >= 6 {
+		s += fmt.Sprintf("\n第200名挖矿分数:%v|第100名挖矿分数:%v", scores[4], scores[5])
+	}
+	s += fmt.Sprintf("\n\n邮件能量储备:%v", mailEnergyCount)
 	s += "\n\n"
 	for _, v := range timeFlushList {
 		s += fmt.Sprintf("%v,", v)
@@ -2375,19 +2393,29 @@ func cancelFamilyRobH(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	// var familyId float64
+	var wg sync.WaitGroup
+	ch := make(chan struct{}, 10)
 	for rows.Next() {
 		var uid, name, token string
 		rows.Scan(&uid, &name, &token)
-		user := GetUser(uid)
+		ch <- struct{}{}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			user := GetUser(uid)
 
-		flagx := cancelFamilyRob(user.ServerURL, user.ZoneToken)
-		xlog.Infof("[%v]取消拉动物[%v]\n", name, flagx)
+			flagx := cancelFamilyRob(user.ServerURL, user.ZoneToken)
+			xlog.Infof("[%v]取消拉动物[%v]\n", name, flagx)
+			<-ch
+		}()
 
 		// if id != "" && flag == "1" {
 		// 	familyId, _ = getFamilyId(serverURL, zoneToken)
 		// }
 	}
 	rows.Close()
+	wg.Wait()
+	xlog.Infof("取消拉动物完成\n")
 
 	// if familyId > 0 {
 	// 	SQL = "select id, name, token from tokens"
@@ -2427,41 +2455,53 @@ func UnlockWorkerH(w http.ResponseWriter, req *http.Request) {
 		io.WriteString(w, "FAIL")
 		return
 	}
-	defer rows.Close()
 	userIDs := []string{}
 	for rows.Next() {
 		var uid, name, token, oldZoneToken string
 		rows.Scan(&uid, &name, &token, &oldZoneToken)
 		userIDs = append(userIDs, uid)
 	}
-	for _, uid := range userIDs {
-		user := GetUser(uid)
-		serverURL := user.ServerURL
-		name := user.Name
-		token := user.Token
+	rows.Close()
 
-		zoneToken, mineList := getEnterInfo(uid, name, serverURL, token, user.ZoneToken, "mineList")
-		UpdateUser(uid, serverURL, zoneToken, token)
-		l1, ok := mineList.(map[string]interface{})
-		if ok {
-			for k, v := range l1 {
-				v1, ok := v.(map[string]interface{})
-				if ok {
-					unlockNum, ok := v1["unlockNum"].(float64)
+	var wg sync.WaitGroup
+	ch := make(chan struct{}, 10)
+
+	for _, uid := range userIDs {
+		ch <- struct{}{}
+		wg.Add(1)
+		go func(uid string) {
+			defer wg.Done()
+			user := GetUser(uid)
+			serverURL := user.ServerURL
+			name := user.Name
+			token := user.Token
+
+			zoneToken, mineList := getEnterInfo(uid, name, serverURL, token, user.ZoneToken, "mineList")
+			UpdateUser(uid, serverURL, zoneToken, token)
+			l1, ok := mineList.(map[string]interface{})
+			if ok {
+				for k, v := range l1 {
+					v1, ok := v.(map[string]interface{})
 					if ok {
-						if unlockNum != 5 {
-							var i float64
-							for i = 1; i <= 5-unlockNum; i++ {
-								xlog.Infof("---------------------------[%v]解锁[%v][%v]---------------------------", name, k, i)
-								time.Sleep(time.Millisecond * 200)
-								unlockWorker(serverURL, zoneToken, k)
+						unlockNum, ok := v1["unlockNum"].(float64)
+						if ok {
+							if unlockNum != 5 {
+								var i float64
+								for i = 1; i <= 5-unlockNum; i++ {
+									xlog.Infof("---------------------------[%v]解锁[%v][%v]---------------------------", name, k, i)
+									time.Sleep(time.Millisecond * 200)
+									unlockWorker(serverURL, zoneToken, k)
+								}
 							}
 						}
 					}
 				}
 			}
-		}
+			<-ch
+		}(uid)
 	}
+	wg.Wait()
+	xlog.Infof("All UnlockWorker done !")
 
 	io.WriteString(w, "SUCCESS")
 }
@@ -2850,6 +2890,13 @@ func UseMiningItem5000H(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, s)
 }
 
+func refreshCandyTree(serverURL, zoneToken string) {
+	params := map[string]string{
+		"cmd": "refreshCandyTree",
+	}
+	CommonReq(serverURL, zoneToken, params)
+}
+
 func userMiningLogic(userIDs []string, quantity, targetScore float64) (s string) {
 	for _, uid := range userIDs {
 		user := GetUser(uid)
@@ -2978,11 +3025,72 @@ func DoneUserPieceH(w http.ResponseWriter, req *http.Request) {
 				result := doneUserPiece(uid)
 				xlog.Infof("[%v] %v", uid, result)
 			}
+			xlog.Infof("All doneUserPiece done!")
 		}()
 	} else {
 		result := doneUserPiece(id)
 		io.WriteString(w, result)
 	}
+}
+
+func enterGoldMineH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	familyId := req.URL.Query().Get("familyId")
+	if familyId != "" {
+		sql := `select id from tokens where familyId = ` + familyId
+		rows, err := Pool.Query(sql)
+		if err != nil {
+			return
+		}
+		defer rows.Close()
+		userIDs := []string{}
+		for rows.Next() {
+			var uid string
+			rows.Scan(&uid)
+			userIDs = append(userIDs, uid)
+		}
+		for _, uid := range userIDs {
+			user := GetUser(uid)
+			enterGoldMine(user.ServerURL, user.ZoneToken, uid, "1")
+			xlog.Infof("[%v] %v", user.Name, "刷新宝石")
+		}
+	} else {
+		user := GetUser(id)
+		enterGoldMine(user.ServerURL, user.ZoneToken, id, "1")
+		xlog.Infof("[%v] %v", user.Name, "刷新宝石")
+	}
+	io.WriteString(w, "SUCCESS")
+	//
+}
+
+func refreshCandyTreeH(w http.ResponseWriter, req *http.Request) {
+	// refreshCandyTree
+	id := req.URL.Query().Get("id")
+	familyId := req.URL.Query().Get("familyId")
+	if familyId != "" {
+		sql := `select id from tokens where familyId = ` + familyId
+		rows, err := Pool.Query(sql)
+		if err != nil {
+			return
+		}
+		defer rows.Close()
+		userIDs := []string{}
+		for rows.Next() {
+			var uid string
+			rows.Scan(&uid)
+			userIDs = append(userIDs, uid)
+		}
+		for _, uid := range userIDs {
+			user := GetUser(uid)
+			refreshCandyTree(user.ServerURL, user.ZoneToken)
+			xlog.Infof("[%v] %v", user.Name, "刷新糖果树")
+		}
+	} else {
+		user := GetUser(id)
+		refreshCandyTree(user.ServerURL, user.ZoneToken)
+		xlog.Infof("[%v] %v", user.Name, "刷新糖果树")
+	}
+	io.WriteString(w, "SUCCESS")
 }
 
 func DrawH(w http.ResponseWriter, req *http.Request) {
@@ -5336,6 +5444,8 @@ func pullAnimalBySql(SQL string) {
 		userIDs = append(userIDs, u)
 
 	}
+	var wg sync.WaitGroup
+	ch := make(chan struct{}, 10)
 	for _, u := range userIDs {
 		var uid, name, pullRows, followUids string
 
@@ -5388,24 +5498,33 @@ func pullAnimalBySql(SQL string) {
 				xlog.Infof("[%v]拉动物完成", name)
 			}()
 		} else {
-			foods, worker := enterFamilyRob(user.ServerURL, user.ZoneToken)
-			if worker == "" {
-				for _, v := range foods {
-					// myTeam := v["myTeam"].(int)
-					// if myTeam != 4 {
-					if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
-						if robFamilyFood(user.ServerURL, user.ZoneToken, v["id"].(string)) {
-							break
+			ch <- struct{}{}
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				foods, worker := enterFamilyRob(user.ServerURL, user.ZoneToken)
+				if worker == "" {
+					for _, v := range foods {
+						// myTeam := v["myTeam"].(int)
+						// if myTeam != 4 {
+						if strings.Contains(pullRows, fmt.Sprintf("%v", v["row"])) {
+							if robFamilyFood(user.ServerURL, user.ZoneToken, v["id"].(string)) {
+								break
+							}
 						}
-					}
-					// }
+						// }
 
+					}
 				}
-			}
-			insertAllAnimals(uid, foods)
-			xlog.Infof("[%v]拉动物完成", name)
+				insertAllAnimals(uid, foods)
+				xlog.Infof("[%v]拉动物完成", name)
+				<-ch
+			}()
 		}
 	}
+	wg.Wait()
+	xlog.Infof("所有拉动物完成")
+
 }
 
 // 一键公会签到/签到/免费福利/免费转盘/免费夹子/赠送能量
@@ -5418,19 +5537,15 @@ func familySignGo() {
 	if err != nil {
 		return
 	}
-
-	defer rows.Close()
-
 	var tokenList []map[string]string
-
 	var helpInfo = make(map[string]int64)
 	userIDs := []string{}
 	for rows.Next() {
 		var uid, token, name string
 		rows.Scan(&uid, &token, &name)
 		userIDs = append(userIDs, uid)
-
 	}
+	rows.Close()
 	for _, uid := range userIDs {
 		user := GetUser(uid)
 		name := user.Name
@@ -5724,11 +5839,7 @@ func othersSign() {
 	if err != nil {
 		return
 	}
-
-	defer rows.Close()
-
 	var tokenList []map[string]string
-
 	var helpInfo = make(map[string]int64)
 	var myhelpInfo = make(map[string]int64)
 	userIDs := []string{}
@@ -5738,83 +5849,94 @@ func othersSign() {
 		userIDs = append(userIDs, uid)
 
 	}
+	rows.Close()
+	// 把userIDs分成10个go程去处理
+
+	var wg sync.WaitGroup
+	ch := make(chan struct{}, 10)
 	for _, uid := range userIDs {
-		user := GetUser(uid)
-		token := user.Token
-		name := user.Name
-		_, zoneToken, newToken := getSeverURLAndZoneTokenAndToken(token)
-		token = newToken
-		serverURL, zoneToken, familyId, helpInt, shovelHelpNum, _, _ := enterWithBeachHelp(token, zoneToken)
-		if zoneToken == "" {
-			sendMsg(uid + ":" + name)
-			xlog.Infof("[ %v] token is invalid\n", uid)
-		}
-		UpdateUser1(uid, serverURL, zoneToken, token, familyId)
-		tokenList = append(tokenList, map[string]string{"uid": uid, "name": name, "serverURL": serverURL, "zoneToken": zoneToken, "token": token})
-		helpInfo["uid"] = int64(helpInt)
-		myhelpInfo["uid"] = int64(shovelHelpNum)
+		ch <- struct{}{}
+		wg.Add(1)
+		go func(uid string) {
+			defer wg.Done()
+			user := GetUser(uid)
+			token := user.Token
+			name := user.Name
+			zoneToken := user.ZoneToken
+			serverURL, zoneToken, familyId, helpInt, shovelHelpNum, _, _ := enterWithBeachHelp(token, zoneToken)
+			if zoneToken == "" {
+				sendMsg(uid + ":" + name)
+				xlog.Infof("[ %v] token is invalid\n", uid)
+			}
+			UpdateUser1(uid, serverURL, zoneToken, token, familyId)
+			tokenList = append(tokenList, map[string]string{"uid": uid, "name": name, "serverURL": serverURL, "zoneToken": zoneToken, "token": token})
+			helpInfo["uid"] = int64(helpInt)
+			myhelpInfo["uid"] = int64(shovelHelpNum)
 
-		xlog.Infof("[%v] start familySign", uid)
-		familySign(serverURL, zoneToken)
-		xlog.Infof("[%v] end familySign", uid)
-		time.Sleep(time.Second * 1)
-		xlog.Infof("[%v] start getSignPrize", name)
-		getSignPrize(serverURL, zoneToken)
-		xlog.Infof("[%v] end getSignPrize", name)
-		time.Sleep(time.Second * 1)
-		xlog.Infof("[%v] start getFreeDailyGiftBox", name)
-		getFreeDailyGiftBox(serverURL, zoneToken)
-		xlog.Infof("[%v] end getFreeDailyGiftBox", name)
-		time.Sleep(time.Second * 1)
-
-		xlog.Infof("[%v] start playLuckyWheel", name)
-		shareAPI(serverURL, zoneToken)
-		playLuckyWheel(serverURL, zoneToken)
-		xlog.Infof("[%v] end playLuckyWheel", name)
-		time.Sleep(time.Second * 1)
-
-		xlog.Infof("[%v] start getFreeClamp", name)
-		shareAPI(serverURL, zoneToken)
-		getFreeClamp(serverURL, zoneToken)
-		xlog.Infof("[%v] end getFreeClamp", name)
-		time.Sleep(time.Second * 1)
-
-		xlog.Infof("[%v] start getInviteSnow", name)
-		shareAPI(serverURL, zoneToken)
-		getInviteSnow(serverURL, zoneToken)
-		xlog.Infof("[%v] end getInviteSnow", name)
-
-		time.Sleep(time.Second * 1)
-		xlog.Infof("[%v] start autoFriendEnergy", name)
-		autoFriendEnergy(serverURL, zoneToken)
-		xlog.Infof("[%v] end autoFriendEnergy", name)
-
-		xlog.Infof("[%v] start getSixEnergy", name)
-		for i := 0; i < 6; i++ {
+			xlog.Infof("[%v] start familySign", uid)
+			familySign(serverURL, zoneToken)
+			xlog.Infof("[%v] end familySign", uid)
 			time.Sleep(time.Second * 1)
-			getSixEnergy(serverURL, zoneToken)
-		}
-		xlog.Infof("[%v] end getSixEnergy", name)
+			xlog.Infof("[%v] start getSignPrize", name)
+			getSignPrize(serverURL, zoneToken)
+			xlog.Infof("[%v] end getSignPrize", name)
+			time.Sleep(time.Second * 1)
+			xlog.Infof("[%v] start getFreeDailyGiftBox", name)
+			getFreeDailyGiftBox(serverURL, zoneToken)
+			xlog.Infof("[%v] end getFreeDailyGiftBox", name)
+			time.Sleep(time.Second * 1)
 
-		gameList := []string{"535", "525", "157", "452", "411"}
+			xlog.Infof("[%v] start playLuckyWheel", name)
+			shareAPI(serverURL, zoneToken)
+			playLuckyWheel(serverURL, zoneToken)
+			xlog.Infof("[%v] end playLuckyWheel", name)
+			time.Sleep(time.Second * 1)
 
-		time.Sleep(time.Second * 1)
-		for _, v := range gameList {
-			getAward(token, v)
-		}
-		xlog.Infof("[%v] 公会聊天", name)
-		familyChat(serverURL, zoneToken)
+			xlog.Infof("[%v] start getFreeClamp", name)
+			shareAPI(serverURL, zoneToken)
+			getFreeClamp(serverURL, zoneToken)
+			xlog.Infof("[%v] end getFreeClamp", name)
+			time.Sleep(time.Second * 1)
 
-		xlog.Infof("[%v] collectMineGold", name)
-		collectMineGold(serverURL, zoneToken)
+			xlog.Infof("[%v] start getInviteSnow", name)
+			shareAPI(serverURL, zoneToken)
+			getInviteSnow(serverURL, zoneToken)
+			xlog.Infof("[%v] end getInviteSnow", name)
 
-		xlog.Infof("[%v] familyShop", name)
-		familyShop(serverURL, zoneToken)
+			time.Sleep(time.Second * 1)
+			xlog.Infof("[%v] start autoFriendEnergy", name)
+			autoFriendEnergy(serverURL, zoneToken)
+			xlog.Infof("[%v] end autoFriendEnergy", name)
 
-		upgradeWheel := upgradeWheel(serverURL, zoneToken)
-		xlog.Infof("[%v] upgradeWheel[%v]", name, upgradeWheel)
+			xlog.Infof("[%v] start getSixEnergy", name)
+			for i := 0; i < 6; i++ {
+				time.Sleep(time.Second * 1)
+				getSixEnergy(serverURL, zoneToken)
+			}
+			xlog.Infof("[%v] end getSixEnergy", name)
+
+			gameList := []string{"535", "525", "157", "452", "411"}
+
+			time.Sleep(time.Second * 1)
+			for _, v := range gameList {
+				getAward(token, v)
+			}
+			xlog.Infof("[%v] 公会聊天", name)
+			familyChat(serverURL, zoneToken)
+
+			xlog.Infof("[%v] collectMineGold", name)
+			collectMineGold(serverURL, zoneToken)
+
+			xlog.Infof("[%v] familyShop", name)
+			familyShop(serverURL, zoneToken)
+
+			upgradeWheel := upgradeWheel(serverURL, zoneToken)
+			xlog.Infof("[%v] upgradeWheel[%v]", name, upgradeWheel)
+			<-ch
+		}(uid)
 	}
-
+	wg.Wait()
+	xlog.Infof("All items processed")
 	// // 互相助力逻辑
 
 	// beizhuliM := map[string]bool{}
@@ -9968,8 +10090,8 @@ func RangeRand(min, max int64) int64 {
 }
 
 func sendMsg(msg string) {
-	url := "https://api.day.app/hTASnegVyjnL963QV5YMhA/" + msg
-	http.Get(url)
+	// url := "https://api.day.app/hTASnegVyjnL963QV5YMhA/" + msg
+	// http.Get(url)
 }
 
 // func sendMsg(msg string) {
@@ -10910,20 +11032,28 @@ func chongbangLogic() {
 	}
 	AllLock.Lock()
 	defer AllLock.Unlock()
-	for _, id := range ids {
-		user := GetUser(id)
-		if user == nil {
-			continue
-		}
-		getFreeEnergy(user.ServerURL, user.ZoneToken)
-		user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
-		UpdateUser(id, user.ServerURL, user.ZoneToken, user.Token)
-		if user.FamilyDayTask == nil {
-			continue
-		}
-		getFamilyTaskPrizeLogic(user.FamilyDayTask, user.ServerURL, user.ZoneToken, user.Name)
+	var wg sync.WaitGroup
+	ch := make(chan struct{}, 10)
 
+	for _, id := range ids {
+		ch <- struct{}{}
+		wg.Add(1)
+
+		go func(id string) {
+			defer wg.Done()
+			user := GetUser(id)
+			if user != nil {
+				getFreeEnergy(user.ServerURL, user.ZoneToken)
+				user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
+				UpdateUser(id, user.ServerURL, user.ZoneToken, user.Token)
+				if user.FamilyDayTask != nil {
+					getFamilyTaskPrizeLogic(user.FamilyDayTask, user.ServerURL, user.ZoneToken, user.Name)
+				}
+			}
+			<-ch
+		}(id)
 	}
+	wg.Wait()
 
 }
 
@@ -11667,6 +11797,7 @@ func doneUserPiece(userID string) (result string) {
 				fSet := fPiece.Float64("set")
 				fTotal := fCount + fSet
 				if fTotal < fNeedGetPiecePrizeTimes {
+					xlog.Infof("%s 没有可捐赠的拼图%s", friendUser.Name, pieceID)
 					continue
 				}
 				// 计算减去需要的，剩下的捐给uesr
@@ -11690,6 +11821,8 @@ func doneUserPiece(userID string) (result string) {
 							return
 						}
 					}
+				} else {
+					xlog.Infof("%s 没有可捐赠的拼图%s", friendUser.Name, pieceID)
 				}
 				if need <= 0 {
 					break
