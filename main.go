@@ -2226,7 +2226,7 @@ func GetFamilyDayTaskH(w http.ResponseWriter, req *http.Request) {
 	sort.Strings(ids)
 	d := []xmap.M{}
 	var wg sync.WaitGroup
-	ch := make(chan struct{}, 10)
+	ch := make(chan struct{}, 5)
 	var lock sync.RWMutex
 	for _, userID := range ids {
 		ch <- struct{}{}
@@ -2394,7 +2394,7 @@ func cancelFamilyRobH(w http.ResponseWriter, req *http.Request) {
 	}
 	// var familyId float64
 	var wg sync.WaitGroup
-	ch := make(chan struct{}, 10)
+	ch := make(chan struct{}, 5)
 	for rows.Next() {
 		var uid, name, token string
 		rows.Scan(&uid, &name, &token)
@@ -2898,66 +2898,138 @@ func refreshCandyTree(serverURL, zoneToken string) {
 }
 
 func userMiningLogic(userIDs []string, quantity, targetScore float64) (s string) {
-	for _, uid := range userIDs {
-		user := GetUser(uid)
-		name := user.Name
+	if len(userIDs) > 10 {
+		var wg sync.WaitGroup
+		ch := make(chan struct{}, 8)
+		for _, uid := range userIDs {
+			ch <- struct{}{}
+			wg.Add(1)
+			go func(uid string) {
+				defer func() {
+					wg.Done()
+					<-ch
+				}()
+				user := GetUser(uid)
+				name := user.Name
+				// miningItems
+				gameData := game(user.ZoneToken)
+				score := gameData.Float64("miningItems/187")
 
-		// miningItems
-		gameData := game(user.ZoneToken)
-		score := gameData.Float64("miningItems/187")
+				if score == 0 {
+					xlog.Infof("[%v]未开启挖矿,准备开启前面49分挖矿", name)
+					doUseMiningItemAtFirst(user)
+					gameData := game(user.ZoneToken)
+					score = gameData.Float64("miningItems/187")
+					if score != 50 {
+						xlog.Infof("[%v]开启挖矿失败,请手动开启", name)
+						s += fmt.Sprintf("[%v]开启挖矿失败,请手动开启\n", name)
+						return
+					}
+				}
 
-		if score == 0 {
-			xlog.Infof("[%v]未开启挖矿,准备开启前面49分挖矿", name)
-			doUseMiningItemAtFirst(user)
+				if targetScore > 0 && score >= targetScore {
+					xlog.Infof("[%v]已达到目标分数", name)
+					s += fmt.Sprintf("[%v]已达到目标分数,当前分数:%v\n", name, score)
+					return
+				}
+				xlog.Infof("[%v]开始挖矿", name)
+				UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
+				userOnline.Lock.Lock()
+				result := &UseMiningWin{
+					AllScore: score,
+				}
+				startTime := time.Now()
+				if quantity > 0 {
+					for i := 0; i < int(quantity); i++ {
+						flag := result.doUseMiningItem(user)
+						if !flag {
+							break
+						}
+					}
+				} else {
+					for {
+						flag := result.doUseMiningItem(user)
+						if !flag {
+							break
+						}
+						if result.AllScore >= targetScore {
+							break
+						}
+					}
+				}
+				userOnline.Lock.Unlock()
+				if quantity > 0 {
+					UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
+				}
+				xlog.Infof("[%v]挖矿结束", name)
+				endTime := time.Now()
+				xlog.Infof("[%v]挖矿耗时%v", name, endTime.Sub(startTime))
+				s += fmt.Sprintf("\n耗时:%v 当前矿石积分:%v 消耗了%v个鱼叉,%v个火箭,%v个水雷,本次获得了%v矿石,%v鱼叉,%v火箭,%v水雷", endTime.Sub(startTime), result.AllScore, result.UseItem184, result.UseItem185, result.UseItem186, result.Score, result.WinItem184, result.WinItem185, result.WinItem186)
+				if !result.GoOn {
+					s += "前面请手动挖到倒数第二层！下次再处理这个逻辑！"
+				}
+			}(uid)
+		}
+	} else {
+		for _, uid := range userIDs {
+			user := GetUser(uid)
+			name := user.Name
+			// miningItems
 			gameData := game(user.ZoneToken)
-			score = gameData.Float64("miningItems/187")
-			if score != 50 {
-				xlog.Infof("[%v]开启挖矿失败,请手动开启", name)
-				s += fmt.Sprintf("[%v]开启挖矿失败,请手动开启\n", name)
+			score := gameData.Float64("miningItems/187")
+
+			if score == 0 {
+				xlog.Infof("[%v]未开启挖矿,准备开启前面49分挖矿", name)
+				doUseMiningItemAtFirst(user)
+				gameData := game(user.ZoneToken)
+				score = gameData.Float64("miningItems/187")
+				if score != 50 {
+					xlog.Infof("[%v]开启挖矿失败,请手动开启", name)
+					s += fmt.Sprintf("[%v]开启挖矿失败,请手动开启\n", name)
+					continue
+				}
+			}
+			if targetScore > 0 && score >= targetScore {
+				xlog.Infof("[%v]已达到目标分数", name)
+				s += fmt.Sprintf("[%v]已达到目标分数,当前分数:%v\n", name, score)
 				continue
 			}
-		}
-
-		if targetScore > 0 && score >= targetScore {
-			xlog.Infof("[%v]已达到目标分数", name)
-			s += fmt.Sprintf("[%v]已达到目标分数,当前分数:%v\n", name, score)
-			continue
-		}
-		xlog.Infof("[%v]开始挖矿", name)
-		UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
-		userOnline.Lock.Lock()
-		result := &UseMiningWin{
-			AllScore: score,
-		}
-		startTime := time.Now()
-		if quantity > 0 {
-			for i := 0; i < int(quantity); i++ {
-				flag := result.doUseMiningItem(user)
-				if !flag {
-					break
-				}
-			}
-		} else {
-			for {
-				flag := result.doUseMiningItem(user)
-				if !flag {
-					break
-				}
-				if result.AllScore >= targetScore {
-					break
-				}
-			}
-		}
-		userOnline.Lock.Unlock()
-		if quantity > 0 {
+			xlog.Infof("[%v]开始挖矿", name)
 			UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
-		}
-		xlog.Infof("[%v]挖矿结束", name)
-		endTime := time.Now()
-		xlog.Infof("[%v]挖矿耗时%v", name, endTime.Sub(startTime))
-		s += fmt.Sprintf("\n耗时:%v 当前矿石积分:%v 消耗了%v个鱼叉,%v个火箭,%v个水雷,本次获得了%v矿石,%v鱼叉,%v火箭,%v水雷", endTime.Sub(startTime), result.AllScore, result.UseItem184, result.UseItem185, result.UseItem186, result.Score, result.WinItem184, result.WinItem185, result.WinItem186)
-		if !result.GoOn {
-			s += "前面请手动挖到倒数第二层！下次再处理这个逻辑！"
+			userOnline.Lock.Lock()
+			result := &UseMiningWin{
+				AllScore: score,
+			}
+			startTime := time.Now()
+			if quantity > 0 {
+				for i := 0; i < int(quantity); i++ {
+					flag := result.doUseMiningItem(user)
+					if !flag {
+						break
+					}
+				}
+			} else {
+				for {
+					flag := result.doUseMiningItem(user)
+					if !flag {
+						break
+					}
+					if result.AllScore >= targetScore {
+						break
+					}
+				}
+			}
+			userOnline.Lock.Unlock()
+			if quantity > 0 {
+				UpdateUser(uid, user.ServerURL, user.ZoneToken, user.Token)
+			}
+			xlog.Infof("[%v]挖矿结束", name)
+			endTime := time.Now()
+			xlog.Infof("[%v]挖矿耗时%v", name, endTime.Sub(startTime))
+			s += fmt.Sprintf("\n耗时:%v 当前矿石积分:%v 消耗了%v个鱼叉,%v个火箭,%v个水雷,本次获得了%v矿石,%v鱼叉,%v火箭,%v水雷", endTime.Sub(startTime), result.AllScore, result.UseItem184, result.UseItem185, result.UseItem186, result.Score, result.WinItem184, result.WinItem185, result.WinItem186)
+			if !result.GoOn {
+				s += "前面请手动挖到倒数第二层！下次再处理这个逻辑！"
+			}
 		}
 	}
 	return
@@ -5445,7 +5517,7 @@ func pullAnimalBySql(SQL string) {
 
 	}
 	var wg sync.WaitGroup
-	ch := make(chan struct{}, 10)
+	ch := make(chan struct{}, 5)
 	for _, u := range userIDs {
 		var uid, name, pullRows, followUids string
 
@@ -5850,10 +5922,8 @@ func othersSign() {
 
 	}
 	rows.Close()
-	// 把userIDs分成10个go程去处理
-
 	var wg sync.WaitGroup
-	ch := make(chan struct{}, 10)
+	ch := make(chan struct{}, 3)
 	for _, uid := range userIDs {
 		ch <- struct{}{}
 		wg.Add(1)
@@ -8523,6 +8593,7 @@ func searchFamily(serverURL, zoneToken string, id float64) (name string) {
 	if ok {
 		name, ok = recommendFamilyInfo["name"].(string)
 		if ok {
+			name, _ = url.QueryUnescape(name)
 			xlog.Infof("对方公会ID:%v, 公会名称:%v", id, name)
 			return
 		}
@@ -11186,14 +11257,14 @@ func RunnerCheckTokenGoLogic() (err error) {
 
 func AttackBossGo() (err error) {
 	status := runnerStatus("AttackBossGoGetbossPrizeLogic")
-	if status == "1" {
+	if time.Now().Hour() == 12 {
 		getbossPrizeLogic("system")
 	}
 	attackMyBossLogic("system", "4400")
 	time.Sleep(450 * time.Second)
 	go singleBossAttackLogic("system")
 	attackBossLogic("")
-	if status == "1" {
+	if time.Now().Hour() == 12 {
 		getbossPrizeLogic("outsystem")
 	}
 	attackMyBossLogic("outsystem", "4400")
