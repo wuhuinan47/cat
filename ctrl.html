@@ -17,7 +17,7 @@
         flex-direction: column;
         align-items: center;
     } */
-    
+
     button {
         background-color: #4CAF50;
         color: white;
@@ -29,15 +29,16 @@
         transition-duration: 0.4s;
         cursor: pointer;
         border-radius: 12px;
-        box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+        box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
         margin: 10px;
     }
-    
+
     button:hover {
         background-color: #45a049;
     }
-    
-    input, select {
+
+    input,
+    select {
         width: 200px;
         padding: 12px 20px;
         margin: 8px 0;
@@ -47,22 +48,23 @@
         background-color: #f8f8f8;
         font-size: 16px;
     }
-    
+
     @media only screen and (max-width: 600px) {
         body {
             flex-direction: column;
         }
-    
-        input, select {
+
+        input,
+        select {
             width: 100%;
         }
-    
+
         button {
             width: 100%;
         }
     }
-    </style>
-    
+</style>
+
 <body>
     <br>
 
@@ -77,14 +79,14 @@
     <button style="font-size:40px;width:350px; height:100px;" onclick="getFamilyDayTask()">
         查看公会任务
     </button>
-    <br> 
+    <br>
 
     <select style="font-size:40px;width:400px; height:100px;" name="getFamilyEnergySelect" id="getFamilyEnergySelect">
     </select>
     <button style="font-size:40px;width:350px; height:100px;" onclick="getFamilyEnergy()">
         查看公会能量
     </button>
-    <br> 
+    <br>
     <br>
 
     <select style="font-size:40px;width:400px; height:100px;" name="getUserInfoSelect" id="getUserInfoSelect">
@@ -92,7 +94,7 @@
     <button style="font-size:40px;width:350px; height:100px;" onclick="getUserInfo()">
         查看用户信息
     </button>
-    <br> 
+    <br>
 
     <select style="font-size:40px;width:400px; height:100px;" name="Oper_Type" id="Oper_Type">
     </select>
@@ -109,7 +111,7 @@
     <button style="font-size:40px;width:400px; height:100px;" onclick="addAccount()">
         添加账号
     </button>
-   
+
     <br>
 
     <select style="font-size:40px;width:400px; height:100px;" name="getUserTokenSelect" id="getUserTokenSelect">
@@ -167,7 +169,7 @@
         id="setPullRowsSelectFamily">
         <option selected="selected" value="">选择公会</option>
     </select>
-    
+
     <select style="font-size:40px;width:160px; height:100px;" name="setPullRows" id="setPullRows">
         <option value="1,2,3,4,5,6">全拉</option>
         <option selected="selected" value="0">不拉</option>
@@ -260,7 +262,8 @@
     <select style="font-size:40px;width:180px; height:100px;" name="refreshCandyTreeUID" id="refreshCandyTreeUID">
         <option selected="selected" value="">请选择</option>
     </select>
-    <select style="font-size:40px;width:250px; height:100px;" name="refreshCandyTreeFamilyID" id="refreshCandyTreeFamilyID">
+    <select style="font-size:40px;width:250px; height:100px;" name="refreshCandyTreeFamilyID"
+        id="refreshCandyTreeFamilyID">
         <option value="">个人</option>
         <option selected="selected" value="">选择公会</option>
     </select>
@@ -356,8 +359,26 @@
         <option selected="selected" value="">全部</option>
     </select>
     <button style="font-size:40px;width:400px; height:100px;" onclick="getBeachLineRewards()">
-        领取海滩奖励
+        领取海滩🎁
     </button>
+    <br>
+    <select style="font-size:40px;width:150px; height:100px;" name="exchangeBeachRewardIDs" id="exchangeBeachRewardIDs">
+        <option selected="selected" value="">全部</option>
+    </select>
+
+    <select style="font-size:40px;width:350px; height:100px;" name="exchangeBeachRewardIndex"
+        id="exchangeBeachRewardIndex">
+        <option selected="selected" value="5">第5套带海浪</option>
+        <option value="4">第4套带召唤石</option>
+        <option value="3">第3套带炮弹</option>
+        <option value="2">第2套带铲子</option>
+        <option value="1">第1套</option>
+    </select>
+
+    <button style="font-size:40px;width:400px; height:100px;" onclick="exchangeBeachReward()">
+        兑换海滩奖励
+    </button>
+
     <br>
     <button style="font-size:40px;width:350px; height:100px;" onclick="openSteamBox()">
         一键领取汤圆
@@ -386,8 +407,10 @@
         <option selected="selected" value="">选择</option>
         <option value="all">全部</option>
     </select>
-    <input id="userMingingItemQuantity" style="font-size:40px;width:250px; height:100px;" type="text" placeholder="挖矿次数" value="0" />
-    <input id="userMingingItemTargetScore" style="font-size:40px;width:250px; height:100px;" type="text" placeholder="目标分数" value="5100" />
+    <input id="userMingingItemQuantity" style="font-size:40px;width:250px; height:100px;" type="text" placeholder="挖矿次数"
+        value="0" />
+    <input id="userMingingItemTargetScore" style="font-size:40px;width:250px; height:100px;" type="text"
+        placeholder="目标分数" value="5100" />
     <button style="font-size:40px;width:300px; height:100px;" onclick="userMingingItem()">
         深海挖矿
     </button>
@@ -540,10 +563,10 @@
     </select>
     <input id="drawAmount" style="font-size:40px;width:150px; height:100px;" type="text" placeholder="摇次数"
         value="399" />
-        <select style="font-size:40px;width:150px; height:100px;" name="DrawModeSelect" id="DrawModeSelect">
-            <option value="1">做攻击任务</option>
-            <option selected="selected" value="0">不做任务</option>
-        </select>
+    <select style="font-size:40px;width:150px; height:100px;" name="DrawModeSelect" id="DrawModeSelect">
+        <option value="1">做攻击任务</option>
+        <option selected="selected" value="0">不做任务</option>
+    </select>
 
     <button style="font-size:40px;width:200px; height:100px;" onclick="draw()">
         转盘
@@ -551,7 +574,7 @@
 
 
 
- 
+
     <!-- <button style="font-size:40px;width:400px; height:100px;" onclick="delServerLogs()">
         删除服务器日志
     </button> -->
@@ -660,7 +683,7 @@
     </select>
 
     <input id="makeRiceCakeAmount" style="font-size:40px;width:200px; height:100px;" type="text" placeholder="几套"
-    value="10" />
+        value="10" />
 
     <button style="font-size:40px;width:400px; height:100px;" onclick="makeRiceCake()">
         领取汤圆数量
@@ -732,54 +755,54 @@
     <br>
 
     <h2>GET Parameter Form</h2>
-   
+
     <form id="paramForm">
-      Cmd: 
-      <input style="font-size:40px; padding:20px;" type="text" id="cmd" name="cmd"><br>
-      Target: 
-      <input style="font-size:40px; padding:20px;" type="text" id="target" name="target"><br>
-      Key: 
-      <input style="font-size:40px; padding:20px;" type="text" id="key" name="key"><br>
-      Value: 
-      <input style="font-size:40px; padding:20px;" type="text" id="value" name="value"><br>
-      <!-- <input style="font-size:40px; padding:20px; width: 350px;" type="button" value="Add Parameter" onclick="addParameter()"> -->
+        Cmd:
+        <input style="font-size:40px; padding:20px;" type="text" id="cmd" name="cmd"><br>
+        Target:
+        <input style="font-size:40px; padding:20px;" type="text" id="target" name="target"><br>
+        Key:
+        <input style="font-size:40px; padding:20px;" type="text" id="key" name="key"><br>
+        Value:
+        <input style="font-size:40px; padding:20px;" type="text" id="value" name="value"><br>
+        <!-- <input style="font-size:40px; padding:20px; width: 350px;" type="button" value="Add Parameter" onclick="addParameter()"> -->
 
     </form>
     <button style="font-size:40px; padding:20px;" onclick="addParameter()">Add Parameter</button>
 
     <button style="font-size:40px; padding:20px;" onclick="submitRequest()">Submit Request</button>
-    
+
     <br>
 
     <script>
         let params = new URLSearchParams();
 
-function addParameter() {
-  let target = document.getElementById('target').value;
-  let cmd = document.getElementById('cmd').value;
-  let key = document.getElementById('key').value;
-  let value = document.getElementById('value').value;
-  
-  params.set('target', target);
-  params.set('cmd', cmd);
+        function addParameter() {
+            let target = document.getElementById('target').value;
+            let cmd = document.getElementById('cmd').value;
+            let key = document.getElementById('key').value;
+            let value = document.getElementById('value').value;
 
-  if (!params.has(key)) {
-    params.append(key, value);
-    alert('添加成功');
-  }
-}
+            params.set('target', target);
+            params.set('cmd', cmd);
 
-function submitRequest() {
-  let url = APIURL+'/commonReq?' + params.toString();
+            if (!params.has(key)) {
+                params.append(key, value);
+                alert('添加成功');
+            }
+        }
 
-  fetch(url)
-    .then(response => response.text())
-    .then(data => console.log(data))
-    .catch((error) => {
-      console.error('Error:', error);
-    });
-    alert('请求成功');
-}
+        function submitRequest() {
+            let url = APIURL + '/commonReq?' + params.toString();
+
+            fetch(url)
+                .then(response => response.text())
+                .then(data => console.log(data))
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+            alert('请求成功');
+        }
     </script>
 
 
@@ -958,7 +981,7 @@ function submitRequest() {
                 var boxAmount = document.getElementById("boxAmount");
                 var familyId = $("#boxUidsSelectFamilyId option:selected").val();
 
-                $.get(APIURL + "/diamond?id=" + boxUID + "&quality=" + boxQuality + "&amount=" + boxAmount.value + "&flag=" + flag + "&familyId="+familyId, function (data) {
+                $.get(APIURL + "/diamond?id=" + boxUID + "&quality=" + boxQuality + "&amount=" + boxAmount.value + "&flag=" + flag + "&familyId=" + familyId, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -970,7 +993,7 @@ function submitRequest() {
             if (r == true) {
                 var boxUID = $("#enterGoldMineUID option:selected").val();
                 var familyId = $("#enterGoldMineFamilyID option:selected").val();
-                $.get(APIURL + "/enterGoldMine?id=" + boxUID +"&familyId="+familyId, function (data) {
+                $.get(APIURL + "/enterGoldMine?id=" + boxUID + "&familyId=" + familyId, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -988,7 +1011,7 @@ function submitRequest() {
                 var boxQuality = $("#BCSelect option:selected").val();
 
                 var boxAmount = document.getElementById("candyAmount");
-                $.get(APIURL + "/hitCandy?id=" + boxUID +"&familyId="+familyId+ "&quality=" + boxQuality + "&amount=" + boxAmount.value, function (data) {
+                $.get(APIURL + "/hitCandy?id=" + boxUID + "&familyId=" + familyId + "&quality=" + boxQuality + "&amount=" + boxAmount.value, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1000,7 +1023,7 @@ function submitRequest() {
             if (r == true) {
                 var boxUID = $("#refreshCandyTreeUID option:selected").val();
                 var familyId = $("#refreshCandyTreeFamilyID option:selected").val();
-                $.get(APIURL + "/refreshCandyTree?id=" + boxUID +"&familyId="+familyId, function (data) {
+                $.get(APIURL + "/refreshCandyTree?id=" + boxUID + "&familyId=" + familyId, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1019,6 +1042,21 @@ function submitRequest() {
                     window.status = "1";
                 });
             }
+        }
+
+        exchangeBeachReward = function () {
+
+            var r = confirm("exchangeBeachReward是否继续")
+            if (r == true) {
+                var ID = $("#exchangeBeachRewardIDs option:selected").val();
+                var Index = $("#exchangeBeachRewardIndex option:selected").val();
+                $.get(APIURL + "/exchangeBeachReward?id=" + ID + "&index=" + Index, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+
         }
 
         getBeachLineRewards = function () {
@@ -1193,7 +1231,7 @@ function submitRequest() {
 
             // window.location.href = APIURL+"/login?id="+id;
             window.open(APIURL + "/login?id=" + id)
-            
+
         }
 
         // deleteAccount
@@ -1276,7 +1314,7 @@ function submitRequest() {
                 var drawMulti = $("#DrawSelect option:selected").val();
                 var drawAmount = document.getElementById("drawAmount");
                 var drawMode = $("#DrawModeSelect option:selected").val();
-                $.get(APIURL + "/draw?id=" + id + "&familyId=" + familyId + "&drawMulti=" + drawMulti + "&amount=" + drawAmount.value + "&mode="+drawMode, function (data) {
+                $.get(APIURL + "/draw?id=" + id + "&familyId=" + familyId + "&drawMulti=" + drawMulti + "&amount=" + drawAmount.value + "&mode=" + drawMode, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1404,7 +1442,7 @@ function submitRequest() {
             if (r == true) {
                 var id = $("#makeRiceCake option:selected").val();
                 var makeRiceCakeAmount = document.getElementById("makeRiceCakeAmount").value;
-                $.get(APIURL + "/makeRiceCake?id=" + id+"&amount="+makeRiceCakeAmount, function (data) {
+                $.get(APIURL + "/makeRiceCake?id=" + id + "&amount=" + makeRiceCakeAmount, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1469,7 +1507,7 @@ function submitRequest() {
                 var id = $("#userMingingItem option:selected").val();
                 var quantity = document.getElementById("userMingingItemQuantity").value;
                 var targetScore = document.getElementById("userMingingItemTargetScore").value;
-                $.get(APIURL + "/useMiningItem5000?id=" + id+"&quantity="+quantity + "&target_score="+targetScore, function (data) {
+                $.get(APIURL + "/useMiningItem5000?id=" + id + "&quantity=" + quantity + "&target_score=" + targetScore, function (data) {
                     alert(data)
                     window.status = "1";
                 });
@@ -1600,7 +1638,7 @@ function submitRequest() {
             var r = confirm("整理拼图是否继续")
             if (r == true) {
                 var boxUID = $("#Oper_Mail option:selected").val();
-                var familyId = $("#getMailPrizeFamilyId option:selected").val();                
+                var familyId = $("#getMailPrizeFamilyId option:selected").val();
                 var title = $("#Oper_MailTitle option:selected").val();
                 var mailAmount = document.getElementById("mailAmount");
                 $.get(APIURL + "/doneUserPiece?id=" + boxUID + "&familyId=" + familyId + "&title=" + title + "&amount=" + mailAmount.value, function (data) {
@@ -1678,8 +1716,8 @@ function submitRequest() {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
                     var pull_rows = jsarr[i]["pull_rows"]
-                    if (pull_rows!="0") {
-                        name = "拉"+pull_rows
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
                     }
                     if (pull_rows == "1,2,3,4,5,6") {
                         name = "全拉"
@@ -1698,7 +1736,7 @@ function submitRequest() {
                     }
                     if (pull_rows == "3") {
                         name = "拉3"
-                    } 
+                    }
                     if (pull_rows == "4") {
                         name = "拉4"
                     }
@@ -1708,7 +1746,7 @@ function submitRequest() {
                     if (pull_rows == "6") {
                         name = "拉6"
                     }
-                   
+
                     tOption.text = jsarr[i]["id"] + "(" + name + ")";
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("setPullRowsSelectFamily").options.add(tOption);
@@ -1719,8 +1757,8 @@ function submitRequest() {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
                     var pull_rows = jsarr[i]["pull_rows"]
-                    if (pull_rows!="0") {
-                        name = "拉"+pull_rows
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
                     }
                     if (pull_rows == "1,2,3,4,5,6") {
                         name = "全拉"
@@ -1739,7 +1777,7 @@ function submitRequest() {
                     }
                     if (pull_rows == "3") {
                         name = "拉3"
-                    } 
+                    }
                     if (pull_rows == "4") {
                         name = "拉4"
                     }
@@ -1757,8 +1795,8 @@ function submitRequest() {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
                     var pull_rows = jsarr[i]["pull_rows"]
-                    if (pull_rows!="0") {
-                        name = "拉"+pull_rows
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
                     }
                     if (pull_rows == "1,2,3,4,5,6") {
                         name = "全拉"
@@ -1777,7 +1815,7 @@ function submitRequest() {
                     }
                     if (pull_rows == "3") {
                         name = "拉3"
-                    } 
+                    }
                     if (pull_rows == "4") {
                         name = "拉4"
                     }
@@ -1795,8 +1833,8 @@ function submitRequest() {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
                     var pull_rows = jsarr[i]["pull_rows"]
-                    if (pull_rows!="0") {
-                        name = "拉"+pull_rows
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
                     }
                     if (pull_rows == "1,2,3,4,5,6") {
                         name = "全拉"
@@ -1815,7 +1853,7 @@ function submitRequest() {
                     }
                     if (pull_rows == "3") {
                         name = "拉3"
-                    } 
+                    }
                     if (pull_rows == "4") {
                         name = "拉4"
                     }
@@ -1834,8 +1872,8 @@ function submitRequest() {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
                     var pull_rows = jsarr[i]["pull_rows"]
-                    if (pull_rows!="0") {
-                        name = "拉"+pull_rows
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
                     }
                     if (pull_rows == "1,2,3,4,5,6") {
                         name = "全拉"
@@ -1854,7 +1892,7 @@ function submitRequest() {
                     }
                     if (pull_rows == "3") {
                         name = "拉3"
-                    } 
+                    }
                     if (pull_rows == "4") {
                         name = "拉4"
                     }
@@ -1873,8 +1911,8 @@ function submitRequest() {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
                     var pull_rows = jsarr[i]["pull_rows"]
-                    if (pull_rows!="0") {
-                        name = "拉"+pull_rows
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
                     }
                     if (pull_rows == "1,2,3,4,5,6") {
                         name = "全拉"
@@ -1893,7 +1931,7 @@ function submitRequest() {
                     }
                     if (pull_rows == "3") {
                         name = "拉3"
-                    } 
+                    }
                     if (pull_rows == "4") {
                         name = "拉4"
                     }
@@ -1912,8 +1950,8 @@ function submitRequest() {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
                     var pull_rows = jsarr[i]["pull_rows"]
-                    if (pull_rows!="0") {
-                        name = "拉"+pull_rows
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
                     }
                     if (pull_rows == "1,2,3,4,5,6") {
                         name = "全拉"
@@ -1932,7 +1970,7 @@ function submitRequest() {
                     }
                     if (pull_rows == "3") {
                         name = "拉3"
-                    } 
+                    }
                     if (pull_rows == "4") {
                         name = "拉4"
                     }
@@ -1951,8 +1989,8 @@ function submitRequest() {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
                     var pull_rows = jsarr[i]["pull_rows"]
-                    if (pull_rows!="0") {
-                        name = "拉"+pull_rows
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
                     }
                     if (pull_rows == "1,2,3,4,5,6") {
                         name = "全拉"
@@ -1971,7 +2009,7 @@ function submitRequest() {
                     }
                     if (pull_rows == "3") {
                         name = "拉3"
-                    } 
+                    }
                     if (pull_rows == "4") {
                         name = "拉4"
                     }
@@ -1992,8 +2030,8 @@ function submitRequest() {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
                     var pull_rows = jsarr[i]["pull_rows"]
-                    if (pull_rows!="0") {
-                        name = "拉"+pull_rows
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
                     }
                     if (pull_rows == "1,2,3,4,5,6") {
                         name = "全拉"
@@ -2012,7 +2050,7 @@ function submitRequest() {
                     }
                     if (pull_rows == "3") {
                         name = "拉3"
-                    } 
+                    }
                     if (pull_rows == "4") {
                         name = "拉4"
                     }
@@ -2033,8 +2071,8 @@ function submitRequest() {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
                     var pull_rows = jsarr[i]["pull_rows"]
-                    if (pull_rows!="0") {
-                        name = "拉"+pull_rows
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
                     }
                     if (pull_rows == "1,2,3,4,5,6") {
                         name = "全拉"
@@ -2053,7 +2091,7 @@ function submitRequest() {
                     }
                     if (pull_rows == "3") {
                         name = "拉3"
-                    } 
+                    }
                     if (pull_rows == "4") {
                         name = "拉4"
                     }
@@ -2072,8 +2110,8 @@ function submitRequest() {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
                     var pull_rows = jsarr[i]["pull_rows"]
-                    if (pull_rows!="0") {
-                        name = "拉"+pull_rows
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
                     }
                     if (pull_rows == "1,2,3,4,5,6") {
                         name = "全拉"
@@ -2092,7 +2130,7 @@ function submitRequest() {
                     }
                     if (pull_rows == "3") {
                         name = "拉3"
-                    } 
+                    }
                     if (pull_rows == "4") {
                         name = "拉4"
                     }
@@ -2111,8 +2149,8 @@ function submitRequest() {
                     var tOption = document.createElement("Option");
                     var name = "不拉"
                     var pull_rows = jsarr[i]["pull_rows"]
-                    if (pull_rows!="0") {
-                        name = "拉"+pull_rows
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
                     }
                     if (pull_rows == "1,2,3,4,5,6") {
                         name = "全拉"
@@ -2131,7 +2169,7 @@ function submitRequest() {
                     }
                     if (pull_rows == "3") {
                         name = "拉3"
-                    } 
+                    }
                     if (pull_rows == "4") {
                         name = "拉4"
                     }
@@ -2171,15 +2209,15 @@ function submitRequest() {
                 for (var i = 0; i < jsarr.length; i++) {
                     if (jsarr[i]["token"] == "") {
                         var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
-                    tOption.selected = false;
-                    tOption.value = jsarr[i]["id"];
-                    document.getElementById("getUserTokenSelect").options.add(tOption);
+                        tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                        tOption.selected = false;
+                        tOption.value = jsarr[i]["id"];
+                        document.getElementById("getUserTokenSelect").options.add(tOption);
                     }
                 }
 
                 for (var i = 0; i < jsarr.length; i++) {
-                        var tOption = document.createElement("Option");
+                    var tOption = document.createElement("Option");
                     tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
@@ -2188,7 +2226,7 @@ function submitRequest() {
 
 
                 for (var i = 0; i < jsarr.length; i++) {
-                        var tOption = document.createElement("Option");
+                    var tOption = document.createElement("Option");
                     tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
@@ -2357,6 +2395,14 @@ function submitRequest() {
                     document.getElementById("GetBeachLineRewardsH").options.add(tOption);
                 }
 
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("exchangeBeachRewardIDs").options.add(tOption);
+                }
+
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
@@ -2426,7 +2472,7 @@ function submitRequest() {
 
                 for (var i = 0; i < jsarr.length; i++) {
                     var tOption = document.createElement("Option");
-                    tOption.text = jsarr[i]["name"]+"("+jsarr[i]["familyId"]+")";
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("userMingingItem").options.add(tOption);

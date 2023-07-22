@@ -167,6 +167,9 @@ func UpdateUser(uid, serverURL, zoneToken, token string) {
 	userOnline.Lock.Lock()
 	defer userOnline.Lock.Unlock()
 	user := userOnline.Users[uid]
+	if user == nil {
+		return
+	}
 	user.ServerURL = serverURL
 	user.ZoneToken = zoneToken
 	if token != "" {
@@ -330,6 +333,7 @@ func main() {
 	http.HandleFunc("/setPullRows", SetPullRowsH)
 	http.HandleFunc("/addFirewood", AddFirewoodH)
 	http.HandleFunc("/exchangeRiceCake", ExchangeRiceCakeH)
+	http.HandleFunc("/exchangeBeachReward", ExchangeBeachRewardH)
 	http.HandleFunc("/searchRiceCake", SearchRiceCakeH)
 	http.HandleFunc("/makeRiceCake", MakeRiceCakeH)
 	http.HandleFunc("/getLabaPrize", GetLabaPrizeH)
@@ -411,8 +415,10 @@ func main() {
 		go runner.NamedRunnerWithHMS("RunnerAttackBossGo12", 12, 5, 0, &running, AttackBossGo)
 		go runner.NamedRunnerWithHMS("RunnerAttackBossGo13", 13, 5, 0, &running, AttackBossGo)
 		go runner.NamedRunnerWithHMS("RunnerAllBeachHelpGo", 4, 5, 0, &running, AllBeachHelpGo)
-
+		go runner.NamedRunnerWithHMS("RunnerProcExchangeLast", 23, 10, 0, &running, ProcExchangeLast)
+		go runner.NamedRunnerWithHMS("RunnerProcExchangeLast", 23, 46, 0, &running, ProcExchangeLast)
 	}
+	go RunnerBeach()
 
 	defer func() {
 		sendMsg("cat is stop")
@@ -1244,22 +1250,31 @@ func getbossPrizeLogic(id string) {
 		rows.Scan(&uid, &token, &name)
 		userIDs = append(userIDs, []string{uid, token, name})
 	}
+	var wg sync.WaitGroup
+	ch := make(chan struct{}, 4)
 	for _, v := range userIDs {
-		user := GetUser(v[0])
-		bossIDList := getBossPrizeList(user.ServerURL, user.ZoneToken)
-		if len(bossIDList) != 0 {
-			xlog.Infof("[%v]开始领取龙奖励", v[2])
-			for _, bossID := range bossIDList {
-				getBossPrize(user.ServerURL, user.ZoneToken, bossID)
-				xlog.Infof("[%v]领取了[%v]奖励", v[2], bossID)
+		ch <- struct{}{}
+		wg.Add(1)
+		go func(v []string) {
+			defer wg.Done()
+			user := GetUser(v[0])
+			bossIDList := getBossPrizeList(user.ServerURL, user.ZoneToken)
+			if len(bossIDList) != 0 {
+				xlog.Infof("[%v]开始领取龙奖励", v[2])
+				for _, bossID := range bossIDList {
+					getBossPrize(user.ServerURL, user.ZoneToken, bossID)
+					xlog.Infof("[%v]领取了[%v]奖励", v[2], bossID)
 
-				time.Sleep(time.Second * 1)
+					time.Sleep(time.Millisecond * 500)
+				}
+				xlog.Infof("[%v]领取龙奖励完毕", v[2])
+			} else {
+				xlog.Infof("[%v]没有可领龙奖励", v[2])
 			}
-			xlog.Infof("[%v]领取龙奖励完毕", v[2])
-		} else {
-			xlog.Infof("[%v]没有可领龙奖励", v[2])
-		}
+			<-ch
+		}(v)
 	}
+	wg.Wait()
 }
 
 func GetBossPrizeH1(s *web.Session) web.Result {
@@ -1483,49 +1498,58 @@ func UseShovelH(w http.ResponseWriter, req *http.Request) {
 		rows.Scan(&uid, &name, &token)
 		userIDs = append(userIDs, uid)
 	}
+	var wg sync.WaitGroup
+	ch := make(chan struct{}, 4)
 	for _, uid := range userIDs {
-		user := GetUser(uid)
-		name := user.Name
-		if toid == "all" {
-			SQL = "select id, name from tokens where find_in_set(id, (select conf_value from config where conf_key = 'beachUidList'))"
-			rows, err := Pool.Query(SQL)
-			if err != nil {
-				return
-			}
-			defer rows.Close()
+		wg.Add(1)
+		ch <- struct{}{}
+		go func(uid string) {
+			defer wg.Done()
+			user := GetUser(uid)
+			name := user.Name
+			if toid == "all" {
+				SQL = "select id, name from tokens where find_in_set(id, (select conf_value from config where conf_key = 'beachUidList'))"
+				rows, err := Pool.Query(SQL)
+				if err != nil {
+					return
+				}
+				defer rows.Close()
 
-			for rows.Next() {
-				var uuid, uname string
-				rows.Scan(&uuid, &uname)
+				for rows.Next() {
+					var uuid, uname string
+					rows.Scan(&uuid, &uname)
+					for i := 1; i <= 5; i++ {
+						xlog.Infof("[%v]为[%v]使用铲子x%v", name, uname, i)
+						useShovel(user.ServerURL, user.ZoneToken, uuid)
+						time.Sleep(time.Millisecond * 100)
+					}
+				}
+				io.WriteString(w, "SUCCESS")
+				return
+
+			}
+
+			if toid == "" {
+				for i := 1; i <= 20; i++ {
+					xlog.Infof("[%v]使用铲子x%v", name, i)
+					useShovel(user.ServerURL, user.ZoneToken, "")
+					time.Sleep(time.Millisecond * 100)
+				}
+			} else {
+
+				var toname string
+				Pool.QueryRow("select name from tokens where id = ?", toid).Scan(&toname)
+
 				for i := 1; i <= 5; i++ {
-					xlog.Infof("[%v]为[%v]使用铲子x%v", name, uname, i)
-					useShovel(user.ServerURL, user.ZoneToken, uuid)
+					xlog.Infof("[%v]为[%v]使用铲子x%v", name, toname, i)
+					useShovel(user.ServerURL, user.ZoneToken, toid)
 					time.Sleep(time.Millisecond * 100)
 				}
 			}
-			io.WriteString(w, "SUCCESS")
-			return
-
-		}
-
-		if toid == "" {
-			for i := 1; i <= 20; i++ {
-				xlog.Infof("[%v]使用铲子x%v", name, i)
-				useShovel(user.ServerURL, user.ZoneToken, "")
-				time.Sleep(time.Millisecond * 100)
-			}
-		} else {
-
-			var toname string
-			Pool.QueryRow("select name from tokens where id = ?", toid).Scan(&toname)
-
-			for i := 1; i <= 5; i++ {
-				xlog.Infof("[%v]为[%v]使用铲子x%v", name, toname, i)
-				useShovel(user.ServerURL, user.ZoneToken, toid)
-				time.Sleep(time.Millisecond * 100)
-			}
-		}
+			<-ch
+		}(uid)
 	}
+	wg.Wait()
 
 	io.WriteString(w, "SUCCESS")
 }
@@ -1626,6 +1650,120 @@ func ExchangeRiceCakeH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	exchangeRiceCakeLogic(id)
 	io.WriteString(w, "SUCCESS")
+}
+
+func ExchangeBeachRewardH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	index1 := req.URL.Query().Get("index")
+	// 吧index1转成int64
+	index, _ := strconv.ParseInt(index1, 10, 64)
+	if id == "" || id == "all" {
+		SQL := "select id from tokens"
+		rows, err := Pool.Query(SQL)
+		if err != nil {
+			return
+		}
+		userIDs := []string{}
+		for rows.Next() {
+			var uid string
+			rows.Scan(&uid)
+			userIDs = append(userIDs, uid)
+		}
+		rows.Close()
+		var wg sync.WaitGroup
+		ch := make(chan struct{}, 3)
+		for _, userID := range userIDs {
+			ch <- struct{}{}
+			wg.Add(1)
+			go func(userID string) {
+				defer wg.Done()
+				user := GetUser(userID)
+				data := game(user.ZoneToken)
+				items := data.Map("beachItems")
+				v176 := items.Int64("176")
+				v177 := items.Int64("177")
+				v178 := items.Int64("178")
+				v179 := items.Int64("179")
+				v180 := items.Int64("180")
+				v181 := items.Int64("181")
+
+				// 从v176-v178中找到最小值
+				min := v176
+				if v177 < min {
+					min = v177
+				}
+				if v178 < min {
+					min = v178
+				}
+				all := v179 + v180 + v181
+				if index == 4 || index == 3 || index == 2 {
+					if all < min {
+						for {
+							flag := exchangeBeachReward(user.ServerURL, user.ZoneToken, index)
+							if !flag {
+								break
+							}
+							xlog.Infof("%s兑换第%d套海滩奖励", user.Name, index)
+						}
+						io.WriteString(w, fmt.Sprintf("[%s]SUCCESS|", user.Name))
+					} else {
+						io.WriteString(w, fmt.Sprintf("[%s]:%d-%d-%d-%d-%d-%d|", user.Name, v176, v177, v178, v179, v180, v181))
+					}
+				} else {
+					for {
+						flag := exchangeBeachReward(user.ServerURL, user.ZoneToken, index)
+						if !flag {
+							break
+						}
+					}
+				}
+				<-ch
+			}(userID)
+		}
+		wg.Wait()
+
+	} else {
+		user := GetUser(id)
+		data := game(user.ZoneToken)
+		items := data.Map("beachItems")
+		v176 := items.Int64("176")
+		v177 := items.Int64("177")
+		v178 := items.Int64("178")
+		v179 := items.Int64("179")
+		v180 := items.Int64("180")
+		v181 := items.Int64("181")
+
+		// 从v176-v178中找到最小值
+		min := v176
+		if v177 < min {
+			min = v177
+		}
+		if v178 < min {
+			min = v178
+		}
+		all := v179 + v180 + v181
+		if index == 4 || index == 3 || index == 2 {
+			if all < min {
+				for {
+					flag := exchangeBeachReward(user.ServerURL, user.ZoneToken, index)
+					if !flag {
+						break
+					}
+					xlog.Infof("%s兑换第%d套海滩奖励", user.Name, index)
+				}
+				io.WriteString(w, "SUCCESS")
+			} else {
+				io.WriteString(w, fmt.Sprintf("%d-%d-%d-%d-%d-%d", v176, v177, v178, v179, v180, v181))
+			}
+		} else {
+			for {
+				flag := exchangeBeachReward(user.ServerURL, user.ZoneToken, index)
+				if !flag {
+					break
+				}
+			}
+		}
+	}
 }
 
 func exchangeRiceCakeLogic(id string) {
@@ -2464,7 +2602,7 @@ func UnlockWorkerH(w http.ResponseWriter, req *http.Request) {
 	rows.Close()
 
 	var wg sync.WaitGroup
-	ch := make(chan struct{}, 10)
+	ch := make(chan struct{}, 5)
 
 	for _, uid := range userIDs {
 		ch <- struct{}{}
@@ -2536,44 +2674,61 @@ func beachRunner(id string) {
 		// serverURL := getServerURL()
 
 	}
+	var wg sync.WaitGroup
+	ch := make(chan struct{}, 4)
 	for _, uid := range userIDs {
-		user := GetUser(uid)
-		serverURL := user.ServerURL
-		zoneToken := user.ZoneToken
-		name := user.Name
-		token := user.Token
-		startBeachActivity(serverURL, zoneToken)
-		for j := 1; j <= 2; j++ {
-			zoneToken, beach := getEnterInfo(uid, name, serverURL, token, zoneToken, "beach")
-			UpdateUser(uid, serverURL, zoneToken, token)
-			if beach != nil {
-				beachMap, ok := beach.(map[string]interface{})
+		wg.Add(1)
+		ch <- struct{}{}
+		go func(uid string) {
+			defer wg.Done()
+			user := GetUser(uid)
+			serverURL := user.ServerURL
+			zoneToken := user.ZoneToken
+			name := user.Name
+			token := user.Token
+			startBeachActivity(serverURL, zoneToken)
+			for j := 1; j <= 2; j++ {
+				zoneToken, beach := getEnterInfo(uid, name, serverURL, token, zoneToken, "beach")
+				UpdateUser(uid, serverURL, zoneToken, token)
+				if beach != nil {
+					if j == 2 {
+						for i := 0; i <= 4; i++ {
+							xlog.Infof("[%v]领取海滩奖励x%v\n", name, i)
+							getBeachLineRewards(serverURL, zoneToken, i, 0)
+							time.Sleep(time.Millisecond * 100)
+						}
 
-				if ok {
-					endTime, ok := beachMap["endTime"].(float64)
+						for i := 0; i <= 4; i++ {
+							xlog.Infof("[%v]领取海滩奖励x%v\n", name, i)
+							getBeachLineRewards(serverURL, zoneToken, i, 1)
+							time.Sleep(time.Millisecond * 100)
+						}
+					}
+					beachMap, ok := beach.(map[string]interface{})
 					if ok {
-						now := time.Now().UnixNano() / 1e6
-
-						seconds := int64(endTime) - now
-
-						grids, ok := beachMap["grids"].([]interface{})
-						var gridsnum = 0
-						var myGridsnum, otherGridsnum = 0, 0
+						endTime, ok := beachMap["endTime"].(float64)
 						if ok {
-							for _, v := range grids {
-								vv, ok := v.([]interface{})
-								if ok {
-									for _, v2 := range vv {
-										vvv, ok := v2.(map[string]interface{})
-										if ok {
-											gridsuid, ok := vvv["uid"].(string)
+							now := time.Now().UnixNano() / 1e6
+							seconds := int64(endTime) - now
+							grids, ok := beachMap["grids"].([]interface{})
+							var gridsnum = 0
+							var myGridsnum, otherGridsnum = 0, 0
+							if ok {
+								for _, v := range grids {
+									vv, ok := v.([]interface{})
+									if ok {
+										for _, v2 := range vv {
+											vvv, ok := v2.(map[string]interface{})
 											if ok {
-												if gridsuid != "" {
-													gridsnum += 1
-													if gridsuid == uid {
-														myGridsnum += 1
-													} else {
-														otherGridsnum += 1
+												gridsuid, ok := vvv["uid"].(string)
+												if ok {
+													if gridsuid != "" {
+														gridsnum += 1
+														if gridsuid == uid {
+															myGridsnum += 1
+														} else {
+															otherGridsnum += 1
+														}
 													}
 												}
 											}
@@ -2581,119 +2736,120 @@ func beachRunner(id string) {
 									}
 								}
 							}
-						}
 
-						var myNeed, otherNeed = 0, 0
-						otherNeed = 5 - otherGridsnum
-						myNeed = 25 - myGridsnum - otherGridsnum
-
-						xlog.Infof("[%v][%v] 总共%v 自己已经使用%v还需要%v 别人已经%v还可以帮助%v\n", name, uid, gridsnum, myGridsnum, myNeed, otherGridsnum, otherNeed)
-
-						if otherNeed > 0 {
-							helpMeForBeach(uid, name)
-						}
-						for i := 1; i <= myNeed; i++ {
-							xlog.Infof("[%v]使用铲子x%v", name, i)
-							useShovel(serverURL, zoneToken, "")
-							time.Sleep(time.Millisecond * 100)
-						}
-
-						if gridsnum == 25 {
-							if seconds > 0 {
-								seconds += 2000
-								var beachRunner int64
-								Pool.QueryRow("select beach_runner from tokens where id = ?", uid).Scan(&beachRunner)
-								if beachRunner == 0 {
-									xlog.Infof("[%v]set runner after %v", name, seconds)
-									go func() {
-										Pool.Exec("update tokens set beach_runner = 1 where id = ?", uid)
-										time.Sleep(time.Millisecond * time.Duration(seconds))
-										Pool.Exec("update tokens set beach_runner = 0 where id = ?", uid)
-										// serverURL = getServerURL()
-										// zoneToken := getZoneToken(serverURL, token)
-
-										serverURL, zoneToken = getSeverURLAndZoneToken(token)
-
-										refreshBeach(serverURL, zoneToken)
-										xlog.Infof("[%s] refreshBeach finish ", name)
-										for i := 1; i <= 20; i++ {
-											xlog.Infof("[%v]使用铲子x%v", name, i)
-											useShovel(serverURL, zoneToken, "")
-											time.Sleep(time.Millisecond * 100)
-										}
-										helpMeForBeach(uid, name)
-
-										for i := 0; i <= 4; i++ {
-											xlog.Infof("[%v]领取海滩奖励x%v", name, i)
-											getBeachLineRewards(serverURL, zoneToken, i, 0)
-											time.Sleep(time.Millisecond * 100)
-										}
-
-										for i := 0; i <= 4; i++ {
-											xlog.Infof("[%v]领取海滩奖励x%v", name, i)
-											getBeachLineRewards(serverURL, zoneToken, i, 1)
-											time.Sleep(time.Millisecond * 100)
-										}
-									}()
-								}
-
-							} else {
-								refreshBeach(serverURL, zoneToken)
-
-								for i := 1; i <= 20; i++ {
+							var myNeed, otherNeed = 0, 0
+							otherNeed = 5 - otherGridsnum
+							myNeed = 25 - myGridsnum - otherGridsnum
+							xlog.Infof("[%v][%v] 总共%v 自己已经使用%v还需要%v 别人已经%v还可以帮助%v\n", name, uid, gridsnum, myGridsnum, myNeed, otherGridsnum, otherNeed)
+							if otherNeed > 0 {
+								helpMeForBeach(uid, name)
+							}
+							if (myGridsnum + myNeed) <= 20 {
+								for i := 1; i <= myNeed; i++ {
 									xlog.Infof("[%v]使用铲子x%v", name, i)
 									useShovel(serverURL, zoneToken, "")
 									time.Sleep(time.Millisecond * 100)
 								}
-								helpMeForBeach(uid, name)
+							}
+							if gridsnum == 25 {
+								if seconds > 0 {
+									seconds += 2000
+									var beachRunner int64
+									Pool.QueryRow("select beach_runner from tokens where id = ?", uid).Scan(&beachRunner)
+									if beachRunner == 0 {
+										xlog.Infof("[%v]set runner after %v", name, seconds)
+										go func(uid string) {
+											Pool.Exec("update tokens set beach_runner = 1 where id = ?", uid)
+											time.Sleep(time.Millisecond * time.Duration(seconds))
+											Pool.Exec("update tokens set beach_runner = 0 where id = ?", uid)
+											// serverURL = getServerURL()
+											// zoneToken := getZoneToken(serverURL, token)
 
+											serverURL, zoneToken = getSeverURLAndZoneToken(token)
+
+											refreshBeach(serverURL, zoneToken)
+											xlog.Infof("[%s] refreshBeach finish ", name)
+											for i := 1; i <= 20; i++ {
+												xlog.Infof("[%v]使用铲子x%v", name, i)
+												useShovel(serverURL, zoneToken, "")
+												time.Sleep(time.Millisecond * 100)
+											}
+											helpMeForBeach(uid, name)
+
+											for i := 0; i <= 4; i++ {
+												xlog.Infof("[%v]领取海滩奖励x%v", name, i)
+												getBeachLineRewards(serverURL, zoneToken, i, 0)
+												time.Sleep(time.Millisecond * 100)
+											}
+
+											for i := 0; i <= 4; i++ {
+												xlog.Infof("[%v]领取海滩奖励x%v", name, i)
+												getBeachLineRewards(serverURL, zoneToken, i, 1)
+												time.Sleep(time.Millisecond * 100)
+											}
+										}(uid)
+									}
+
+								} else {
+									refreshBeach(serverURL, zoneToken)
+
+									for i := 1; i <= 20; i++ {
+										xlog.Infof("[%v]使用铲子x%v", name, i)
+										useShovel(serverURL, zoneToken, "")
+										time.Sleep(time.Millisecond * 100)
+									}
+									helpMeForBeach(uid, name)
+
+									for i := 0; i <= 4; i++ {
+										xlog.Infof("[%v]领取海滩奖励x%v", name, i)
+										getBeachLineRewards(serverURL, zoneToken, i, 0)
+										time.Sleep(time.Millisecond * 100)
+									}
+
+									for i := 0; i <= 4; i++ {
+										xlog.Infof("[%v]领取海滩奖励x%v", name, i)
+										getBeachLineRewards(serverURL, zoneToken, i, 1)
+										time.Sleep(time.Millisecond * 100)
+									}
+
+								}
+							} else {
+								helpMeForBeach(uid, name)
 								for i := 0; i <= 4; i++ {
-									xlog.Infof("[%v]领取海滩奖励x%v", name, i)
+									xlog.Infof("[%v]领取海滩奖励x%v\n", name, i)
 									getBeachLineRewards(serverURL, zoneToken, i, 0)
 									time.Sleep(time.Millisecond * 100)
 								}
 
 								for i := 0; i <= 4; i++ {
-									xlog.Infof("[%v]领取海滩奖励x%v", name, i)
+									xlog.Infof("[%v]领取海滩奖励x%v\n", name, i)
 									getBeachLineRewards(serverURL, zoneToken, i, 1)
 									time.Sleep(time.Millisecond * 100)
 								}
+							}
+							// if gridsnum == 20 {
+							// 	helpMeForBeach(uid, name)
+							// 	for i := 0; i <= 4; i++ {
+							// 		xlog.Infof("[%v]领取海滩奖励x%v\n", name, i)
+							// 		getBeachLineRewards(serverURL, zoneToken, i, 0)
+							// 		time.Sleep(time.Millisecond * 100)
+							// 	}
 
-							}
-						} else {
-							helpMeForBeach(uid, name)
-							for i := 0; i <= 4; i++ {
-								xlog.Infof("[%v]领取海滩奖励x%v\n", name, i)
-								getBeachLineRewards(serverURL, zoneToken, i, 0)
-								time.Sleep(time.Millisecond * 100)
-							}
+							// 	for i := 0; i <= 4; i++ {
+							// 		xlog.Infof("[%v]领取海滩奖励x%v\n", name, i)
+							// 		getBeachLineRewards(serverURL, zoneToken, i, 1)
+							// 		time.Sleep(time.Millisecond * 100)
+							// 	}
+							// }
 
-							for i := 0; i <= 4; i++ {
-								xlog.Infof("[%v]领取海滩奖励x%v\n", name, i)
-								getBeachLineRewards(serverURL, zoneToken, i, 1)
-								time.Sleep(time.Millisecond * 100)
-							}
 						}
-						// if gridsnum == 20 {
-						// 	helpMeForBeach(uid, name)
-						// 	for i := 0; i <= 4; i++ {
-						// 		xlog.Infof("[%v]领取海滩奖励x%v\n", name, i)
-						// 		getBeachLineRewards(serverURL, zoneToken, i, 0)
-						// 		time.Sleep(time.Millisecond * 100)
-						// 	}
-
-						// 	for i := 0; i <= 4; i++ {
-						// 		xlog.Infof("[%v]领取海滩奖励x%v\n", name, i)
-						// 		getBeachLineRewards(serverURL, zoneToken, i, 1)
-						// 		time.Sleep(time.Millisecond * 100)
-						// 	}
-						// }
-
 					}
 				}
 			}
-		}
+			<-ch
+		}(uid)
 	}
+	wg.Wait()
 }
 
 func helpMeForBeach(toid, toname string) {
@@ -4584,6 +4740,20 @@ func CommonReqH(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, "执行完毕")
 }
 
+func ProcExchangeLast() (err error) {
+	if time.Now().Weekday() == time.Saturday {
+		exchangeRiceCakeLogic("")
+		getLabaPrizeLogic("", "3")
+	}
+	if time.Now().Weekday() == time.Monday {
+		setPieceLogic("", 10)
+	}
+	if time.Now().Weekday() == time.Sunday {
+		familyRewardLogic("")
+	}
+	return
+}
+
 func AllBeachHelpGo() (err error) {
 	sql := `select id, token, name from tokens`
 	rows, err := Pool.Query(sql)
@@ -5517,7 +5687,7 @@ func pullAnimalBySql(SQL string) {
 
 	}
 	var wg sync.WaitGroup
-	ch := make(chan struct{}, 5)
+	ch := make(chan struct{}, 3)
 	for _, u := range userIDs {
 		var uid, name, pullRows, followUids string
 
@@ -6103,13 +6273,22 @@ func openSteamBoxGo() {
 		rows.Scan(&uid, &name, &token)
 		userIDs = append(userIDs, uid)
 	}
-	for _, uid := range userIDs {
-		user := GetUser(uid)
-		serverURL, zoneToken := user.ServerURL, user.ZoneToken
+	var wg sync.WaitGroup
+	ch := make(chan struct{}, 4)
 
-		openSteamBox(serverURL, zoneToken, uid)
-		xlog.Infof("[%v]领取汤圆成功", user.Name)
+	for _, uid := range userIDs {
+		ch <- struct{}{}
+		wg.Add(1)
+		go func(uid string) {
+			defer wg.Done()
+			user := GetUser(uid)
+			serverURL, zoneToken := user.ServerURL, user.ZoneToken
+			openSteamBox(serverURL, zoneToken, uid)
+			xlog.Infof("[%v]领取汤圆成功", user.Name)
+			<-ch
+		}(uid)
 	}
+	wg.Wait()
 }
 
 // 抓特定箱子 quality-> 1=普通 2=稀有 3=传奇
@@ -10313,20 +10492,19 @@ func RunnerSteamBox() (err error) {
 	if err != nil {
 		return
 	}
-	defer rows.Close()
 
 	users := [][]string{}
 
 	for rows.Next() {
 		var uid, name, token string
 		rows.Scan(&uid, &name, &token)
-		user := GetUser(uid)
-		serverURL, zoneToken := user.ServerURL, user.ZoneToken
-		addFirewood(serverURL, zoneToken, "302691822")
-		addFirewood(serverURL, zoneToken, "309392050")
+		// user := GetUser(uid)
+		// serverURL, zoneToken := user.ServerURL, user.ZoneToken
+		// addFirewood(serverURL, zoneToken, "302691822")
+		// addFirewood(serverURL, zoneToken, "309392050")
 		users = append(users, []string{uid, name, token})
 	}
-
+	rows.Close()
 	SQL = "select id, name, token from tokens where id in (302691822,309392050)"
 
 	rows, err = Pool.Query(SQL)
@@ -10340,19 +10518,6 @@ func RunnerSteamBox() (err error) {
 		rows.Scan(&uid, &uname, &utoken)
 		user := GetUser(uid)
 		serverURL, zoneToken := user.ServerURL, user.ZoneToken
-		// uids, helpUids := getSteamBoxHelpList(serverURL, zoneToken, 2)
-		// for _, v := range uids {
-		// 	fuid := fmt.Sprintf("%v", v)
-		// 	addFirewood(serverURL, zoneToken, fuid)
-		// 	xlog.Infof("[%v]给[%v]添加柴火", uname, fuid)
-		// }
-		// for _, v := range helpUids {
-		// 	fuid := fmt.Sprintf("%v", v)
-		// 	openSteamBox(serverURL, zoneToken, fuid)
-		// 	xlog.Infof("[%v]给[%v]打开汤圆", uname, v)
-
-		// }
-
 		uids, helpUids := getSteamBoxHelpList(serverURL, zoneToken, 3)
 		for _, v := range uids {
 			fuid := fmt.Sprintf("%v", v)
@@ -10366,22 +10531,31 @@ func RunnerSteamBox() (err error) {
 			fuid := fmt.Sprintf("%v", v)
 			openSteamBox(serverURL, zoneToken, fuid)
 			xlog.Infof("[%v]给[%v]打开汤圆", uname, v)
-
 		}
 	}
+	rows.Close()
+	var wg sync.WaitGroup
+	ch := make(chan struct{}, 4)
 	for _, v := range users {
-		user := GetUser(v[0])
-		serverURL, zoneToken := user.ServerURL, user.ZoneToken
-		uids, _ := getSteamBoxHelpList(serverURL, zoneToken, 0)
-		for _, v2 := range uids {
-			fuid := fmt.Sprintf("%v", v2)
-			if !addFirewood(serverURL, zoneToken, fuid) {
-				xlog.Infof("[%v]给[%v]添加柴火失败！！！", v[1], fuid)
-				break
+		wg.Add(1)
+		ch <- struct{}{}
+		go func(v []string) {
+			defer wg.Done()
+			user := GetUser(v[0])
+			serverURL, zoneToken := user.ServerURL, user.ZoneToken
+			uids, _ := getSteamBoxHelpList(serverURL, zoneToken, 0)
+			for _, v2 := range uids {
+				fuid := fmt.Sprintf("%v", v2)
+				if !addFirewood(serverURL, zoneToken, fuid) {
+					xlog.Infof("[%v]给[%v]添加柴火失败！！！", v[1], fuid)
+					break
+				}
+				xlog.Infof("[%v]给[%v]添加柴火成功", v[1], fuid)
 			}
-			xlog.Infof("[%v]给[%v]添加柴火成功", v[1], fuid)
-		}
+			<-ch
+		}(v)
 	}
+	wg.Wait()
 	return
 }
 
@@ -11104,7 +11278,7 @@ func chongbangLogic() {
 	AllLock.Lock()
 	defer AllLock.Unlock()
 	var wg sync.WaitGroup
-	ch := make(chan struct{}, 10)
+	ch := make(chan struct{}, 5)
 
 	for _, id := range ids {
 		ch <- struct{}{}
@@ -11157,16 +11331,16 @@ type Animal struct {
 var TodayAlreadyCalculateAnimals []string
 
 func RunnerFamilySignGo() (err error) {
-	if time.Now().Weekday() == time.Saturday {
-		exchangeRiceCakeLogic("")
-		getLabaPrizeLogic("", "3")
-	}
-	if time.Now().Weekday() == time.Monday {
-		setPieceLogic("", 10)
-	}
-	if time.Now().Weekday() == time.Sunday {
-		familyRewardLogic("")
-	}
+	// if time.Now().Weekday() == time.Saturday {
+	// 	exchangeRiceCakeLogic("")
+	// 	getLabaPrizeLogic("", "3")
+	// }
+	// if time.Now().Weekday() == time.Monday {
+	// 	setPieceLogic("", 10)
+	// }
+	// if time.Now().Weekday() == time.Sunday {
+	// 	familyRewardLogic("")
+	// }
 	familySignGo()
 
 	xlog.Infof("签到完成")
@@ -11223,33 +11397,40 @@ func RunnerCheckTokenGoLogic() (err error) {
 		users = append(users, id)
 	}
 	now := time.Now()
+
+	var wg sync.WaitGroup
+	ch := make(chan struct{}, 3)
+
 	for _, id := range users {
-		user := GetUser(id)
-
-		if user == nil {
-			continue
-		}
-		followCompanion_1(user.ServerURL, user.ZoneToken, 3)
-		if now.Hour() == 1 || now.Hour() == 6 || now.Hour() == 15 || now.Hour() == 23 {
-			for i := 1; i <= 3; i++ {
-				getFamilySignPrize(user.ServerURL, user.ZoneToken, i)
-				xlog.Infof("[%v] getFamilySignPrize[%v]", user.Name, i)
+		wg.Add(1)
+		ch <- struct{}{}
+		go func(id string) {
+			defer wg.Done()
+			user := GetUser(id)
+			if user != nil {
+				followCompanion_1(user.ServerURL, user.ZoneToken, 3)
+				if now.Hour() == 1 || now.Hour() == 6 || now.Hour() == 15 || now.Hour() == 23 {
+					for i := 1; i <= 3; i++ {
+						getFamilySignPrize(user.ServerURL, user.ZoneToken, i)
+						xlog.Infof("[%v] getFamilySignPrize[%v]", user.Name, i)
+					}
+					taskIDs := getDayTasksInfo(user.ServerURL, user.ZoneToken)
+					xlog.Infof("[%v]领取日常任务奖励:%v", user.Name, taskIDs)
+					for _, taskID := range taskIDs {
+						// time.Sleep(time.Millisecond * 100)
+						getDayTaskAward(user.ServerURL, user.ZoneToken, taskID)
+					}
+					user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
+					UpdateUser(id, user.ServerURL, user.ZoneToken, user.Token)
+					if user.FamilyDayTask != nil {
+						getFamilyTaskPrizeLogic(user.FamilyDayTask, user.ServerURL, user.ZoneToken, user.Name)
+					}
+				}
 			}
-			taskIDs := getDayTasksInfo(user.ServerURL, user.ZoneToken)
-			xlog.Infof("[%v]领取日常任务奖励:%v", user.Name, taskIDs)
-			for _, taskID := range taskIDs {
-				// time.Sleep(time.Millisecond * 100)
-				getDayTaskAward(user.ServerURL, user.ZoneToken, taskID)
-			}
-			user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
-			UpdateUser(id, user.ServerURL, user.ZoneToken, user.Token)
-			if user.FamilyDayTask == nil {
-				continue
-			}
-			getFamilyTaskPrizeLogic(user.FamilyDayTask, user.ServerURL, user.ZoneToken, user.Name)
-		}
-
+			<-ch
+		}(id)
 	}
+	wg.Wait()
 	RunnerBeach()
 
 	return
@@ -11372,6 +11553,9 @@ func InitTodayAnimal() (err error) {
 	sql := `select id, name, token,zoneToken from tokens where id = (select conf_value from config where conf_key = 'animalUid')`
 	var uid, name, token, zoneToken string
 	Pool.QueryRow(sql).Scan(&uid, &name, &token, &zoneToken)
+	if uid == "" {
+		return
+	}
 	serverURL := getServerURL()
 	zoneToken, animal := getEnterInfo(uid, name, serverURL, token, zoneToken, "animal")
 	UpdateUser(uid, serverURL, zoneToken, token)
@@ -12211,6 +12395,7 @@ func getMiningScoreReward(serverURL, zoneToken string) bool {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 	URL := fmt.Sprintf("%v/game?cmd=getMiningScoreReward&token=%v&now=%v", serverURL, zoneToken, now)
 	form := httpGetReturnJson(URL)
+	xlog.Infof("getMiningScoreReward %v", converter.JSON(form))
 	_, ok := form["getItem"].(map[string]interface{})
 	return ok
 }

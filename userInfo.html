@@ -158,7 +158,15 @@
       "27":"黑水晶",
       "28":"绿宝石",
       "29":"红宝石",
-      "30":"钻石"
+      "30":"钻石",
+      "176":"蓝珊瑚",
+      "177":"红珊瑚",
+      "178":"黄珊瑚",
+      "179":"鹦鹉螺",
+      "180":"海星",
+      "181":"玄武螺",
+      "182":"铲子",
+      "183":"海浪"
    };
 
 
@@ -226,7 +234,7 @@ var formattedDate = date.toLocaleString('zh-CN', options);
           // }
           cell2.innerHTML = JSON.stringify(data[key]);
 
-        } else if (key === "miningItems" || key === "animal" || key === "gemList"){
+        } else if (key === "miningItems" || key === "animal" || key === "gemList" || key === "beachItems"){
           // 遍历data[key],数据是{"184":3404,"185":2176,"186":944,"187":0} 把key从translateMap中取出来作为新的key,重新组装成新的json
           var jsonValue = data[key];
           var newJson = {};
