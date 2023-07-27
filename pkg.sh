@@ -8,3 +8,7 @@ date
 # scp 1369-46.json root@192.168.10.21:/data/cat/
 scp ctrl.html whn.html maolaile.html userInfo.html familyEnergy.html familyDayTask.html cat root@192.168.10.21:/data/cat/
 # bs-scp 'master0->twbi->tcp://127.0.0.1:22' ctrl.html whn.html maolaile.html userInfo.html familyEnergy.html familyDayTask.html cat root@127.0.0.1:/data/cat/
+# bs-scp 'master0->twbi->tcp://127.0.0.1:22' cat root@127.0.0.1:/data/cat/
+
+# root@62.234.2.105:/data/cat/
+# root@101.43.184.20:/data/cat/

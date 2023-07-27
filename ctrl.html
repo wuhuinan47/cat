@@ -194,6 +194,10 @@
     <select style="font-size:40px;width:250px; height:100px;" name="setFamilyCount" id="setFamilyCount">
         <option selected="selected" value="1995">转2000</option>
         <option value="795">转800</option>
+        <option value="495">转500</option>
+        <option value="295">转300</option>
+        <option value="195">转200</option>
+        <option value="95">转100</option>
         <option value="-1">不转</option>
     </select>
     <button style="font-size:40px;width:300px; height:100px;" onclick="setFamilyCount()">
@@ -401,6 +405,24 @@
     </select>
     <button style="font-size:40px;width:700px; height:100px;" onclick="exchangeRiceCake()">
         领取汤圆/骰子/海滩/小岛/糖果奖励
+    </button>
+    <br>
+    <select style="font-size:40px;width:200px; height:100px;" name="exchangeRiceCake2" id="exchangeRiceCake2">
+        <option selected="selected" value="">全部</option>
+    </select>
+    <select style="font-size:40px;width:350px; height:100px;" name="exchangeRiceCake2Target"
+        id="exchangeRiceCake2Target">
+        <option selected="selected" value="1800">目标能量1800</option>
+        <option value="1900">目标能量1900</option>
+        <option value="2000">目标能量2000</option>
+        <option value="2500">目标能量2500</option>
+        <option value="800">目标能量800</option>
+        <option value="500">目标能量500</option>
+        <option value="300">目标能量300</option>
+        <option value="100">目标能量100</option>
+    </select>
+    <button style="font-size:40px;width:700px; height:100px;" onclick="exchangeRiceCake2()">
+        领取汤圆奖励
     </button>
     <br>
     <select style="font-size:40px;width:250px; height:100px;" name="userMingingItem" id="userMingingItem">
@@ -1499,6 +1521,20 @@
 
         }
 
+        exchangeRiceCake2 = function () {
+            // buildUpUsers
+            var id = $("#exchangeRiceCake2 option:selected").val();
+            var target = $("#exchangeRiceCake2Target option:selected").val();
+            var r = confirm("兑换是否继续，id=" + id + " target=" + target)
+            if (r == true) {
+                $.get(APIURL + "/exchangeRiceCake2?id=" + id+"&target="+target, function (data) {
+                    alert(data)
+                    window.status = "1";
+                });
+            }
+
+        }
+
         userMingingItem = function () {
             // buildUpUsers
 
@@ -2183,9 +2219,161 @@
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("SelectMyBoss").options.add(tOption);
                 }
-                // 
 
-                // 
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    var pull_rows = jsarr[i]["pull_rows"]
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
+                    }
+                    if (pull_rows == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (pull_rows == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (pull_rows == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (pull_rows == "1") {
+                        name = "拉1"
+                    }
+                    if (pull_rows == "2") {
+                        name = "拉2"
+                    }
+                    if (pull_rows == "3") {
+                        name = "拉3"
+                    }
+                    if (pull_rows == "4") {
+                        name = "拉4"
+                    }
+                    if (pull_rows == "5") {
+                        name = "拉5"
+                    }
+                    if (pull_rows == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("exchangeRiceCake").options.add(tOption);
+                }
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    var pull_rows = jsarr[i]["pull_rows"]
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
+                    }
+                    if (pull_rows == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (pull_rows == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (pull_rows == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (pull_rows == "1") {
+                        name = "拉1"
+                    }
+                    if (pull_rows == "2") {
+                        name = "拉2"
+                    }
+                    if (pull_rows == "3") {
+                        name = "拉3"
+                    }
+                    if (pull_rows == "4") {
+                        name = "拉4"
+                    }
+                    if (pull_rows == "5") {
+                        name = "拉5"
+                    }
+                    if (pull_rows == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("exchangeRiceCake2").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    var pull_rows = jsarr[i]["pull_rows"]
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
+                    }
+                    if (pull_rows == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (pull_rows == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (pull_rows == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (pull_rows == "1") {
+                        name = "拉1"
+                    }
+                    if (pull_rows == "2") {
+                        name = "拉2"
+                    }
+                    if (pull_rows == "3") {
+                        name = "拉3"
+                    }
+                    if (pull_rows == "4") {
+                        name = "拉4"
+                    }
+                    if (pull_rows == "5") {
+                        name = "拉5"
+                    }
+                    if (pull_rows == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("searchRiceCake").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    var name = "不拉"
+                    var pull_rows = jsarr[i]["pull_rows"]
+                    if (pull_rows != "0") {
+                        name = "拉" + pull_rows
+                    }
+                    if (pull_rows == "1,2,3,4,5,6") {
+                        name = "全拉"
+                    }
+                    if (pull_rows == "1,2,3") {
+                        name = "拉123"
+                    }
+                    if (pull_rows == "4,5,6") {
+                        name = "拉456"
+                    }
+                    if (pull_rows == "1") {
+                        name = "拉1"
+                    }
+                    if (pull_rows == "2") {
+                        name = "拉2"
+                    }
+                    if (pull_rows == "3") {
+                        name = "拉3"
+                    }
+                    if (pull_rows == "4") {
+                        name = "拉4"
+                    }
+                    if (pull_rows == "5") {
+                        name = "拉5"
+                    }
+                    if (pull_rows == "6") {
+                        name = "拉6"
+                    }
+                    tOption.text = jsarr[i]["id"] + "(" + name + ")";
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("makeRiceCake").options.add(tOption);
+                }
 
 
             });
@@ -2468,6 +2656,14 @@
                     tOption.selected = false;
                     tOption.value = jsarr[i]["id"];
                     document.getElementById("exchangeRiceCake").options.add(tOption);
+                }
+
+                for (var i = 0; i < jsarr.length; i++) {
+                    var tOption = document.createElement("Option");
+                    tOption.text = jsarr[i]["name"] + "(" + jsarr[i]["familyId"] + ")";
+                    tOption.selected = false;
+                    tOption.value = jsarr[i]["id"];
+                    document.getElementById("exchangeRiceCake2").options.add(tOption);
                 }
 
                 for (var i = 0; i < jsarr.length; i++) {

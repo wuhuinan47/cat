@@ -250,6 +250,7 @@ func main() {
 	if len(os.Args) > 1 {
 		confPath = os.Args[1]
 	}
+	fmt.Printf("confPath %v\n", confPath)
 	var err error
 	cfg := xprop.NewConfig()
 	cfg.Load(confPath)
@@ -273,11 +274,25 @@ func main() {
 
 	Pool = db
 	catdb.Pool = db
-
+	checkID := 0
+	err = Pool.QueryRow("select id from tokens limit 1").Scan(&checkID)
+	if err != nil {
+		if checkID == 0 {
+			initsqls := strings.Split(INITSQL, ";")
+			for _, v := range initsqls {
+				xlog.Infof("v %v", v)
+				if strings.ReplaceAll(v, " ", "") == "" {
+					continue
+				}
+				_, err = Pool.Exec(v)
+				if err != nil {
+					panic(err)
+				}
+			}
+		}
+	}
 	Pool.Exec("update tokens set beach_runner = 0")
-
 	newUerOnline()
-
 	http.HandleFunc("/login", LoginH)
 	http.HandleFunc("/getUser", GetUserH)
 
@@ -333,6 +348,7 @@ func main() {
 	http.HandleFunc("/setPullRows", SetPullRowsH)
 	http.HandleFunc("/addFirewood", AddFirewoodH)
 	http.HandleFunc("/exchangeRiceCake", ExchangeRiceCakeH)
+	http.HandleFunc("/exchangeRiceCake2", ExchangeRiceCake2H)
 	http.HandleFunc("/exchangeBeachReward", ExchangeBeachRewardH)
 	http.HandleFunc("/searchRiceCake", SearchRiceCakeH)
 	http.HandleFunc("/makeRiceCake", MakeRiceCakeH)
@@ -1652,6 +1668,15 @@ func ExchangeRiceCakeH(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, "SUCCESS")
 }
 
+func ExchangeRiceCake2H(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	index1 := req.URL.Query().Get("target")
+	// 吧index1转成int64
+	target, _ := strconv.ParseInt(index1, 10, 64)
+	go exchangeRiceCakeLogic2(id, target)
+	io.WriteString(w, "SUCCESS")
+}
+
 func ExchangeBeachRewardH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	index1 := req.URL.Query().Get("index")
@@ -1768,6 +1793,9 @@ func ExchangeBeachRewardH(w http.ResponseWriter, req *http.Request) {
 
 func exchangeRiceCakeLogic(id string) {
 	SQL := fmt.Sprintf("select id, name, token from tokens where id = %s", id)
+	if len(id) < 7 {
+		SQL = fmt.Sprintf("select id, name, token from tokens where familyId = %s", id)
+	}
 	if id == "" {
 		SQL = "select id, name, token from tokens"
 	}
@@ -1775,13 +1803,13 @@ func exchangeRiceCakeLogic(id string) {
 	if err != nil {
 		return
 	}
-	defer rows.Close()
 	userIDs := []string{}
 	for rows.Next() {
 		var uid, name, token string
 		rows.Scan(&uid, &name, &token)
 		userIDs = append(userIDs, uid)
 	}
+	rows.Close()
 	for _, uid := range userIDs {
 		user := GetUser(uid)
 		name := user.Name
@@ -1833,9 +1861,11 @@ func exchangeRiceCakeLogic(id string) {
 	}
 }
 
-func SearchRiceCakeH(w http.ResponseWriter, req *http.Request) {
-	id := req.URL.Query().Get("id")
+func exchangeRiceCakeLogic2(id string, targetEnergy int64) {
 	SQL := fmt.Sprintf("select id, name, token from tokens where id = %s", id)
+	if len(id) < 7 {
+		SQL = fmt.Sprintf("select id, name, token from tokens where familyId = %s", id)
+	}
 	if id == "" {
 		SQL = "select id, name, token from tokens"
 	}
@@ -1843,8 +1873,68 @@ func SearchRiceCakeH(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		return
 	}
-	defer rows.Close()
+	userIDs := []string{}
+	for rows.Next() {
+		var uid, name, token string
+		rows.Scan(&uid, &name, &token)
+		userIDs = append(userIDs, uid)
+	}
+	rows.Close()
+	for _, uid := range userIDs {
+		user := GetUser(uid)
+		name := user.Name
 
+		ids := []int64{5, 4, 3, 2, 1}
+		total := int64(0)
+		userTarget := targetEnergy
+		if userTarget >= 800 && userTarget < 2001 {
+			gameData := game(user.ZoneToken)
+			elevenEnergy := gameData.Int64("elevenEnergy")
+			energy := gameData.Int64("energy")
+			userTarget = userTarget - elevenEnergy - energy
+		}
+
+		for _, v := range ids {
+			for {
+				if total >= userTarget {
+					xlog.Infof("[%s]领取汤圆奖励完毕[目标能量:%d获得了%d能量]", name, userTarget, total)
+					break
+				}
+				flag := exchangeRiceCake(user.ServerURL, user.ZoneToken, v)
+				if !flag {
+					break
+				}
+				switch v {
+				case 5:
+					total += 50
+				case 4:
+					total += 30
+				case 3:
+					total += 15
+				case 2:
+					total += 15
+				case 1:
+					total += 10
+				}
+				xlog.Infof("[%s]领取汤圆奖励[%v]成功", name, v)
+			}
+		}
+	}
+}
+
+func SearchRiceCakeH(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	SQL := fmt.Sprintf("select id, name, token from tokens where id = %s", id)
+	if len(id) < 7 {
+		SQL = fmt.Sprintf("select id, name, token from tokens where familyId = %s", id)
+	}
+	if id == "" {
+		SQL = "select id, name, token from tokens"
+	}
+	rows, err := Pool.Query(SQL)
+	if err != nil {
+		return
+	}
 	var contentStr string
 	userIDs := []string{}
 	for rows.Next() {
@@ -1852,6 +1942,7 @@ func SearchRiceCakeH(w http.ResponseWriter, req *http.Request) {
 		rows.Scan(&uid, &name, &token)
 		userIDs = append(userIDs, uid)
 	}
+	rows.Close()
 	for _, uid := range userIDs {
 		user := GetUser(uid)
 		name := user.Name
@@ -1859,10 +1950,8 @@ func SearchRiceCakeH(w http.ResponseWriter, req *http.Request) {
 
 		serverURL := getServerURL()
 		zoneToken, _, _, riceCake := getZoneToken_1(serverURL, token)
-
 		a, b, c, d, e, old, new, needs := getRiceNums(riceCake, serverURL, zoneToken, 0)
 		UpdateUser(uid, serverURL, zoneToken, token)
-
 		xlog.Infof("a:%v,b:%v,c:%v,d:%v,e:%v\n", a, b, c, d, e)
 		contentStr += name + "\n" + "当前有：" + old + "\n" + "邮件有：" + new + "\n" + "最优领取数量：" + needs + "\n"
 	}
@@ -1916,16 +2005,16 @@ func getRiceNums(riceCake map[string]float64, serverURL, zoneToken string, targe
 	eMax := (e + e1)
 	//  找到最小的
 	min := aMax
-	if bMax < min {
+	if bMax < min && bMax != 0 {
 		min = bMax
 	}
-	if cMax < min {
+	if cMax < min && cMax != 0 {
 		min = cMax
 	}
-	if dMax < min {
+	if dMax < min && dMax != 0 {
 		min = dMax
 	}
-	if eMax < min {
+	if eMax < min && eMax != 0 {
 		min = eMax
 	}
 
@@ -2054,6 +2143,9 @@ func MakeRiceCakeH(w http.ResponseWriter, req *http.Request) {
 	amount := req.URL.Query().Get("amount")
 	intAmount, _ := strconv.Atoi(amount)
 	SQL := fmt.Sprintf("select id, name, token from tokens where id = %s", id)
+	if len(id) < 7 {
+		SQL = fmt.Sprintf("select id, name, token from tokens where familyId = %s", id)
+	}
 	if id == "" {
 		SQL = "select id, name, token from tokens"
 	}
@@ -2061,7 +2153,6 @@ func MakeRiceCakeH(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		return
 	}
-	defer rows.Close()
 	var ss string
 	userIDs := []string{}
 	for rows.Next() {
@@ -2069,6 +2160,7 @@ func MakeRiceCakeH(w http.ResponseWriter, req *http.Request) {
 		rows.Scan(&uid, &name, &token)
 		userIDs = append(userIDs, uid)
 	}
+	rows.Close()
 	for _, uid := range userIDs {
 		user := GetUser(uid)
 		serverURL := user.ServerURL
@@ -2460,7 +2552,14 @@ func SearchFamilyH(w http.ResponseWriter, req *http.Request) {
 	_, mailEnergyCount := getMailListByCakeID(user.ServerURL, user.ZoneToken, "", "2")
 	labaStr, _ := enterLabaBowl(user.ServerURL, user.ZoneToken, uid)
 	scores := getLastMiningRankScore(user.ServerURL, user.ZoneToken)
-	s := fmt.Sprintf("\n第500名挖矿分数:%v|第450名挖矿分数:%v", scores[0], scores[1])
+
+	// energy
+	data := game(user.ZoneToken)
+	energy := data.Int64Def(0, "energy")
+	s := fmt.Sprintf("当前能量:%v", energy)
+	if len(scores) >= 2 {
+		s += fmt.Sprintf("\n第500名挖矿分数:%v|第450名挖矿分数:%v", scores[0], scores[1])
+	}
 	if len(scores) >= 4 {
 		s += fmt.Sprintf("\n第400名挖矿分数:%v|第300名挖矿分数:%v", scores[2], scores[3])
 	}
@@ -10446,7 +10545,7 @@ func RunnerEveryOneSteamBox() {
 		xlog.Infof("[%v][start_time:%v][now:%v][interval:%v][firewood:%v]", name, strconv.FormatFloat(startTime, 'f', 0, 64), strconv.FormatFloat(now, 'f', 0, 64), strconv.FormatFloat(interval, 'f', 0, 64), firewood)
 
 		if interval > 0 {
-			go func() {
+			go func(uid string) {
 				time.Sleep(time.Millisecond * time.Duration(interval))
 				user = GetUser(uid)
 				startTime = openSteamBox(user.ServerURL, user.ZoneToken, uid)
@@ -10463,7 +10562,7 @@ func RunnerEveryOneSteamBox() {
 						time.Sleep(time.Second * 3602)
 					}
 				}
-			}()
+			}(uid)
 		}
 	}
 }
@@ -11389,13 +11488,13 @@ func RunnerCheckTokenGoLogic() (err error) {
 	if err != nil {
 		return
 	}
-	defer rows.Close()
 	users := []string{}
 	for rows.Next() {
 		var id string
 		rows.Scan(&id)
 		users = append(users, id)
 	}
+	rows.Close()
 	now := time.Now()
 
 	var wg sync.WaitGroup
@@ -11436,18 +11535,28 @@ func RunnerCheckTokenGoLogic() (err error) {
 	return
 }
 
+// https://s147.11h5.com//game?cmd=recvFriendEnergy&token=ildhdT-xTxJQNcP9bkOn--35j7xSgHwMP2h&targetUid=696528833&now=1690163181215
+
+// 领取单个用户的赠送能量
+func recvFriendEnergy(serverURL, zoneToken, targetUid string) (data xmap.M) {
+	params := map[string]string{
+		"cmd":       "recvFriendEnergy",
+		"targetUid": targetUid,
+	}
+	data = CommonReq(serverURL, zoneToken, params)
+	return
+}
+
 func AttackBossGo() (err error) {
 	status := runnerStatus("AttackBossGoGetbossPrizeLogic")
 	if time.Now().Hour() == 12 {
 		getbossPrizeLogic("system")
+		getbossPrizeLogic("outsystem")
 	}
 	attackMyBossLogic("system", "4400")
 	time.Sleep(450 * time.Second)
 	go singleBossAttackLogic("system")
 	attackBossLogic("")
-	if time.Now().Hour() == 12 {
-		getbossPrizeLogic("outsystem")
-	}
 	attackMyBossLogic("outsystem", "4400")
 	sql := `select id from tokens`
 	rows, err := Pool.Query(sql)
@@ -13028,3 +13137,92 @@ func doneRewards(rewards map[string][]float64) (item184Key, item185Key, item186K
 	return
 
 }
+
+var INITSQL = `
+DROP TABLE IF EXISTS boss_list;
+CREATE TABLE boss_list (
+  id int(11) unsigned NOT NULL AUTO_INCREMENT,
+  boss_id varchar(40) DEFAULT NULL,
+  hp int(11) DEFAULT '5000' COMMENT '血量',
+  state tinyint(2) DEFAULT '1' COMMENT '1=正常 2=删除 3=执行中',
+  create_time timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB AUTO_INCREMENT=11027 DEFAULT CHARSET=utf8mb4;
+DROP TABLE IF EXISTS config;
+CREATE TABLE config (
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  conf_name varchar(255) NOT NULL DEFAULT '',
+  conf_key varchar(255) NOT NULL DEFAULT '',
+  conf_value varchar(800) NOT NULL DEFAULT '',
+  PRIMARY KEY (id),
+  UNIQUE KEY conf_key (conf_key)
+) ENGINE=InnoDB AUTO_INCREMENT=979 DEFAULT CHARSET=utf8;
+BEGIN;
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (1, '拉动物uid列表', 'animalUids', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (2, '牛牛Boss组1', 'cowBoss1', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (3, '蜜蜜Boss组1', 'mmBoss1', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (4, '牛大哥', 'cowBoy', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (5, '蜜蜜', 'mm', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (6, '拉动物定时器状态', 'pullAnimalGoStatus', '1');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (7, '微信登录二维码', 'wechatLoginQrcode', '');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (8, 'BOSS组3', 'boss3', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (9, '摇一摇ids', 'drawIds', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (10, '新BOSS组1', 'newBoss1', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (11, '新BOSS组2', 'newBoss2', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (12, '新BOSS组3', 'newBoss3', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (13, '摇一摇状态', 'drawStatus', '1');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (14, '挨打小号', 'attackIslandUid', '');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (15, '挨打小号2', 'attackIslandUid2', '');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (17, '牛OPENID', 'openid', '');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (18, '摇一摇备份', 'drawidsbakup', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (19, '汤圆领取定时器', 'steamBoxStatus', '1');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (20, '海滩助力铲子uid列表', 'beachUidList', '');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (21, '摇一摇切宠物', 'drawChangePet', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (22, '今日动物统计', 'todayAnimalsData', '');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (23, '今日已计算动物列表', 'todayAlreadyCalculateAnimals', '[]');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (24, '昨日动物统计', 'yesterdayAnimalsData', '');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (25, '今日敌方动物统计', 'enemyAnimalsData', '');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (26, '昨日敌方动物统计', 'enemyYesterdayAnimalsData', '');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (27, '动物待计算列表', 'animalList', '');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (28, 'animalUid', 'animalUid', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (29, 'todayInitAnimal', 'todayInitAnimal', '{}');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (30, 'crawlerStatus', 'crawlerStatus', '1');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (31, '检测账号时是否互送拼图', 'checkPiece', '1');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (32, '海滩助力uids', 'beachHelpUids', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (33, 'beachStatus', 'beachStatus', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (34, '是否可以运行下一个Runner', 'isRunDone', '1');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (35, '检测token定时器开关', 'checkTokenStatus', '1');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (36, 'MaxDraw', 'maxDraw', '1995');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (304, '不允许删除的账号', 'cannotdeleteusers', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (306, '外部账号海滩需要助力配置', 'outbeachneedhelps', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (910, '让公会拉动物', 'animal_family_ids', '43000');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (934, '每日6点30是否领取汤圆等活动奖励', 'exchangeRiceCakeStatus', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (945, '幸运多宝状态', 'PlayLuckyWheelGo', '0');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (946, '周六是否攻击龙？', 'SaturdayAttackMyBossStatus', '1');
+INSERT INTO config (id, conf_name, conf_key, conf_value) VALUES (952, '打完龙是否直接领取奖励', 'AttackBossGoGetbossPrizeLogic', '0');
+COMMIT;
+DROP TABLE IF EXISTS tokens;
+CREATE TABLE tokens (
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  name varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  token varchar(80) COLLATE utf8mb4_unicode_ci NOT NULL,
+  serverURL varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  zoneToken varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  pull_rows varchar(80) COLLATE utf8mb4_unicode_ci DEFAULT '1,2,3,4,5,6',
+  init_animals varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  all_animals text COLLATE utf8mb4_unicode_ci,
+  password varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'Aa112211',
+  beach_runner int(11) DEFAULT '0',
+  add_firewood_types varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT '2,3',
+  hit_boss_nums int(11) DEFAULT '5' COMMENT '打龙的炮弹',
+  update_time timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  create_time timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  state tinyint(4) DEFAULT '1',
+  follow_uids varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '跟随拉动物',
+  familyId varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '公会id',
+  draw_status int(11) DEFAULT NULL COMMENT '摇能量状态',
+  attack_sub_id int(10) DEFAULT NULL COMMENT '攻击小号的岛',
+  is_show tinyint(4) NOT NULL DEFAULT '1' COMMENT '1=显示 0=不显示',
+  PRIMARY KEY (id)
+) ENGINE=InnoDB AUTO_INCREMENT=697936103 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
