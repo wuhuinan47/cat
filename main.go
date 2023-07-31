@@ -427,6 +427,8 @@ func main() {
 		go runner.NamedRunnerWithHMS("RunnerFamilySignGo210", 2, 1, 0, &running, RunnerFamilySignGo)
 
 		go runner.NamedRunnerWithSeconds("RunnerCheckTokenGo", 2000, &running, RunnerCheckTokenGo)
+		go runner.NamedRunnerWithHMS("chongbangLogicCheck", 10, 55, 0, &running, chongbangLogicCheck)
+		go runner.NamedRunnerWithHMS("chongbangLogic", 11, 0, 0, &running, chongbangLogic)
 
 		go runner.NamedRunnerWithHMS("RunnerAttackBossGo12", 12, 5, 0, &running, AttackBossGo)
 		go runner.NamedRunnerWithHMS("RunnerAttackBossGo13", 13, 5, 0, &running, AttackBossGo)
@@ -969,10 +971,19 @@ func attackBossLogic(id string) (err error) {
 				attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 200, 200, 0)
 				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 400, 400, 0)
 				countI += 4
+			} else if leftHp == 450 {
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 150, 150, 0)
+				countI += 3
 			} else if leftHp == 400 {
 				flag = attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 200, 200, 0)
 				countI += 2
+			} else if leftHp == 300 {
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 150, 150, 0)
+				countI += 2
 			} else if leftHp == 200 {
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 0)
+				countI += 1
+			} else if leftHp == 150 {
 				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 0)
 				countI += 1
 			} else {
@@ -990,10 +1001,19 @@ func attackBossLogic(id string) (err error) {
 				attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 200, 200, 0)
 				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 400, 400, 0)
 				countI += 4
+			} else if leftHp == 450 {
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 150, 150, 0)
+				countI += 3
 			} else if leftHp == 400 {
 				flag = attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 200, 200, 0)
 				countI += 2
+			} else if leftHp == 300 {
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 150, 150, 0)
+				countI += 2
 			} else if leftHp == 200 {
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 0)
+				countI += 1
+			} else if leftHp == 150 {
 				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 0)
 				countI += 1
 			} else {
@@ -1017,10 +1037,19 @@ func attackBossLogic(id string) (err error) {
 				attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 200, 200, 0)
 				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 1, 1, 400, 400, 0)
 				countI += 4
+			} else if leftHp == 450 {
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 3, 0, 1, 150, 150, 0)
+				countI += 3
 			} else if leftHp == 400 {
 				flag = attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 200, 200, 0)
 				countI += 2
+			} else if leftHp == 300 {
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 2, 0, 1, 150, 150, 0)
+				countI += 2
 			} else if leftHp == 200 {
+				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 0)
+				countI += 1
+			} else if leftHp == 150 {
 				flag = attackBossAPI(serverURL, zoneToken, bossID, 1, 0, 1, 200, 200, 0)
 				countI += 1
 			} else {
@@ -1103,9 +1132,21 @@ func AttackBossH1(s *web.Session) web.Result {
 			attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 200, 200, 0)
 			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 1, 1, 400, 400, 0)
 			countI += 4
+		} else if leftHp == 450 {
+			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 3, 0, 1, 150, 150, 0)
+			countI += 3
 		} else if leftHp == 400 {
 			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 200, 200, 0)
 			countI += 2
+		} else if leftHp == 300 {
+			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 2, 0, 1, 150, 150, 0)
+			countI += 2
+		} else if leftHp == 200 {
+			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 200, 200, 0)
+			countI += 1
+		} else if leftHp == 150 {
+			flag = attackBossAPI(serverURL, zoneToken, v["id"].(string), 1, 0, 1, 200, 200, 0)
+			countI += 1
 		} else {
 			flag = false
 			xlog.Infof("ignore")
@@ -2022,12 +2063,24 @@ func getRiceNums(riceCake map[string]float64, serverURL, zoneToken string, targe
 	min = math.Floor(min)
 
 	// 比较min和limitV
+	xlog.Infof("min %v limitV %v", min, limitV)
 	if min < limitV {
 		limitV = min
 		e = limitV - e1
 		if e < 0 {
 			e = 0
 		}
+		d = getRiceCakeInterval(d1, d2, limitV)
+		c = getRiceCakeInterval(c1, c2, limitV)
+		b = getRiceCakeInterval(b1, b2, limitV*2)
+		a = getRiceCakeInterval(a1, a2, limitV*2)
+	} else {
+		limitV = targetE
+		e = limitV - e1
+		if e < 0 {
+			e = 0
+		}
+
 		d = getRiceCakeInterval(d1, d2, limitV)
 		c = getRiceCakeInterval(c1, c2, limitV)
 		b = getRiceCakeInterval(b1, b2, limitV*2)
@@ -11356,14 +11409,16 @@ func RunnerPullAnimal() (err error) {
 	return
 }
 
-func chongbangLogic() {
+var chongbangIDs = []string{}
+var chongbangLock = sync.RWMutex{}
+
+func chongbangLogicCheck() (err error) {
 	sql := `select id from tokens where familyId = 1945`
 	rows, err := Pool.Query(sql)
 	if err != nil {
 		xlog.Errorf("查询公会成员失败:%v", err)
 		return
 	}
-	defer rows.Close()
 	ids := []string{}
 	for rows.Next() {
 		var id string
@@ -11374,11 +11429,62 @@ func chongbangLogic() {
 		}
 		ids = append(ids, id)
 	}
+	rows.Close()
+	chongbangLock.Lock()
+	chongbangIDs = []string{}
+
+	for _, id := range ids {
+		user := GetUser(id)
+		if user != nil {
+			getFreeEnergy(user.ServerURL, user.ZoneToken)
+			getFamilyDayTaskPrize(user.ServerURL, user.ZoneToken, "2")
+			user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
+			UpdateUser(id, user.ServerURL, user.ZoneToken, user.Token)
+			if user.FamilyDayTask != nil {
+				result := getFamilyTaskPrizeLogic(user.FamilyDayTask, user.ServerURL, user.ZoneToken, user.Name)
+				if strings.Contains(result, "领取1次免费20能量") {
+					chongbangIDs = append(chongbangIDs, id)
+				}
+			}
+		}
+	}
+	chongbangLock.Unlock()
+	xlog.Infof("冲榜完成检测:%v")
+	return
+}
+
+func chongbangLogic() (err error) {
+	chongbangLock.RLock()
+	defer chongbangLock.RUnlock()
+	ids := []string{}
+	if len(chongbangIDs) > 0 {
+		ids = chongbangIDs
+	} else {
+		sql := `select id from tokens where familyId = 1945`
+		rows, err := Pool.Query(sql)
+		if err != nil {
+			xlog.Errorf("查询公会成员失败:%v", err)
+			return err
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var id string
+			err = rows.Scan(&id)
+			if err != nil {
+				xlog.Errorf("查询公会成员失败:%v", err)
+				return err
+			}
+			ids = append(ids, id)
+		}
+	}
 	AllLock.Lock()
 	defer AllLock.Unlock()
 	var wg sync.WaitGroup
-	ch := make(chan struct{}, 5)
-
+	length := len(ids)
+	if length > 8 {
+		length = 8
+	}
+	ch := make(chan struct{}, length)
 	for _, id := range ids {
 		ch <- struct{}{}
 		wg.Add(1)
@@ -11388,17 +11494,20 @@ func chongbangLogic() {
 			user := GetUser(id)
 			if user != nil {
 				getFreeEnergy(user.ServerURL, user.ZoneToken)
-				user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
-				UpdateUser(id, user.ServerURL, user.ZoneToken, user.Token)
-				if user.FamilyDayTask != nil {
-					getFamilyTaskPrizeLogic(user.FamilyDayTask, user.ServerURL, user.ZoneToken, user.Name)
-				}
+				getFamilyDayTaskPrize(user.ServerURL, user.ZoneToken, "2")
+				// user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
+				// UpdateUser(id, user.ServerURL, user.ZoneToken, user.Token)
+				// if user.FamilyDayTask != nil {
+				// 	result:=getFamilyTaskPrizeLogic(user.FamilyDayTask, user.ServerURL, user.ZoneToken, user.Name)
+
+				// }
 			}
 			<-ch
 		}(id)
 	}
 	wg.Wait()
-
+	xlog.Infof("冲榜完成")
+	return
 }
 
 func getDrawStatus(familyId string) (confValue string) {
