@@ -10637,7 +10637,7 @@ func RunnerSteamBox() (err error) {
 	}
 	openSteamBoxGo()
 
-	SQL := "select id, name, token from tokens where id <> 302691822 and id <> 309392050 order by id desc"
+	SQL := "select id, name, token, add_firewood_types from tokens where id <> 302691822 and id <> 309392050 order by id desc"
 
 	rows, err := Pool.Query(SQL)
 
@@ -10648,13 +10648,13 @@ func RunnerSteamBox() (err error) {
 	users := [][]string{}
 
 	for rows.Next() {
-		var uid, name, token string
-		rows.Scan(&uid, &name, &token)
+		var uid, name, token, addFirewoodTypes string
+		rows.Scan(&uid, &name, &token, &addFirewoodTypes)
 		// user := GetUser(uid)
 		// serverURL, zoneToken := user.ServerURL, user.ZoneToken
 		// addFirewood(serverURL, zoneToken, "302691822")
 		// addFirewood(serverURL, zoneToken, "309392050")
-		users = append(users, []string{uid, name, token})
+		users = append(users, []string{uid, name, token, addFirewoodTypes})
 	}
 	rows.Close()
 	SQL = "select id, name, token from tokens where id in (302691822,309392050)"
@@ -10695,7 +10695,24 @@ func RunnerSteamBox() (err error) {
 			defer wg.Done()
 			user := GetUser(v[0])
 			serverURL, zoneToken := user.ServerURL, user.ZoneToken
-			uids, _ := getSteamBoxHelpList(serverURL, zoneToken, 0)
+			uids := []float64{}
+			if v[3] == "1,2,3" {
+				uids, _ = getSteamBoxHelpList(serverURL, zoneToken, 0)
+			}
+			if v[3] == "2,3" {
+				uids, _ = getSteamBoxHelpList(serverURL, zoneToken, 2)
+				uids2, _ := getSteamBoxHelpList(serverURL, zoneToken, 3)
+				uids = append(uids, uids2...)
+			}
+			if v[3] == "1" {
+				uids, _ = getSteamBoxHelpList(serverURL, zoneToken, 1)
+			}
+			if v[3] == "2" {
+				uids, _ = getSteamBoxHelpList(serverURL, zoneToken, 2)
+			}
+			if v[3] == "3" {
+				uids, _ = getSteamBoxHelpList(serverURL, zoneToken, 3)
+			}
 			for _, v2 := range uids {
 				fuid := fmt.Sprintf("%v", v2)
 				if !addFirewood(serverURL, zoneToken, fuid) {
@@ -11443,13 +11460,14 @@ func chongbangLogicCheck() (err error) {
 			if user.FamilyDayTask != nil {
 				result := getFamilyTaskPrizeLogic(user.FamilyDayTask, user.ServerURL, user.ZoneToken, user.Name)
 				if strings.Contains(result, "领取1次免费20能量") {
+					xlog.Infof("[%v][%v]需要冲榜", id, user.Name)
 					chongbangIDs = append(chongbangIDs, id)
 				}
 			}
 		}
 	}
 	chongbangLock.Unlock()
-	xlog.Infof("冲榜完成检测:%v")
+	xlog.Infof("冲榜完成检测:%v", converter.JSON(chongbangIDs))
 	return
 }
 
@@ -11495,6 +11513,7 @@ func chongbangLogic() (err error) {
 			if user != nil {
 				getFreeEnergy(user.ServerURL, user.ZoneToken)
 				getFamilyDayTaskPrize(user.ServerURL, user.ZoneToken, "2")
+				xlog.Infof("[%v]冲榜完成", user.Name)
 				// user.ZoneToken, user.FamilyDayTask = getEnterInfo(user.Uid, user.Name, user.ServerURL, user.Token, user.ZoneToken, "familyDayTask")
 				// UpdateUser(id, user.ServerURL, user.ZoneToken, user.Token)
 				// if user.FamilyDayTask != nil {
