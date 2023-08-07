@@ -82,7 +82,7 @@
         if (isShow && isShow === "0") {
           cell1.innerHTML = data[i]["key"]
         } else {
-          var href = APIURL+"/login?id="+data[i]["user_id"];
+          var href = APIURL+"/login2?id="+data[i]["user_id"];
          cell1.innerHTML = data[i]["key"]+'<a href="'+href +'" target="_blank">登陆</a>';
         }
         cell2.innerHTML = data[i]["value"];

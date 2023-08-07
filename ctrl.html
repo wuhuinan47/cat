@@ -414,6 +414,9 @@
         id="exchangeRiceCake2Target">
         <option selected="selected" value="1800">目标能量1800</option>
         <option value="1900">目标能量1900</option>
+        <option value="1990">目标能量1990</option>
+        <option value="1980">目标能量1980</option>
+        <option value="1970">目标能量1970</option>
         <option value="2000">目标能量2000</option>
         <option value="2500">目标能量2500</option>
         <option value="1600">目标能量1600</option>
@@ -1450,14 +1453,14 @@
         }
 
         searchRiceCake = function () {
-            var r = confirm("searchRiceCake是否继续")
+            var r = confirm("注意:若选择全部或按公会查询需要等待一段时间！")
             if (r == true) {
                 var id = $("#searchRiceCake option:selected").val();
-
-                $.get(APIURL + "/searchRiceCake?id=" + id, function (data) {
-                    alert(data)
-                    window.status = "1";
-                });
+                 window.open(APIURL + "/searchRiceCake?id=" + id);
+                // $.get(APIURL + "/searchRiceCake?id=" + id, function (data) {
+                //     alert(data)
+                //     window.status = "1";
+                // });
             }
 
         }

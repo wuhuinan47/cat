@@ -47,6 +47,8 @@ var run_dir, api_url string
 
 var adminUID int64 = 302691822
 
+var serviceName = "cat"
+
 // type CatData struct {
 // 	GoldMineHelpList []GoldMineHelpList `json:"helpList"`
 // }
@@ -128,24 +130,58 @@ func AddUser(uid string) {
 	}
 }
 
+func GetUser2(uid string) *User {
+	userLock := userOnline.GetUserLock(uid)
+	userLock.Lock()
+	defer userLock.Unlock()
+	// userOnline.Lock.Lock()
+	user := userOnline.Users[uid]
+	needUpdate := false
+	defer func(needUpdate *bool, user *User) {
+		// userOnline.Lock.Unlock()
+		if *needUpdate && user != nil {
+			xlog.Infof("[%v]Update tokens", user.Name)
+			Pool.Exec(`update tokens set token=?,serverURL=?,zoneToken=?,familyId=? where id=?`, user.Token, user.ServerURL, user.ZoneToken, user.FamilyId, user.Uid)
+		}
+	}(&needUpdate, user)
+	if user == nil {
+		return nil
+	}
+	needUpdate = true
+	user.Token = loginByPassword(uid, user.Password)
+	if user.Token != "" {
+		user.ServerURL = getServerURL()
+		var f float64
+		user.ZoneToken, f = getZoneTokenFamilyId(user.ServerURL, user.Token, user.ZoneToken)
+		user.FamilyId = strconv.FormatFloat(f, 'f', 0, 64)
+		if user.ZoneToken != "" {
+			return user
+		}
+	}
+	return user
+}
+
 func GetUser(uid string) *User {
 	userLock := userOnline.GetUserLock(uid)
 	userLock.Lock()
 	defer userLock.Unlock()
 	// userOnline.Lock.Lock()
 	user := userOnline.Users[uid]
-	defer func(user *User) {
+	needUpdate := false
+	defer func(needUpdate *bool, user *User) {
 		// userOnline.Lock.Unlock()
-		if user != nil {
+		if *needUpdate && user != nil {
+			xlog.Infof("[%v]Update tokens", user.Name)
 			Pool.Exec(`update tokens set token=?,serverURL=?,zoneToken=?,familyId=? where id=?`, user.Token, user.ServerURL, user.ZoneToken, user.FamilyId, user.Uid)
 		}
-	}(user)
+	}(&needUpdate, user)
 	if user == nil {
 		return nil
 	}
 	if catdb.CheckZoneToken(user.ServerURL, user.ZoneToken) {
 		return user
 	}
+	needUpdate = true
 	getSzf(user)
 	userOnline.Users[uid] = user
 	if user.Password != "" {
@@ -268,6 +304,10 @@ func main() {
 	run_dir = cfg.Str("run_dir")
 	api_url = cfg.Str("api_url")
 
+	if cfg.Str("service_name") != "" {
+		serviceName = cfg.Str("service_name")
+	}
+
 	db.SetConnMaxLifetime(100 * time.Second) //最大连接周期，超过时间的连接就close
 	db.SetMaxOpenConns(100)                  //设置最大连接数
 	db.SetMaxIdleConns(16)                   //设置闲置连接数
@@ -294,6 +334,7 @@ func main() {
 	Pool.Exec("update tokens set beach_runner = 0")
 	newUerOnline()
 	http.HandleFunc("/login", LoginH)
+	http.HandleFunc("/login2", Login2H)
 	http.HandleFunc("/getUser", GetUserH)
 
 	http.HandleFunc("/addAccount", AddAccountH)
@@ -402,7 +443,10 @@ func main() {
 	// http.HandleFunc("/", IndexH)
 
 	sendMsg("cat is start")
-	go RunnerEveryOneSteamBox()
+	steamBoxInterval := 0
+	steamBoxInterval = cfg.Int("steam_box_interval")
+
+	go RunnerEveryOneSteamBox(steamBoxInterval)
 
 	if cfg.Str("draw") == "1" {
 		go drawLogic(time.Now().Hour(), 800, 5, true)
@@ -619,7 +663,7 @@ func CatDemoH(w http.ResponseWriter, req *http.Request) {
 }
 
 func GetServerLogsH(w http.ResponseWriter, req *http.Request) {
-	cmd := `journalctl -n 20 -u cat | cut -d: -f4- | sed -E 's/INFO cat\/main.go:[0-9]+//g'`
+	cmd := `journalctl -n 20 -u cat | cut -d: -f4- | sed -E 's/INFO ` + serviceName + `\/main.go:[0-9]+//g'`
 	// cmd := `journalctl -f -u cat | awk '{printf " " ; for (i=6; i<=7; i++) printf " " $i; printf " " $10; for (i=11; i<=NF; i++) printf " " $i; printf "\n"}'`
 	c := exec.Command("bash", "-c", cmd)
 	xx, err := c.Output()
@@ -5003,7 +5047,7 @@ func AllBeachHelpGo() (err error) {
 func RestartH(w http.ResponseWriter, req *http.Request) {
 	go func() {
 		time.Sleep(2 * time.Second)
-		cmd := exec.Command("systemctl", "restart", "cat")
+		cmd := exec.Command("systemctl", "restart", serviceName)
 		err := cmd.Run()
 		fmt.Printf("systemctl restart cat: %v", err)
 	}()
@@ -5752,6 +5796,18 @@ func LoginH(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func Login2H(w http.ResponseWriter, req *http.Request) {
+	id := req.URL.Query().Get("id")
+	user := GetUser2(id)
+	if user == nil {
+		io.WriteString(w, "cannot find user")
+		return
+	}
+	url := "https://play.h5avu.com/game/?gameid=147&token="
+	url += user.Token
+	http.Redirect(w, req, url, http.StatusTemporaryRedirect)
+}
+
 func DeleteAccountH(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 
@@ -6462,7 +6518,7 @@ func getSelfBoxPrizeGo(uid string, quality, amount float64) (total, all float64)
 				return
 			}
 			time.Sleep(time.Millisecond * 500)
-			getFlag := goldMineFish(serverURL, zoneToken, uid, v2)
+			getFlag := goldMineFish(user.Name, serverURL, zoneToken, uid, v2)
 			if getFlag != -1 {
 				all++
 			}
@@ -6506,7 +6562,7 @@ func getSelfBoxPrizeGo(uid string, quality, amount float64) (total, all float64)
 							return
 						}
 						time.Sleep(time.Millisecond * 500)
-						getFlag := goldMineFish(serverURL, zoneToken, uid, v2)
+						getFlag := goldMineFish(user.Name, serverURL, zoneToken, uid, v2)
 						if getFlag != -1 {
 							all++
 						}
@@ -6573,7 +6629,7 @@ func getBoxPrizeGo(uid string, quality, amount float64) (total, all float64) {
 				return
 			}
 			time.Sleep(time.Millisecond * 500)
-			getFlag := goldMineFish(serverURL, zoneToken, v["uid"], v2)
+			getFlag := goldMineFish(user.Name, serverURL, zoneToken, v["uid"], v2)
 			if getFlag != -1 {
 				all++
 			}
@@ -7270,7 +7326,7 @@ func enterGoldMine(serverURL, zoneToken string, fuid, flushType string) (quality
 }
 
 // 抓宝箱
-func goldMineFish(serverURL, zoneToken string, fuid, id interface{}) int64 {
+func goldMineFish(name, serverURL, zoneToken string, fuid, id interface{}) int64 {
 	now := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
 
 	url := fmt.Sprintf("%v/game?cmd=goldMineFish&token=%v&fuid=%v&id=%v&now=%v", serverURL, zoneToken, fuid, id, now)
@@ -7283,40 +7339,40 @@ func goldMineFish(serverURL, zoneToken string, fuid, id interface{}) int64 {
 
 	_, ok = getItem["25"]
 	if ok {
-		xlog.Infof("抓到黄水晶")
+		xlog.Infof("[%s]抓到黄水晶", name)
 		return 1
 	}
 
 	_, ok = getItem["26"]
 	if ok {
-		xlog.Infof("抓到紫水晶")
+		xlog.Infof("[%s]抓到紫水晶", name)
 		return 1
 	}
 
 	_, ok = getItem["27"]
 	if ok {
-		xlog.Infof("抓到黑水晶")
+		xlog.Infof("[%s]抓到黑水晶", name)
 		return 1
 	}
 
 	_, ok = getItem["28"]
 	if ok {
-		xlog.Infof("抓到绿宝石")
+		xlog.Infof("[%s]抓到绿宝石", name)
 		return 1
 	}
 
 	_, ok = getItem["29"]
 	if ok {
-		xlog.Infof("抓到红宝石")
+		xlog.Infof("[%s]抓到红宝石", name)
 		return 1
 	}
 
 	_, ok = getItem["30"]
 	if ok {
-		xlog.Infof("抓到钻石")
+		xlog.Infof("[%s]抓到钻石", name)
 		return 1
 	}
-	xlog.Infof("没抓到宝石")
+	xlog.Infof("[%s]没抓到宝石", name)
 	return 0
 
 }
@@ -10564,7 +10620,7 @@ func sendMsg(msg string) {
 
 // }
 
-func RunnerEveryOneSteamBox() {
+func RunnerEveryOneSteamBox(steamBoxInterval int) {
 	if runnerStatus("steamBoxStatus") == "0" {
 		return
 	}
@@ -10574,8 +10630,6 @@ func RunnerEveryOneSteamBox() {
 	if err != nil {
 		return
 	}
-
-	defer rows.Close()
 	userIDs := []string{}
 	for rows.Next() {
 		var uid, name, token string
@@ -10583,6 +10637,7 @@ func RunnerEveryOneSteamBox() {
 		userIDs = append(userIDs, uid)
 
 	}
+	rows.Close()
 	for _, uid := range userIDs {
 		user := GetUser(uid)
 		name := user.Name
@@ -10595,14 +10650,14 @@ func RunnerEveryOneSteamBox() {
 
 		var interval = startTime + 3600000 + 7200000*(3-firewood) - now
 
-		xlog.Infof("[%v][start_time:%v][now:%v][interval:%v][firewood:%v]", name, strconv.FormatFloat(startTime, 'f', 0, 64), strconv.FormatFloat(now, 'f', 0, 64), strconv.FormatFloat(interval, 'f', 0, 64), firewood)
+		xlog.Infof("[%v][start_time:%v][now:%v][interval:%v秒][firewood:%v]", name, strconv.FormatFloat(startTime, 'f', 0, 64), strconv.FormatFloat(now, 'f', 0, 64), strconv.FormatFloat(interval/1000, 'f', 0, 64), firewood)
 
 		if interval > 0 {
 			go func(uid string) {
-				time.Sleep(time.Millisecond * time.Duration(interval))
-				user = GetUser(uid)
-				startTime = openSteamBox(user.ServerURL, user.ZoneToken, uid)
-				xlog.Infof("[%v]定时器首次领取汤圆成功[startTime:%v]", name, strconv.FormatFloat(startTime, 'f', 0, 64))
+				// time.Sleep(time.Millisecond * time.Duration(interval))
+				// user = GetUser(uid)
+				// startTime = openSteamBox(user.ServerURL, user.ZoneToken, uid)
+				// xlog.Infof("[%v]定时器首次领取汤圆成功[startTime:%v]", name, strconv.FormatFloat(startTime, 'f', 0, 64))
 
 				for {
 					if runnerStatus("steamBoxStatus") == "0" {
@@ -10610,9 +10665,22 @@ func RunnerEveryOneSteamBox() {
 						// time.Sleep(time.Second * 3601)
 					} else {
 						user = GetUser(uid)
+						startTime, firewood = enterSteamBox(user.ServerURL, user.ZoneToken, uid)
+						now := float64(time.Now().UnixNano() / 1e6)
+						interval = startTime + 3600000 + 7200000*(3-firewood) - now
+						intev := float64(3602000)
+						if interval > 3600000 {
+							if steamBoxInterval != 0 {
+								intev = float64(steamBoxInterval) * 1000
+							}
+						} else {
+							intev = interval + 500
+						}
+						// intev转成秒
+						xlog.Infof("[%s]下一次[%v 秒]领取汤圆 检测时间 %v 秒", user.Name, interval/1000, intev/1000)
 						startTime = openSteamBox(user.ServerURL, user.ZoneToken, uid)
 						xlog.Infof("[%v]领取汤圆[start_time:%v]", name, strconv.FormatFloat(startTime, 'f', 0, 64))
-						time.Sleep(time.Second * 3602)
+						time.Sleep(time.Millisecond * time.Duration(intev))
 					}
 				}
 			}(uid)
@@ -10657,7 +10725,7 @@ func RunnerSteamBox() (err error) {
 		users = append(users, []string{uid, name, token, addFirewoodTypes})
 	}
 	rows.Close()
-	SQL = "select id, name, token from tokens where id in (302691822,309392050)"
+	SQL = "select id, name, token, add_firewood_types from tokens where id in (302691822,309392050)"
 
 	rows, err = Pool.Query(SQL)
 
@@ -10666,11 +10734,32 @@ func RunnerSteamBox() (err error) {
 	}
 
 	for rows.Next() {
-		var uid, uname, utoken string
-		rows.Scan(&uid, &uname, &utoken)
+		var uid, uname, utoken, firewoodTypes string
+		rows.Scan(&uid, &uname, &utoken, &firewoodTypes)
 		user := GetUser(uid)
 		serverURL, zoneToken := user.ServerURL, user.ZoneToken
-		uids, helpUids := getSteamBoxHelpList(serverURL, zoneToken, 3)
+		// uids, helpUids := getSteamBoxHelpList(serverURL, zoneToken, 3)
+
+		var uids, helpUids []float64
+
+		if firewoodTypes == "1,2,3" {
+			uids, _ = getSteamBoxHelpList(serverURL, zoneToken, 0)
+		}
+		if firewoodTypes == "2,3" {
+			uids, _ = getSteamBoxHelpList(serverURL, zoneToken, 3)
+			uids2, _ := getSteamBoxHelpList(serverURL, zoneToken, 2)
+			uids = append(uids, uids2...)
+		}
+		if firewoodTypes == "1" {
+			uids, _ = getSteamBoxHelpList(serverURL, zoneToken, 1)
+		}
+		if firewoodTypes == "2" {
+			uids, _ = getSteamBoxHelpList(serverURL, zoneToken, 2)
+		}
+		if firewoodTypes == "3" {
+			uids, _ = getSteamBoxHelpList(serverURL, zoneToken, 3)
+		}
+
 		for _, v := range uids {
 			fuid := fmt.Sprintf("%v", v)
 			if !addFirewood(serverURL, zoneToken, fuid) {
